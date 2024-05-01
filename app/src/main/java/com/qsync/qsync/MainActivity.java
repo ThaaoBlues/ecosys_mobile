@@ -22,7 +22,6 @@ import com.qsync.qsync.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import qsync.AccesBdd;
 import android.Manifest;
 
 import java.util.logging.Logger;
@@ -84,8 +83,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 try{
-                    qsync.AccesBdd acces = new AccesBdd();
-                    acces.initConnection();
+
                 }catch (Error e){
                     Log.wtf("Erreur en initialisant la BDD",e);
                 }
