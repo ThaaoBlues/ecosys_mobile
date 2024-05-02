@@ -9,7 +9,7 @@ public class Globals {
 
 
 
-    public class QEvent {
+    public static class QEvent {
         public String flag;
         public String fileType;
         public DeltaBinaire.Delta delta;
@@ -389,6 +389,75 @@ public class Globals {
         return mt;
 
     }
+
+
+    public static HashMap<String, String> modTypesReverse(){
+        HashMap<String, String> mt = new HashMap<>();
+        mt.put("c","creation");
+        mt.put("d","delete");
+        mt.put("p","patch");
+        mt.put("m","move");
+
+        return mt;
+
+    }
+
+
+    // SyncInfos.java
+    public static class SyncInfos {
+        private String path;
+        private String secureId;
+
+        public SyncInfos(String path, String secureId) {
+            this.path = path;
+            this.secureId = secureId;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public String getSecureId() {
+            return secureId;
+        }
+
+        public void setSecureId(String secureId) {
+            this.secureId = secureId;
+        }
+    }
+
+
+    // LinkDevice.java
+    public class LinkDevice {
+        private String secureId;
+        private boolean isConnected;
+
+        public LinkDevice(String secureId, boolean isConnected) {
+            this.secureId = secureId;
+            this.isConnected = isConnected;
+        }
+
+        public String getSecureId() {
+            return secureId;
+        }
+
+        public void setSecureId(String secureId) {
+            this.secureId = secureId;
+        }
+
+        public boolean isConnected() {
+            return isConnected;
+        }
+
+        public void setConnected(boolean connected) {
+            isConnected = connected;
+        }
+    }
+
 
 
 
