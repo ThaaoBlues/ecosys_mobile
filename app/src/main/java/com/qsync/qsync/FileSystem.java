@@ -20,7 +20,7 @@ public class FileSystem {
     public static void startWatcher(final Context context, final String rootPath) {
         // Initialize the database connection
         final AccesBdd acces = new AccesBdd();
-        acces.initConnection();
+        acces.InitConnection();
         acces.getSecureIdFromRootPath(rootPath);
 
         // Start the filesystem watcher
@@ -71,39 +71,27 @@ public class FileSystem {
 
     private static void handleCreateEvent(AccesBdd acces, String path, boolean isDirectory) {
         String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        try {
-            if (isDirectory) {
-                Log.d(TAG, "Adding " + path + " to the directories to watch.");
-                acces.createFolder(relativePath);
-            } else {
-                DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, 0, new byte[0]); // Assuming BuilDelta is adapted for Java
-                acces.createFile(relativePath, path, "[ADD_TO_RETARD]");
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error handling create event: " + e.getMessage());
+        if (isDirectory) {
+            Log.d(TAG, "Adding " + path + " to the directories to watch.");
+            acces.createFolder(relativePath);
+        } else {
+            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, 0, new byte[0]); // Assuming BuilDelta is adapted for Java
+            acces.createFile(relativePath, path, "[ADD_TO_RETARD]");
         }
     }
 
     private static void handleWriteEvent(AccesBdd acces, String path) {
         String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        try {
-            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, acces.getFileSizeFromBdd(relativePath), acces.getFileContent(relativePath));
-            acces.updateFile(relativePath, delta); // Assuming updateFile is adapted for Java
-        } catch (IOException e) {
-            Log.e(TAG, "Error handling write event: " + e.getMessage());
-        }
+        DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, acces.GetFileSizeFromBdd(relativePath), acces.getFileContent(relativePath));
+        acces.updateFile(relativePath, delta); // Assuming updateFile is adapted for Java
     }
 
     private static void handleRemoveEvent(AccesBdd acces, String path) {
         String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        try {
-            if (acces.wasFile(relativePath)) {
-                acces.rmFile(relativePath);
-            } else {
-                acces.rmFolder(relativePath);
-            }
-        } catch (IOException e) {
-            Log.e(TAG, "Error handling remove event: " + e.getMessage());
+        if (acces.wasFile(relativePath)) {
+            acces.rmFile(relativePath);
+        } else {
+            acces.rmFolder(relativePath);
         }
     }
 }

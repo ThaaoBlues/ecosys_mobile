@@ -47,6 +47,8 @@ public class AccesBdd {
     private SQLiteDatabase db;
     private Context context;
 
+
+
     public void AccesBdd(Context context){
         this.context = context;
     }
@@ -71,7 +73,13 @@ public class AccesBdd {
         Cursor cursor = db.rawQuery("INSERT INTO mesid(device_id) VALUES(?)",new String[]{secureId});
         cursor.close();
     }
-    public void initdb() {
+    public String GetSecureId(){
+        return this.secureId;
+    }
+    public void SetSecureId(String new_secureId){
+        this.secureId = new_secureId;
+    }
+    public void InitConnection() {
         SQLiteOpenHelper dbHelper = new SQLiteOpenHelper(context,"qsync",null,1) {
             @Override
             public void onCreate(SQLiteDatabase db) {
@@ -938,7 +946,7 @@ public class AccesBdd {
 
     }
 
-    private boolean IsDeviceLinked(String deviceId) {
+    public boolean IsDeviceLinked(String deviceId) {
         boolean isLinked = false;
         Cursor cursor = db.rawQuery("SELECT COUNT(*) AS count FROM linked_devices WHERE device_id=?",
                 new String[]{
@@ -1253,6 +1261,8 @@ public class AccesBdd {
         cursor.close();
         return version_id;
     }
+
+
 
 
 
