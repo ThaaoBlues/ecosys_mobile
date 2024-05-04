@@ -35,6 +35,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.HashMap;
 import java.nio.file.SimpleFileVisitor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class AccesBdd {
 
@@ -50,6 +51,26 @@ public class AccesBdd {
         this.context = context;
     }
 
+    public boolean isMyDeviceIdGenerated() {
+        Cursor cursor = db.rawQuery("SELECT id FROM mesid",null);
+        boolean ret = cursor.moveToFirst();
+
+        cursor.close();
+
+        return ret;
+    }
+
+    public void generateMyDeviceId() {
+        String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+        StringBuilder secureIdBuilder = new StringBuilder();
+        for (int i = 0; i < 41; i++) {
+            int index = (int) (Math.random() * alphabet.length());
+            secureIdBuilder.append(alphabet.charAt(index));
+        }
+        this.secureId = secureIdBuilder.toString();
+        Cursor cursor = db.rawQuery("INSERT INTO mesid(device_id) VALUES(?)",new String[]{secureId});
+        cursor.close();
+    }
     public void initdb() {
         SQLiteOpenHelper dbHelper = new SQLiteOpenHelper(context,"qsync",null,1) {
             @Override
@@ -75,6 +96,24 @@ public class AccesBdd {
             db.close();
         }
 
+    }
+
+
+    // to store different objects in the database
+    // this one is specifically made for the binary delta object
+    public byte[] serialize(DeltaBinaire.Delta delta) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+        objectOutputStream.writeObject(delta);
+        objectOutputStream.flush();
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    // Deserialization method
+    public static DeltaBinaire.Delta deserialize(byte[] byteArray) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
+        ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
+        return (DeltaBinaire.Delta) objectInputStream.readObject();
     }
 
     private void createTables() {
@@ -136,16 +175,34 @@ public class AccesBdd {
                     "uninstaller_path TEXT)",null);
 
             // Additional initialization
-            if (! IsMyDeviceIdGenerated()) {
-                GenerateMyDeviceId();
+            if (! isMyDeviceIdGenerated()) {
+                generateMyDeviceId();
             }
 
     }
+
+    public void incrementFileVersion(String path) {
+        // Get the latest version of the file and increment it
+        long newVersionId = GetFileLastVersionId(path) + 1;
+
+        // Update version number in the database
+        Cursor cursor = db.rawQuery("UPDATE filesystem SET version_id=? WHERE path=? AND secure_id=?",
+                new String[]{
+                        String.valueOf(newVersionId),
+                        path,
+                        secureId
+                }
+        );
+        cursor.close();
+    }
+
+
 
     public boolean checkFileExists(String path){
         String[] args = {path,secureId};
         Cursor cursor = db.rawQuery("SELECT id FROM filesystem WHERE path=? AND secure_id=?",args);
         boolean ret = cursor.moveToFirst();
+        cursor.close();
         return ret;
     }
 
@@ -153,7 +210,7 @@ public class AccesBdd {
         String[] args = {path, secureId};
         Cursor cursor = db.rawQuery("SELECT type FROM filesystem WHERE path=? AND secure_id=?",args);
         boolean ret = cursor.moveToNext() && cursor.getString(0).equals("file");
-
+        cursor.close();
         return ret;
     }
 
@@ -209,16 +266,20 @@ public class AccesBdd {
             Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
 
             // Insert delta into delta table
-            Gson gson = new Gson();
-            String jsonData = gson.toJson(delta);
-            String deltaInsertQuery = "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)";
-            Cursor cursor = db.rawQuery(deltaInsertQuery,new String[]{
-                    relativePath,
-                    String.valueOf(getFileLastVersionId(relativePath) + 1),
-                    jsonData,
-                    secureId
+
+            try {
+                byte[] serializedData = serialize(delta);
+                String deltaInsertQuery = "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)";
+                db.execSQL(deltaInsertQuery,new Object[]{
+                        relativePath,
+                        String.valueOf(getFileLastVersionId(relativePath) + 1),
+                        serializedData,
+                        secureId
             });
-            cursor.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
 
 
 
@@ -234,7 +295,7 @@ public class AccesBdd {
             strIds.deleteCharAt(strIds.length() - 1);
 
             String retardInsertQuery = "INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)";
-            cursor = db.rawQuery(retardInsertQuery,new String[]{
+            Cursor cursor = db.rawQuery(retardInsertQuery,new String[]{
                     String.valueOf(getFileLastVersionId(relativePath) + 1),
                     relativePath,
                     modtypes.get("creation"),
@@ -250,30 +311,12 @@ public class AccesBdd {
         UpdateCachedFile(absolutePath);
     }
 
-    public boolean isMyDeviceIdGenerated() {
-        Cursor cursor = db.rawQuery("SELECT id FROM mesid",null);
-        boolean ret = cursor.moveToFirst();
 
-        cursor.close();
 
-        return ret;
-    }
-
-    public void generateMyDeviceId() {
-        String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        StringBuilder secureIdBuilder = new StringBuilder();
-        for (int i = 0; i < 41; i++) {
-            int index = (int) (Math.random() * alphabet.length());
-            secureIdBuilder.append(alphabet.charAt(index));
-        }
-        this.secureId = secureIdBuilder.toString();
-        Cursor cursor = db.rawQuery("INSERT INTO mesid(device_id) VALUES(?)",new String[]{secureId});
-        cursor.close();
-    }
 
     public String getMyDeviceId() {
 
-        Cursor cursor = db.rawQuery("SELECT device_id FROM mesid",null)
+        Cursor cursor = db.rawQuery("SELECT device_id FROM mesid",null);
         String ret = null;
         if (cursor.moveToFirst()) {
             ret = cursor.getString(0);
@@ -374,43 +417,52 @@ public class AccesBdd {
         if (!offlineDevices.isEmpty()) {
             long newVersionId = getFileLastVersionId(path) + 1;
             incrementFileVersion(path);
-            try {
-                Gson gson = new Gson();
-                String jsonDelta = gson.toJson(delta);
-                PreparedStatement statement = connection.prepareStatement("INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)");
-                statement.setString(1, path);
-                statement.setLong(2, newVersionId);
-                statement.setString(3, jsonDelta);
-                statement.setString(4, secureId);
-                db.rawQuery();
+                try{
+                    byte[] SerializedData = serialize(delta);
+                    db.execSQL(
+                            "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)",
+                            new Object[]{path,
+                                    String.valueOf(newVersionId),
+                                    SerializedData,
+                                    secureId
+                            }
+                    );
+                }catch (IOException e){
+
+                }
+
                 String modType = "p"; // Assuming 'patch' for demonstration
                 String strIds = offlineDevices.join(";"); // Implement 'join' method in GenArray class
-                statement = connection.prepareStatement("INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)");
-                statement.setLong(1, newVersionId);
-                statement.setString(2, path);
-                statement.setString(3, modType);
-                statement.setString(4, strIds);
-                statement.setString(5, secureId);
-                db.rawQuery();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+                Cursor cursor = db.rawQuery("INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)",
+                        new String[]{
+                                String.valueOf(newVersionId),
+                                path,
+                                modType,
+                                strIds,
+                                secureId
+                        }
+                        );
+                cursor.close();
         }
         updateCachedFile(path);
     }
 
     private void updateCachedFile(String path) {
+        byte[] fileContent = new byte[0];
         try {
-            byte[] fileContent = readFromFile(path);
+            fileContent = readFromFile(path);
             byte[] compressedContent = compressData(fileContent);
-            PreparedStatement statement = connection.prepareStatement("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?");
-            statement.setBytes(1, compressedContent);
-            statement.setString(2, path);
-            statement.setString(3, secureId);
-            db.rawQuery();
-        } catch (IOException | SQLException e) {
-            e.printStackTrace();
+            db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
+                    new Object[]{
+                            compressedContent,
+                            path,
+                            secureId
+                    }
+            );
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     private byte[] readFromFile(String path) throws IOException {
@@ -434,139 +486,158 @@ public class AccesBdd {
         }
     }
 
-    private db db;
-
-    // Constructor
-    public AccesBdd(db db) {
-        this.db = db;
-    }
 
     // GetFileContent retrieves the content of a file from the database.
     // Returned as byte array
     public byte[] getFileContent(String path) {
-        try (PreparedStatement statement = connection.prepareStatement("SELECT content FROM filesystem WHERE path=? AND secure_id=?")) {
-            statement.setString(1, path);
-            statement.setString(2, secureId);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    byte[] compressedContent = resultSet.getBytes("content");
-                    try (InputStream inputStream = new GZIPInputStream(new ByteArrayInputStream(compressedContent));
-                         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                        byte[] buffer = new byte[1024];
-                        int length;
-                        while ((length = inputStream.read(buffer)) != -1) {
-                            outputStream.write(buffer, 0, length);
-                        }
-                        return outputStream.toByteArray();
-                    }
+        Cursor cursor = db.rawQuery("SELECT content FROM filesystem WHERE path=? AND secure_id=?",new String[]{
+                path,
+                secureId
+        });
+        if (cursor.moveToFirst()) {
+            byte[] compressedContent = cursor.getBlob(0);
+            try (InputStream inputStream = new GZIPInputStream(new ByteArrayInputStream(compressedContent));
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, length);
                 }
+                return outputStream.toByteArray();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (SQLException | IOException e) {
-            e.printStackTrace();
         }
+
+        cursor.close();
+
         return null;
     }
 
     // RmFile deletes a file from the database and adds it in delete mode to the retard table.
     public void rmFile(String path) {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM filesystem WHERE path=? AND secure_id=?")) {
-            statement.setString(1, path);
-            statement.setString(2, secureId);
-            db.rawQuery();
+
+
+        Cursor cursor = db.rawQuery("DELETE FROM filesystem WHERE path=? AND secure_id=?",new String[]{
+                path,
+                secureId
+        });
+
+        cursor.close();
             // Now, purge all data involving this file from retard table
-            try (PreparedStatement retardStatement = connection.prepareStatement("DELETE FROM retard WHERE path=? AND secure_id=?")) {
-                retardStatement.setString(1, path);
-                retardStatement.setString(2, secureId);
-                retarddb.rawQuery();
-                // And finally, add it in delete mode to the retard table
-                HashMap<String, String> modtypes = Globals.modTypes();
-                String modType = modtypes.get("delete");
-                String linkedDevices = getSyncLinkedDevices();
-                try (PreparedStatement insertRetardStatement = connection.prepareStatement("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)")) {
-                    insertRetardStatement.setInt(1, 0);
-                    insertRetardStatement.setString(2, path);
-                    insertRetardStatement.setString(3, modType);
-                    insertRetardStatement.setString(4, linkedDevices);
-                    insertRetardStatement.setString(5, "file");
-                    insertRetardStatement.setString(6, secureId);
-                    insertRetarddb.rawQuery();
+        cursor = db.rawQuery("DELETE FROM retard WHERE path=? AND secure_id=?",
+                new String[]{
+                        path,
+                        secureId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        );
+
+        cursor.close();
+        // And finally, add it in delete mode to the retard table
+        HashMap<String, String> modtypes = Globals.modTypes();
+        String modType = modtypes.get("delete");
+        String linkedDevices = getSyncLinkedDevices().join(";");
+        cursor = db.rawQuery("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)",
+                new String[]{
+                        "0",
+                        path,
+                        modType,
+                        linkedDevices,
+                        "file",
+                        secureId
+                    }
+                );
+
+        cursor.close();
     }
+
 
     // CreateFolder adds a folder to the database.
     public void createFolder(String path) {
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO filesystem (path, version_id, type, size, secure_id) VALUES (?, 0, 'folder', 0, ?)")) {
-            statement.setString(1, path);
-            statement.setString(2, secureId);
-            db.rawQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        Cursor cursor = db.rawQuery("INSERT INTO filesystem (path, version_id, type, size, secure_id) VALUES (?, 0, 'folder', 0, ?)",
+                new String[]{
+                        path,
+                        secureId
+                    }
+                );
+
+        cursor.close();
     }
 
     // RmFolder deletes a folder from the database and adds it in delete mode to the retard table.
     public void rmFolder(String path) {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM filesystem WHERE path LIKE ? AND secure_id=?")) {
-            statement.setString(1, path + "%");
-            statement.setString(2, secureId);
-            db.rawQuery();
-            // Now, purge all data involving this folder from retard table
-            try (PreparedStatement retardStatement = connection.prepareStatement("DELETE FROM retard WHERE path LIKE ? AND secure_id=?")) {
-                retardStatement.setString(1, path + "%");
-                retardStatement.setString(2, secureId);
-                retarddb.rawQuery();
-                // Purge all data from delta table involving this folder
-                try (PreparedStatement deltaStatement = connection.prepareStatement("DELETE FROM delta WHERE path LIKE ? AND secure_id=?")) {
-                    deltaStatement.setString(1, path + "%");
-                    deltaStatement.setString(2, secureId);
-                    deltadb.rawQuery();
-                    // And finally, add it in delete mode to the retard table
-                    HashMap<String, String> modtypes = Globals.modTypes();
-                    String modType = modtypes.get("delete");
-                    String linkedDevices = getSyncLinkedDevices();
-                    try (PreparedStatement insertRetardStatement = connection.prepareStatement("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)")) {
-                        insertRetardStatement.setInt(1, 0);
-                        insertRetardStatement.setString(2, path);
-                        insertRetardStatement.setString(3, modType);
-                        insertRetardStatement.setString(4, linkedDevices);
-                        insertRetardStatement.setString(5, "folder");
-                        insertRetardStatement.setString(6, secureId);
-                        insertRetarddb.rawQuery();
-                    }
+        Cursor cursor = db.rawQuery("DELETE FROM filesystem WHERE path LIKE ? AND secure_id=?",
+            new String[]{
+                    path+"%",
+                    secureId
+            });
+
+        cursor.close();
+        // Now, purge all data involving this folder from retard table
+        cursor = db.rawQuery("DELETE FROM retard WHERE path LIKE ? AND secure_id=?",
+                new String[]{
+                        path+"%",
+                        secureId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+                );
+        cursor.close();
+
+                // Purge all data from delta table involving this folder
+        cursor = db.rawQuery("DELETE FROM delta WHERE path LIKE ? AND secure_id=?",
+                new String[]{
+                        path+"%",
+                        secureId
+                }
+                );
+
+        cursor.close();
+
+        // And finally, add it in delete mode to the retard table
+        HashMap<String, String> modtypes = Globals.modTypes();
+        String modType = modtypes.get("delete");
+        String linkedDevices = getSyncLinkedDevices().join(";");
+        cursor = db.rawQuery("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)",
+                new String[]{
+                        "0",
+                        path,
+                        modType,
+                        linkedDevices,
+                        "folder",
+                        secureId
+                });
+
+        cursor.close();
+
     }
 
     // Move updates the path of a file or folder in the database and adds a move event to the retard table.
     public void move(String path, String newPath, String fileType) {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE filesystem SET path=? WHERE path=? AND secure_id=?")) {
-            statement.setString(1, newPath);
-            statement.setString(2, path);
-            statement.setString(3, secureId);
-            db.rawQuery();
-            // Add the move event to retard file
-            HashMap<String, String> modtypes = Globals.modTypes();
-            String modType = modtypes.get("move");
-            String linkedDevices = getSyncLinkedDevices();
-            try (PreparedStatement insertRetardStatement = connection.prepareStatement("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)")) {
-                insertRetardStatement.setInt(1, 0);
-                insertRetardStatement.setString(2, path);
-                insertRetardStatement.setString(3, modType);
-                insertRetardStatement.setString(4, linkedDevices);
-                insertRetardStatement.setString(5, fileType);
-                insertRetardStatement.setString(6, secureId);
-                insertRetarddb.rawQuery();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+
+        Cursor cursor = db.rawQuery("UPDATE filesystem SET path=? WHERE path=? AND secure_id=?",
+                new String[]{
+                        newPath,
+                        path,
+                        secureId
+                }
+                );
+
+        cursor.close();
+        // Add the move event to retard file
+        HashMap<String, String> modtypes = Globals.modTypes();
+        String modType = modtypes.get("move");
+        String linkedDevices = getSyncLinkedDevices().join(";");
+        cursor = db.rawQuery("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)",
+                new String[]{
+                        "0",
+                        path,
+                        linkedDevices,
+                        fileType,
+                        secureId
+                }
+                );
+
+        cursor.close();
     }
 
     public void addFilesToFileSystem(String rootPath) {
@@ -639,268 +710,252 @@ public class AccesBdd {
         }
         String secureId = secureIdBuilder.toString();
 
-        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO sync (secure_id, root) VALUES(?,?)")) {
-            statement.setString(1, secureId);
-            statement.setString(2, rootPath);
-            db.rawQuery();
-            // ICI AJOUTER LA CARTOGRAPHIE DU SYSTEME DE FICHIERS
-            addFilesToFileSystem(rootPath);
+        Cursor cursor = db.rawQuery("INSERT INTO sync (secure_id, root) VALUES(?,?)",
+                new String[]{
+                        secureId,
+                        rootPath
+                }
+        );
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        cursor.close();
+
+        // ICI AJOUTER LA CARTOGRAPHIE DU SYSTEME DE FICHIERS
+        addFilesToFileSystem(rootPath);
     }
 
     // CreateSyncFromOtherEnd creates a synchronization entry in the database with the given info.
     // Used to connect from an existing task from another device
     // Filesystem is not mapped by the function as a remote setup procedure is made around this call
     public void CreateSyncFromOtherEnd(String rootPath, String secureId) {
-        try {
-            this.secureId = secureId;
-            // Add synchronization entry to the database
-            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO sync (secure_id, root) VALUES (?, ?)")) {
-                statement.setString(1, secureId);
-                statement.setString(2, rootPath);
-                db.rawQuery();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        this.secureId = secureId;
+        // Add synchronization entry to the database
+        Cursor cursor = db.rawQuery("INSERT INTO sync (secure_id, root) VALUES (?, ?)",
+                new String[]{
+                        secureId,
+                        rootPath
+                }
+                );
+        cursor.close();
     }
 
     public void RmSync() {
-        try {
             // Remove synchronization entry from the database
-            try (PreparedStatement statement = connection.prepareStatement("DELETE FROM sync WHERE secure_id=?")) {
-                statement.setString(1, secureId);
-                db.rawQuery();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        Cursor cursor = db.rawQuery("DELETE FROM sync WHERE secure_id=?",
+                new String[]{
+                        secureId
+                }
+                );
+        cursor.close();
     }
 
     public void LinkDevice(String deviceId, String ipAddress) {
-        try {
-            // Link a device to the synchronization entry
-            try (PreparedStatement statement = connection.prepareStatement("UPDATE sync SET linked_devices_id=IFNULL(linked_devices_id, '') || ? WHERE secure_id=?")) {
-                statement.setString(1, deviceId + ";");
-                statement.setString(2, secureId);
-                db.rawQuery();
-            }
-            if (!IsDeviceLinked(deviceId)) {
-                // If the device is not registered as a target, register it
-                try (PreparedStatement insertStatement = connection.prepareStatement("INSERT INTO linked_devices (device_id,is_connected,ip_addr) VALUES(?,TRUE,?)")) {
-                    insertStatement.setString(1, deviceId);
-                    insertStatement.setString(2, ipAddress);
-                    insertdb.rawQuery();
+        // Link a device to the synchronization entry
+        Cursor cursor = db.rawQuery("UPDATE sync SET linked_devices_id=IFNULL(linked_devices_id, '') || ? WHERE secure_id=?",
+                new String[]{
+                        deviceId+";",
+                        secureId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+                );
+
+        cursor.close();
+
+        if (!IsDeviceLinked(deviceId)) {
+            // If the device is not registered as a target, register it
+            cursor = db.rawQuery("INSERT INTO linked_devices (device_id,is_connected,ip_addr) VALUES(?,TRUE,?)",
+                    new String[]{
+                            deviceId,
+                            ipAddress
+                    }
+                    );
+            cursor.close();
         }
+
+
     }
 
     public void UnlinkDevice(String deviceId) {
-        try {
-            // Unlink a device from the synchronization entry
-            try (PreparedStatement deleteStatement = connection.prepareStatement("DELETE FROM linked_devices WHERE device_id=?")) {
-                deleteStatement.setString(1, deviceId);
-                deletedb.rawQuery();
-            }
-            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE sync SET linked_devices_id=REPLACE(linked_devices_id,?, '')")) {
-                updateStatement.setString(1, deviceId + ";");
-                updatedb.rawQuery();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // Unlink a device from the synchronization entry
+        Cursor cursor = db.rawQuery("DELETE FROM linked_devices WHERE device_id=?",
+                new String[]{
+                        deviceId
+                }
+                );
+        cursor.close();
+
+        cursor = db.rawQuery("UPDATE sync SET linked_devices_id=REPLACE(linked_devices_id,?, '')",
+                new String[]{deviceId+";"}
+                );
+        cursor.close();
+
     }
 
     public String GetRootSyncPath() {
         String rootPath = null;
-        try {
-            // Retrieve the root path associated with the synchronization entry
-            try (PreparedStatement statement = connection.prepareStatement("SELECT root FROM sync WHERE secure_id=?")) {
-                statement.setString(1, secureId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        rootPath = resultSet.getString("root");
-                    }
+        // Retrieve the root path associated with the synchronization entry
+        Cursor cursor = db.rawQuery("SELECT root FROM sync WHERE secure_id=?",
+                new String[]{
+                        secureId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+                );
+                if (cursor.moveToFirst()) {
+                    rootPath = cursor.getString(0);
+                }
+
         return rootPath;
     }
 
     public void SetDevicedbState(String deviceId, boolean value, String... ipAddr) {
-        try {
-            if (ipAddr.length == 0) {
-                try (PreparedStatement statement = connection.prepareStatement("UPDATE linked_devices SET is_connected=? WHERE device_id=?")) {
-                    statement.setBoolean(1, value);
-                    statement.setString(2, deviceId);
-                    db.rawQuery();
-                }
-            } else {
-                try (PreparedStatement statement = connection.prepareStatement("UPDATE linked_devices SET is_connected=?,ip_addr=? WHERE device_id=?")) {
-                    statement.setBoolean(1, value);
-                    statement.setString(2, ipAddr[0]);
-                    statement.setString(3, deviceId);
-                    db.rawQuery();
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        if (ipAddr.length == 0) {
+            Cursor cursor = db.rawQuery("UPDATE linked_devices SET is_connected=? WHERE device_id=?",
+                    new String[]{
+                            String.valueOf(value),
+                            deviceId
+                    }
+                    );
+            cursor.close();
         }
+        Cursor cursor = db.rawQuery("UPDATE linked_devices SET is_connected=?,ip_addr=? WHERE device_id=?",
+                new  String[]{
+                        String.valueOf(value),
+                        ipAddr[0],
+                        deviceId
+                }
+                );
+
+        cursor.close();
     }
 
     public boolean GetDevicedbState(String deviceId) {
         boolean dbState = false;
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT is_connected FROM linked_devices WHERE device_id=?")) {
-                statement.setString(1, deviceId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        dbState = resultSet.getBoolean("is_connected");
-                    }
+        Cursor cursor = db.rawQuery("SELECT is_connected FROM linked_devices WHERE device_id=?",
+                new String[]{
+                        deviceId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+                );
+        if(cursor.moveToNext()) {
+            dbState = cursor.getInt(0)== 1;
         }
+
+        cursor.close();
+
         return dbState;
     }
 
     public boolean IsThisFileSystemBeingPatched() {
         boolean isPatched = false;
-        try {
-            String idsStr;
-            try (PreparedStatement statement = connection.prepareStatement("SELECT IFNULL(receiving_update, '')FROM linked_devices")) {
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        idsStr = resultSet.getString(1);
-                        String[] idsArr = idsStr.split(";");
-                        for (String id : idsArr) {
-                            if (id.equals(secureId)) {
-                                isPatched = true;
-                                break;
-                            }
-                        }
-                    }
+        String idsStr;
+        Cursor cursor = db.rawQuery("SELECT IFNULL(receiving_update, '')FROM linked_devices",
+                null
+                );
+
+        if (cursor.moveToNext()) {
+            idsStr = cursor.getString(0);
+            String[] idsArr = idsStr.split(";");
+            for (String id : idsArr) {
+                if (id.equals(secureId)) {
+                    isPatched = true;
+                    break;
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
         }
+
+        cursor.close();
         return isPatched;
     }
 
     public void SetFileSystemPatchLockState(String deviceId, boolean value) {
-        try {
-            if (value) {
-                try (PreparedStatement statement = connection.prepareStatement("UPDATE linked_devices SET receiving_update=IFNULL(receiving_update, '') || ?")) {
-                    statement.setString(1, secureId + ";");
-                    db.rawQuery();
-                }
-            } else {
-                String idsStr;
-                try (PreparedStatement statement = connection.prepareStatement("SELECT receiving_update FROM linked_devices")) {
-                    try (ResultSet resultSet = statement.executeQuery()) {
-                        if (resultSet.next()) {
-                            idsStr = resultSet.getString(1);
-                            String[] idsArr = idsStr.split(";");
-                            StringBuilder newIdsStr = new StringBuilder();
-                            for (String id : idsArr) {
-                                if (!id.equals(secureId)) {
-                                    newIdsStr.append(id).append(";");
-                                }
-                            }
-                            try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE linked_devices SET receiving_update= ?")) {
-                                updateStatement.setString(1, newIdsStr.toString());
-                                updatedb.rawQuery();
-                            }
-                        }
+        if (value) {
+            Cursor cursor = db.rawQuery("UPDATE linked_devices SET receiving_update=IFNULL(receiving_update, '') || ?",
+                    new String[]{
+                            secureId+";"
+                    }
+                    );
+            cursor.close();
+        } else {
+            String idsStr;
+            Cursor cursor = db.rawQuery("SELECT receiving_update FROM linked_devices",
+                null
+                );
+            if (cursor.moveToNext()) {
+                idsStr = cursor.getString(0);
+                String[] idsArr = idsStr.split(";");
+                StringBuilder newIdsStr = new StringBuilder();
+                for (String id : idsArr) {
+                    if (!id.equals(secureId)) {
+                        newIdsStr.append(id).append(";");
                     }
                 }
+                cursor = db.rawQuery("UPDATE linked_devices SET receiving_update= ?",
+                        new String[]{
+                                newIdsStr.toString()
+                        }
+                        );
+                cursor.close();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+
     }
 
     public long GetFileSizeFromBdd(String path) {
         long size = 0;
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT size FROM filesystem WHERE path=? AND secure_id=?")) {
-                statement.setString(1, path);
-                statement.setString(2, secureId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        size = resultSet.getLong("size");
-                    }
+        Cursor cursor = db.rawQuery("SELECT size FROM filesystem WHERE path=? AND secure_id=?",
+                new String[]{
+                        path,
+                        secureId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+                );
+        if (cursor.moveToNext()) {
+            size = cursor.getLong(0);
         }
+
+        cursor.close();
         return size;
     }
 
-    public String GetFileDelta(long version, String path) {
-        String jsonDelta = null;
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT delta FROM delta WHERE path=? AND version_id=?")) {
-                statement.setString(1, path);
-                statement.setLong(2, version);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        jsonDelta = resultSet.getString("delta");
+    public DeltaBinaire.Delta GetFileDelta(long version, String path) {
+        byte[] SerializedData = null;
+        Cursor cursor = db.rawQuery("SELECT delta FROM delta WHERE path=? AND version_id=?",
+                    new String[]{
+                            path,
+                            String.valueOf(version)
                     }
-                }
+                    );
+        if (cursor.moveToNext()) {
+            SerializedData = cursor.getBlob(0);
+
+            try{
+                DeltaBinaire.Delta delta = deserialize(SerializedData);
+                return delta;
+
+            }catch (IOException | ClassNotFoundException e){
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
         }
-        return jsonDelta;
+
+        return  null;
+
     }
 
     private boolean IsDeviceLinked(String deviceId) {
         boolean isLinked = false;
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) AS count FROM linked_devices WHERE device_id=?")) {
-                statement.setString(1, deviceId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (resultSet.next()) {
-                        int count = resultSet.getInt("count");
-                        isLinked = count > 0;
-                    }
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) AS count FROM linked_devices WHERE device_id=?",
+                new String[]{
+                        deviceId
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        );
+
+        if (cursor.moveToNext()) {
+            int count = cursor.getInt(0);
+            isLinked = count > 0;
         }
+
         return isLinked;
     }
 
 
-    public void IncrementFileVersion(String path) {
-        try {
-            // Get the latest version of the file and increment it
-            long newVersionId = GetFileLastVersionId(path) + 1;
 
-            // Update version number in the database
-            try (PreparedStatement statement = connection.prepareStatement("UPDATE filesystem SET version_id=? WHERE path=? AND secure_id=?")) {
-                statement.setLong(1, newVersionId);
-                statement.setString(2, path);
-                statement.setString(3, secureId);
-                db.rawQuery();
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void UpdateCachedFile(String path) {
         try {
@@ -917,14 +972,16 @@ public class AccesBdd {
                 gzipos.close();
                 byte[] compressedData = bos.toByteArray();
 
-                try (PreparedStatement statement = connection.prepareStatement("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?")) {
-                    statement.setBytes(1, compressedData);
-                    statement.setString(2, path);
-                    statement.setString(3, secureId);
-                    db.rawQuery();
+                db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
+                        new Object[]{
+                                compressedData,
+                                path,
+                                secureId
+                        }
+                        );
                 }
-            }
-        } catch (IOException | SQLException e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -933,19 +990,17 @@ public class AccesBdd {
         // Used to get all sync task secure_id and root path listed
         // Returns a map containing the secure_id as key and SyncInfos as value
         Map<String, Globals.SyncInfos> list = new HashMap<>();
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT secure_id,root FROM sync");
-                 ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    Globals.SyncInfos info = new Globals.SyncInfos("","");
-                    info.setSecureId(resultSet.getString("secure_id"));
-                    info.setPath(resultSet.getString("root"));
-                    list.put(info.getSecureId(), info);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        Cursor cursor = db.rawQuery("SELECT secure_id,root FROM sync", null);
+
+        while (cursor.moveToNext()) {
+            Globals.SyncInfos info = new Globals.SyncInfos("","");
+            info.setSecureId(cursor.getString(0));
+            info.setPath(cursor.getString(1));
+            list.put(info.getSecureId(), info);
         }
+
+        cursor.close();
+
         return list;
     }
 
@@ -955,70 +1010,75 @@ public class AccesBdd {
 
 
         // FILES
-        Gson gson = new Gson();
         Map<String, Globals.GenArray<Globals.QEvent>> queue = new HashMap<>();
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT r.secure_id,d.delta,r.mod_type,r.path,r.type FROM retard AS r JOIN delta AS d ON r.path=d.path AND r.version_id=d.version_id AND r.secure_id=d.secure_id WHERE r.devices_to_patch LIKE ?")) {
-                statement.setString(1, "%" + deviceId + "%");
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        // build delta
-                        Globals.QEvent event = new Globals.QEvent("","",null,"","","");
-                        event.setFlag(Globals.modTypesReverse().get(resultSet.getString("mod_type")));
-                        event.setFileType(resultSet.getString("type"));
-                        event.setDelta(gson.fromJson(resultSet.getString("delta"),DeltaBinaire.Delta.class)));
-                        event.setFilePath(resultSet.getString("path"));
-                        event.setSecureId(secureId);
+        Cursor cursor = db.rawQuery("SELECT r.secure_id,d.delta,r.mod_type,r.path,r.type FROM retard AS r JOIN delta AS d ON r.path=d.path AND r.version_id=d.version_id AND r.secure_id=d.secure_id WHERE r.devices_to_patch LIKE ?",
 
-                        if (!queue.containsKey(event.getSecureId())) {
-                            queue.put(event.getSecureId(), new Globals.GenArray<>());
-                        }
-                        Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
-                        assert events != null;
-                        events.add(event);
-                        queue.put(event.getSecureId(), events);
-                    }
+                new String[]{
+                        "%"+deviceId+"%"
                 }
+                );
+        while (cursor.moveToNext()) {
+            // build delta
+            Globals.QEvent event = new Globals.QEvent("","",null,"","","");
+            event.setFlag(Globals.modTypesReverse().get(cursor.getString(2)));
+            event.setFileType(cursor.getString(4));
+
+            try{
+                DeltaBinaire.Delta delta = deserialize(cursor.getBlob(1));
+                event.setDelta(delta);
+                event.setFilePath(cursor.getString(3));
+                event.setSecureId(secureId);
+            }catch (IOException | ClassNotFoundException e){
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+
+
+            if (!queue.containsKey(event.getSecureId())) {
+                queue.put(event.getSecureId(), new Globals.GenArray<>());
+            }
+            Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
+            assert events != null;
+            events.add(event);
+            queue.put(event.getSecureId(), events);
         }
 
 
         // FOLDERS
 
-        try {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT r.secure_id,r.mod_type,r.path,r.type FROM retard AS r WHERE r.devices_to_patch LIKE ? AND r.type='folder'")) {
-                statement.setString(1, "%" + deviceId + "%");
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        // build delta
-                        Globals.QEvent event = new Globals.QEvent("","",null,"","","");
-                        event.setFlag(Globals.modTypesReverse().get(resultSet.getString("mod_type")));
-                        event.setFileType(resultSet.getString("type"));
-                        event.setFilePath(resultSet.getString("path"));
-                        event.setSecureId(secureId);
+        cursor = db.rawQuery("SELECT r.secure_id,r.mod_type,r.path,r.type FROM retard AS r WHERE r.devices_to_patch LIKE ? AND r.type='folder'",
 
-                        if (!queue.containsKey(event.getSecureId())) {
-                            queue.put(event.getSecureId(), new Globals.GenArray<>());
-                        }
-                        Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
-                        assert events != null;
-                        events.add(event);
-                        queue.put(event.getSecureId(), events);
-                    }
+                new String[]{
+                        "%"+deviceId+"%"
                 }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+                );
+                while (cursor.moveToNext()) {
+                    // build delta
+                    Globals.QEvent event = new Globals.QEvent("","",null,"","","");
+                    event.setFlag(Globals.modTypesReverse().get(cursor.getString(1)));
+                    event.setFileType(cursor.getString(3));
+                    event.setFilePath(cursor.getString(2));
+                    event.setSecureId(secureId);
+
+                    if (!queue.containsKey(event.getSecureId())) {
+                        queue.put(event.getSecureId(), new Globals.GenArray<>());
+                    }
+                    Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
+                    assert events != null;
+                    events.add(event);
+                    queue.put(event.getSecureId(), events);
+                }
+
         return queue;
     }
 
 
 
     public void removeDeviceFromRetard(String deviceId) {
-        Cursor cursor = connection.rawQuery("SELECT devices_to_patch FROM retard WHERE devices_to_patch LIKE ?", new String[]{"%" + deviceId + "%"});
+        Cursor cursor = db.rawQuery("SELECT devices_to_patch FROM retard WHERE devices_to_patch LIKE ?",
+                new String[]{
+                    "%" + deviceId + "%"
+                }
+        );
         if (cursor.moveToFirst()) {
             String idsStr = cursor.getString(0);
             String[] idsList = idsStr.split(";");
@@ -1030,58 +1090,91 @@ public class AccesBdd {
             }
             if (newIds.length() > 0) {
                 newIds.deleteCharAt(newIds.length() - 1);
-                connection.execSQL("UPDATE retard SET devices_to_patch= ? WHERE devices_to_patch LIKE ?", new String[]{newIds.toString(), "%" + deviceId + "%"});
+                db.execSQL("UPDATE retard SET devices_to_patch= ? WHERE devices_to_patch LIKE ?",
+                        new String[]{
+                                newIds.toString(),
+                                "%" + deviceId + "%"
+                        }
+                );
             } else {
-                connection.execSQL("DELETE FROM retard WHERE devices_to_patch LIKE ?", new String[]{"%" + deviceId + "%"});
+                db.execSQL("DELETE FROM retard WHERE devices_to_patch LIKE ?",
+                        new String[]{
+                            "%" + deviceId + "%"
+                        }
+                );
             }
         }
         cursor.close();
     }
 
     public boolean needsUpdate(String deviceId) {
-        Cursor cursor = connection.prepareStatement("SELECT devices_to_patch FROM retard WHERE devices_to_patch LIKE ?", new String[]{"%" + deviceId + "%"});
+        Cursor cursor = db.rawQuery("SELECT devices_to_patch FROM retard WHERE devices_to_patch LIKE ?",
+                new String[]{
+                    "%" + deviceId + "%"
+                }
+        );
         boolean result = cursor.getCount() > 0;
         cursor.close();
         return result;
     }
 
     public void addToutEnUn(Globals.ToutEnUnConfig data) {
-        connection.execSQL("INSERT INTO apps (name,path,version_id,type,secure_id,uninstaller_path) VALUES(?,?,?,?,?,?)",
-                new Object[]{data.getAppName(), data.getAppLauncherPath(), 1, "toutenun", secureId, data.getAppUninstallerPath()});
+        db.execSQL("INSERT INTO apps (name,path,version_id,type,secure_id,uninstaller_path) VALUES(?,?,?,?,?,?)",
+                new Object[]{
+                        data.getAppName(),
+                        data.getAppLauncherPath(),
+                        1,
+                        "toutenun",
+                        secureId,
+                        data.getAppUninstallerPath()
+                }
+        );
     }
 
     public void addGrapin(Globals.GrapinConfig data) {
-        connection.execSQL("INSERT INTO apps (name,path,version_id,type,uninstaller_path) VALUES(?,?,?,?,?)",
+        db.execSQL("INSERT INTO apps (name,path,version_id,type,uninstaller_path) VALUES(?,?,?,?,?)",
                 new Object[]{data.getAppName(), "[GRAPIN]", 1, "grapin", secureId, "[GRAPIN]"});
     }
 
     public Globals.GenArray<Globals.MinGenConfig> listInstalledApps() {
         Globals.GenArray<Globals.MinGenConfig> configs = new Globals.GenArray<>();
-        Cursor cursor = connection.rawQuery("SELECT name,id,path,type FROM apps", null);
+        Cursor cursor = db.rawQuery("SELECT name,id,path,type FROM apps", null);
         while (cursor.moveToNext()) {
-            Globals.MinGenConfig config = new Globals.MinGenConfig();
-            config.setAppName(cursor.getString(0));
-            config.setId(cursor.getInt(1));
-            config.setPath(cursor.getString(2));
-            config.setType(cursor.getString(3));
+            Globals.MinGenConfig config = new Globals.MinGenConfig(
+                    cursor.getString(0),
+                    cursor.getInt(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    secureId,
+                    ""
+            );
             configs.add(config);
         }
         cursor.close();
         return configs;
     }
 
-    public MinGenConfig getAppConfig(int appId) {
-        MinGenConfig config = new MinGenConfig();
-        Cursor cursor = db_handler.rawQuery("SELECT name,id,path,type,uninstaller_path FROM apps WHERE id=?", new String[]{String.valueOf(appId)});
+    public Globals.MinGenConfig getAppConfig(int appId) {
+        Cursor cursor = db.rawQuery("SELECT name,id,path,type,secure_id,uninstaller_path FROM apps WHERE id=?",
+                new String[]{
+                        String.valueOf(appId)
+                }
+        );
         if (cursor.moveToFirst()) {
-            config.setAppName(cursor.getString(0));
-            config.setId(cursor.getInt(1));
-            config.setPath(cursor.getString(2));
-            config.setType(cursor.getString(3));
-            config.setUninstallerPath(cursor.getString(4));
+            Globals.MinGenConfig config = new Globals.MinGenConfig(
+                    cursor.getString(0),
+                    cursor.getInt(1),
+                    cursor.getString(2),
+                    cursor.getString(3),
+                    cursor.getString(4),
+                    cursor.getString(5)
+            );
+
+            return config;
+
         }
         cursor.close();
-        return config;
+        return null;
     }
 
     public void deleteApp(int appId) {
@@ -1102,6 +1195,66 @@ public class AccesBdd {
         db.execSQL("UPDATE mesid SET accepte_largage_aerien=NOT accepte_largage_aerien");
         return !areLargageAerienAllowed();
     }
+    public Globals.GenArray<String> getSyncLinkedDevices() {
+        Globals.GenArray<String> devicesList = new Globals.GenArray<>();
+
+        // Define the SQL query to retrieve linked devices
+        Cursor cursor = db.rawQuery("SELECT linked_devices_id FROM sync WHERE secure_id=?",
+                new String[]{
+                        secureId
+                }
+                );
+
+        if (cursor != null) {
+            try {
+                // Move the cursor to the first row
+                if (cursor.moveToFirst()) {
+                    do {
+                        // Get the linked_devices_id from the cursor
+                        String devices_id = cursor.getString(0);
+
+                        // Split the string and add each device to the devicesList
+                        String[] devices = devices_id.split(";");
+                        for (String device : devices) {
+                            devicesList.add(device);
+                        }
+                    } while (cursor.moveToNext());
+                }
+            } finally {
+                cursor.close(); // Close the cursor when done
+            }
+        } else {
+            Log.e("AccesBdd", "Cursor is null");
+        }
+
+        // Remove the last slot (empty space) in the array
+        if (!devicesList.isEmpty()) {
+            devicesList.popLast();
+        }
+
+        return devicesList;
+    }
+
+
+    // GetFileLastVersionId retrieves the last version ID of a file.
+    public long GetFileLastVersionId(String path) {
+        Cursor cursor = db.rawQuery("SELECT version_id FROM filesystem WHERE path=? AND secure_id=?",
+                new String[]{
+                        path,
+                        secureId
+                }
+        );
+
+        int version_id = 0;
+        if(cursor.moveToFirst()){
+            version_id = cursor.getInt(0);
+        }
+
+        cursor.close();
+        return version_id;
+    }
+
+
 
 
 }

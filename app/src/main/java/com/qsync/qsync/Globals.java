@@ -304,7 +304,7 @@ public class Globals {
         }
     }
 
-    public class MinGenConfig {
+    public static class MinGenConfig {
         public String appName;
         public int appId;
         public String binPath;
