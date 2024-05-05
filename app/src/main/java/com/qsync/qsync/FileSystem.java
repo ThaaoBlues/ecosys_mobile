@@ -19,7 +19,7 @@ public class FileSystem {
 
     public static void startWatcher(final Context context, final String rootPath) {
         // Initialize the database connection
-        final AccesBdd acces = new AccesBdd();
+        final AccesBdd acces = new AccesBdd(context);
         acces.InitConnection();
         acces.getSecureIdFromRootPath(rootPath);
 

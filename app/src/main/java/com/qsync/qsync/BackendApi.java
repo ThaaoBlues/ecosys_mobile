@@ -1,7 +1,12 @@
 package com.qsync.qsync;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.EditText;
+
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,32 +14,58 @@ import java.util.Map;
 public class BackendApi {
     private static final String TAG = "BackendApi";
 
-    private static final String QSYNC_WRITEABLE_DIRECTORY = "path_to_your_directory"; // Specify your directory path here
+    private static final String QSYNC_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
 
-    public static String askInput(Context context, String flag, String inputContext) {
-        try {
-            File file = new File(QSYNC_WRITEABLE_DIRECTORY, flag + ".btf");
-            FileWriter writer = new FileWriter(file);
-            writer.write(inputContext);
-            writer.close();
+    public static String askInput(String flag, String inputContext,Context context) {
+        final String[] result = new String[1];
 
-            long originalSize = file.length();
+        ProcessExecutor.Function userInput = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                final Handler handler = new Handler(Looper.getMainLooper());
 
-            while (file.length() == originalSize) {
-                Thread.sleep(2000); // Sleep for 2 seconds
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                        builder.setTitle(flag);
+                        builder.setMessage(inputContext);
+
+                        // Set up the input
+                        final EditText input = new EditText(context);
+                        builder.setView(input);
+
+                        // Set up the buttons
+                        builder.setPositiveButton("OK", (dialog, which) -> {
+                            result[0] = input.getText().toString();
+                            dialog.dismiss();
+                        });
+                        builder.setNegativeButton("Cancel", (dialog, which) -> {
+                            dialog.cancel();
+                        });
+                        Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
+                        builder.show();
+                    }
+                });
+
+
             }
 
-            byte[] bytes = new byte[(int) (file.length() - inputContext.length())];
-            FileInputStream fis = new FileInputStream(file);
-            fis.skip(inputContext.length());
-            fis.read(bytes);
-            fis.close();
+        };
 
-            return new String(bytes);
-        } catch (IOException | InterruptedException e) {
-            Log.e(TAG, "Error in askInput(): " + e.getMessage());
-            return null;
+        ProcessExecutor.executeOnUIThread(userInput);
+
+
+
+        // Wait for user input
+        while (result[0] == null) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+        return result[0];
     }
 
     public static String readInputContext(String flag) {
@@ -52,7 +83,7 @@ public class BackendApi {
         }
     }
 
-    public static void giveInput(Context context, String flag, String data) {
+    public static void giveInput(String flag, String data) {
         try {
             File file = new File(QSYNC_WRITEABLE_DIRECTORY, flag + ".btf");
             FileWriter writer = new FileWriter(file, true);

@@ -26,7 +26,7 @@ public class ZeroConfService {
         this.context = context;
         this.nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
         this.handler = new Handler(Looper.getMainLooper());
-        this.acces = new AccesBdd(); // Assuming AccessBdd is the equivalent of bdd.AccesBdd in Java
+        this.acces = new AccesBdd(context); // Assuming AccessBdd is the equivalent of bdd.AccesBdd in Java
         acces.InitConnection();
     }
 

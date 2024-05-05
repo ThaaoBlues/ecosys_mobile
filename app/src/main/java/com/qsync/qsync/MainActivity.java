@@ -24,6 +24,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.Manifest;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity {
@@ -79,16 +83,58 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
 
+        /* Starting qsync processes
+
+         */
+
+        ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                Networking nt = new Networking(getApplicationContext(),getFilesDir().toString());
+                nt.ServerMainLoop();
+            }
+        };
+
+        ProcessExecutor.startProcess(StartServer);
+
+
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try{
 
+                    ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
+                        @Override
+                        public void execute() {
+                            try {
+                                String filename = PathUtils.joinPaths(getFilesDir().toString(), "test.txt");
+                                File file = new File(filename);
+                                RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
+                                fileHandler.write("Ceci est un test de :\n Contenu de fichier.".getBytes());
+
+
+                                fileHandler.close();
+                                Networking nt = new Networking(getApplicationContext(),getFilesDir().toString());
+
+                                nt.sendLargageAerien(filename,"127.0.0.1");
+
+                            } catch (IOException e) {
+                                Log.e("PROUT", "Error Sending dummy Largage Aerien file: " + e.getMessage());
+                            }
+
+                        }
+                    };
+
+                    ProcessExecutor.startProcess(SendLA);
+
+
+
+
                 }catch (Error e){
                     Log.wtf("Erreur en initialisant la BDD",e);
                 }
 
-                Snackbar.make(view, "Base de donnée initialisée", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Largage Aerien envoyé", Snackbar.LENGTH_LONG)
                         .setAnchorView(R.id.fab)
                         .setAction("Action", null).show();
             }

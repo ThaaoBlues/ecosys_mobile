@@ -49,11 +49,12 @@ public class AccesBdd {
 
 
 
-    public void AccesBdd(Context context){
+    public AccesBdd(Context context){
         this.context = context;
+        InitConnection();
     }
 
-    public boolean isMyDeviceIdGenerated() {
+    public boolean isMyDeviceIdGenerated(SQLiteDatabase db) {
         Cursor cursor = db.rawQuery("SELECT id FROM mesid",null);
         boolean ret = cursor.moveToFirst();
 
@@ -62,7 +63,7 @@ public class AccesBdd {
         return ret;
     }
 
-    public void generateMyDeviceId() {
+    public void generateMyDeviceId(SQLiteDatabase db) {
         String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
         StringBuilder secureIdBuilder = new StringBuilder();
         for (int i = 0; i < 41; i++) {
@@ -83,6 +84,12 @@ public class AccesBdd {
         SQLiteOpenHelper dbHelper = new SQLiteOpenHelper(context,"qsync",null,1) {
             @Override
             public void onCreate(SQLiteDatabase db) {
+                createTables(db);
+
+            }
+            @Override
+            public void onOpen(SQLiteDatabase db){
+                createTables(db);
 
             }
 
@@ -93,10 +100,8 @@ public class AccesBdd {
         };
         db = dbHelper.getWritableDatabase();
 
-        createTables();
-        if (!isMyDeviceIdGenerated()) {
-            generateMyDeviceId();
-        }
+
+
     }
 
     public void closedb() {
@@ -124,69 +129,68 @@ public class AccesBdd {
         return (DeltaBinaire.Delta) objectInputStream.readObject();
     }
 
-    private void createTables() {
-        db.rawQuery("CREATE TABLE IF NOT EXISTS retard(" +
+    private void createTables(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS retard(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "version_id INTEGER," +
                     "path TEXT," +
                     "mod_type TEXT," +
                     "devices_to_patch TEXT DEFAULT ''," +
                     "type TEXT," +
-                    "secure_id TEXT)",null);
-            // CREATE TABLE delta
-        db.rawQuery("CREATE TABLE IF NOT EXISTS delta(" +
+                    "secure_id TEXT)");
+         // CREATE TABLE delta
+        db.execSQL("CREATE TABLE IF NOT EXISTS delta(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "path TEXT," +
                     "version_id INTEGER," +
                     "delta TEXT," +
-                    "secure_id TEXT)",null);
+                    "secure_id TEXT)");
 
             // CREATE TABLE filesystem
-            db.rawQuery("CREATE TABLE IF NOT EXISTS filesystem(" +
+        db.execSQL("CREATE TABLE IF NOT EXISTS filesystem(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "path TEXT," +
                     "version_id INTEGER," +
                     "type TEXT," +
                     "size INTEGER," +
                     "secure_id TEXT," +
-                    "content BLOB)",null);
+                    "content BLOB)");
 
             // CREATE TABLE sync
-            db.rawQuery("CREATE TABLE IF NOT EXISTS sync(" +
+        db.execSQL("CREATE TABLE IF NOT EXISTS sync(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "secure_id TEXT," +
                     "linked_devices_id TEXT DEFAULT ''," +
-                    "root TEXT)",null);
+                    "root TEXT)");
 
             // CREATE TABLE linked_devices
-            db.rawQuery("CREATE TABLE IF NOT EXISTS linked_devices(" +
+        db.execSQL("CREATE TABLE IF NOT EXISTS linked_devices(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "device_id TEXT," +
                     "is_connected BOOLEAN," +
                     "receiving_update TEXT DEFAULT ''," +
-                    "ip_addr TEXT)",null);
-
+                    "ip_addr TEXT)");
             // CREATE TABLE mesid
-            db.rawQuery("CREATE TABLE IF NOT EXISTS mesid(" +
+        db.execSQL("CREATE TABLE IF NOT EXISTS mesid(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "device_id TEXT," +
-                    "accepte_largage_aerien BOOLEAN DEFAULT TRUE)",null);
+                    "accepte_largage_aerien BOOLEAN DEFAULT TRUE)");
 
             // CREATE TABLE apps
-            db.rawQuery("CREATE TABLE IF NOT EXISTS apps(" +
+        db.execSQL("CREATE TABLE IF NOT EXISTS apps(" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "name TEXT," +
                     "path TEXT," +
                     "version_id INTEGER," +
                     "type TEXT," +
                     "secure_id TEXT," +
-                    "uninstaller_path TEXT)",null);
+                    "uninstaller_path TEXT)");
 
-            // Additional initialization
-            if (! isMyDeviceIdGenerated()) {
-                generateMyDeviceId();
-            }
+        Log.d("BASE DE DONNEES","LES TABLES ON ETE CREES");
 
+        if (!isMyDeviceIdGenerated(db)) {
+            generateMyDeviceId(db);
+        }
     }
 
     public void incrementFileVersion(String path) {

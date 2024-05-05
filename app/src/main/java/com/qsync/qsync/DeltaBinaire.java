@@ -93,7 +93,7 @@ public class DeltaBinaire {
         return delta;
     }
 
-    public static void patchFile(Context context, Delta delta) {
+    public static void patchFile(Delta delta) {
         try {
             File file = new File(delta.filePath);
             RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
