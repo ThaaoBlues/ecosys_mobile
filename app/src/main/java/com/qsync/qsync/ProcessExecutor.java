@@ -27,6 +27,8 @@ public class ProcessExecutor {
         handler.post(new Runnable() {
             @Override
             public void run() {
+
+
                 function.execute();
             }
         });

@@ -1,10 +1,13 @@
 package com.qsync.qsync;
 
+import android.content.ContentProvider;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -22,6 +25,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -441,8 +445,23 @@ public class Networking {
                 }
                 String filePath = PathUtils.joinPaths(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/" + fileName);
                 data.setFilePath(filePath);
-                data.delta.filePath = filePath;
+                data.delta.setFilePath(filePath);
+
+
                 DeltaBinaire.patchFile(data.delta);
+                //Log.d("LARGAGE AERIEN","CONTENU DU FICHIER APRES PATCH : "+ Arrays.toString(readBytesFromFile(filePath)));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+                    // Now,we move the recently received file to the downloads folder
+
+                    BackendApi.displayToast(context,"The file is now available in your Downloads folder.");
+                    BackendApi.openFile(context,
+                            Uri.parse(
+                                    PathUtils.moveFileToDownloads(context,filePath)
+                            )
+                    );
+
+                }
             } catch (Exception e) {
                 Log.e("HandleAirdrop", "Error while handling Largage Aerien", e);
             }
@@ -455,7 +474,12 @@ public class Networking {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 byte[] fileContent = Files.readAllBytes(Paths.get(filePath));
             }
-            DeltaBinaire.Delta delta = new DeltaBinaire.Delta(); // Assuming Delta class accepts file name and content
+            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(
+                    "",
+                    filePath,
+                    0,
+                    new byte[0]
+            );
             Globals.QEvent event = new Globals.QEvent(
                     "[OTDL]",
                     "file",

@@ -110,11 +110,11 @@ public class MainActivity extends AppCompatActivity {
                                 String filename = PathUtils.joinPaths(getFilesDir().toString(), "test.txt");
                                 File file = new File(filename);
                                 RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
-                                fileHandler.write("Ceci est un test de :\n Contenu de fichier.".getBytes());
+                                fileHandler.write("Prout ceci est un test de :\n Contenu de fichier.".getBytes());
 
 
                                 fileHandler.close();
-                                Networking nt = new Networking(getApplicationContext(),getFilesDir().toString());
+                                Networking nt = new Networking(MainActivity.this,getFilesDir().toString());
 
                                 nt.sendLargageAerien(filename,"127.0.0.1");
 

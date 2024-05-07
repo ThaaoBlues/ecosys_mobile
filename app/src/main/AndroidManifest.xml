@@ -21,7 +21,17 @@
             android:name=".FileProvider"
             android:authorities="com.qsync.fileprovider"
             android:exported="true" />
-        
+
+        <activity android:name=".ReceiveFileActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

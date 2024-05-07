@@ -2,13 +2,17 @@ package com.qsync.qsync;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.*;
-import java.util.HashMap;
+import java.net.URI;
+import java.nio.channels.FileChannel;
 import java.util.Map;
 
 public class BackendApi {
@@ -27,20 +31,22 @@ public class BackendApi {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
+
                         AlertDialog.Builder builder = new AlertDialog.Builder(context);
                         builder.setTitle(flag);
                         builder.setMessage(inputContext);
 
                         // Set up the input
-                        final EditText input = new EditText(context);
-                        builder.setView(input);
+                        /*final EditText input = new EditText(context);
+                        builder.setView(input);*/
 
                         // Set up the buttons
                         builder.setPositiveButton("OK", (dialog, which) -> {
-                            result[0] = input.getText().toString();
+                            result[0] = "y"; //input.getText().toString();
                             dialog.dismiss();
                         });
                         builder.setNegativeButton("Cancel", (dialog, which) -> {
+                            result[0] = null;
                             dialog.cancel();
                         });
                         Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
@@ -68,6 +74,22 @@ public class BackendApi {
         return result[0];
     }
 
+    public static void ShareFile(Context context, Uri fileUri) {
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            intent.setType("*/*");
+            intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+            intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            Intent chooser = Intent.createChooser(intent, "Share File");
+            if (intent.resolveActivity(context.getPackageManager()) != null) {
+                context.startActivity(chooser);
+            } else {
+                // Handle if no activity can handle the intent
+                Toast.makeText(context, "No app found to handle the share action", Toast.LENGTH_SHORT).show();
+            }
+    }
+
     public static String readInputContext(String flag) {
         try {
             File file = new File(QSYNC_WRITEABLE_DIRECTORY, flag + ".btf");
@@ -80,6 +102,17 @@ public class BackendApi {
         } catch (IOException e) {
             Log.e(TAG, "Error in readInputContext(): " + e.getMessage());
             return null;
+        }
+    }
+
+    public static void openFile(Context context, Uri fileUri) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(fileUri, "application/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        if (intent.resolveActivity(context.getPackageManager()) != null) {
+            context.startActivity(intent);
+        } else {
+            // Handle if no activity can handle the intent
         }
     }
 
@@ -134,6 +167,20 @@ public class BackendApi {
         });
         thread.start();
     }
+
+
+    public static void displayToast(Context context, String text){
+        ProcessExecutor.Function showToast = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        ProcessExecutor.executeOnUIThread(showToast);
+    }
+
+
 
     public interface EventCallback {
         void onEvent(String context);
