@@ -3,26 +3,38 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/LargageAerienFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.qsync.qsync.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/LargageAerienFragment"
+        android:name="com.qsync.qsync.LargageAerienFragment"
+        android:label="Fragment largage aérien"
+        tools:layout="@layout/fragment_largage_aerien">
 
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            app:destination="@id/SynchronisationsFragment" />
     </fragment>
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.qsync.qsync.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/SynchronisationsFragment"
+        android:name="com.qsync.qsync.SynchronisationsFragment"
+        android:label="Fragment synchronisations"
+        tools:layout="@layout/fragment_synchronisations">
+        <action
+            android:id="@+id/action_SynchronisationsFragment_to_fragment_magasin"
+            app:destination="@id/fragment_magasin" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fragment_magasin"
+        android:label="fragment magasin"
+        tools:layout="@layout/fragment_magasin"
+        android:name="com.qsync.qsync.MagasinFragment"
+        >
+
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_fragment_magasin_to_LargageAerienFragment"
+            app:destination="@id/LargageAerienFragment" />
     </fragment>
 </navigation>

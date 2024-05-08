@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -45,6 +46,7 @@ public class Networking {
     private static Socket clientSocket;
     private static Context context;
     private static String QSYNC_WRITABLE_DIRECTORY;
+
 
     public Networking(Context mcontext, String mFilesDir) {
         context = mcontext;
@@ -82,17 +84,21 @@ public class Networking {
 
 
                 AccesBdd acces = new AccesBdd(context);
-                acces.InitConnection();
 
                 // get the device id and secure sync id from header
                 char[] header_buff = new char[HEADER_LENGTH];
                 InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedReader.read(header_buff, 0, HEADER_LENGTH);
-
-                String device_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[0];
-                String secure_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[1];
-
+                String device_id = "";
+                String secure_id = "";
+                try {
+                   device_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[0];
+                   secure_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[1];
+                }catch (ArrayIndexOutOfBoundsException e){
+                    Log.i("Qsync Server","Received a malformed request");
+                    return;
+                }
                 acces.SetSecureId(secure_id);
 
                 // in case of a link packet, the device is not yet registered in the database
@@ -101,7 +107,7 @@ public class Networking {
                     // makes sure it is marked as connected
                     if (!acces.GetDevicedbState(device_id)) {
                         // needs split as RemoteAddr ads port to the address
-                        acces.SetDevicedbState(device_id, true, clientSocket.getInetAddress().getHostAddress());
+                        acces.setDevicedbState(device_id, true, clientSocket.getInetAddress().getHostAddress());
                     }
                 }
 
@@ -172,7 +178,6 @@ public class Networking {
             JSONObject jsonEvent = new JSONObject(bufferData);
 
             AccesBdd acces = new AccesBdd(context);
-            acces.InitConnection();
             // First, we lock the filesystem watcher to prevent a ping-pong effect
             acces.SetFileSystemPatchLockState(deviceId, true);
 
@@ -269,6 +274,7 @@ public class Networking {
                         Thread.sleep(1000);
                     }
                 } catch (IOException | InterruptedException e) {
+                    acces.setDevicedbState(deviceId,false);
                     Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
                 }
             }
@@ -361,7 +367,6 @@ public class Networking {
     public static void buildSetupQueue(String secureId, String deviceId) {
         try {
             AccesBdd acces = new AccesBdd(context);
-            acces.InitConnection();
             Path rootPath;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 rootPath = Path.of(acces.GetRootSyncPath());
@@ -496,6 +501,23 @@ public class Networking {
             sendDeviceEventQueueOverNetwork(dummyDevice, "le_ciel_me_tombe_sur_la_tete_000000000000", eventQueue, deviceIp);
         } catch (IOException e) {
             Log.e("SendAirdrop", "Error while sending Largage Aerien", e);
+        }
+    }
+
+    public static boolean CheckIfDeviceOnline(String ipAddress, int port) {
+        try {
+            // Create a socket with a timeout
+            Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(ipAddress, port), 2000); // Timeout in milliseconds
+
+            // Close the socket
+            socket.close();
+
+            // If connection was successful, return true
+            return true;
+        } catch (IOException e) {
+            // Connection failed or timeout occurred
+            return false;
         }
     }
 

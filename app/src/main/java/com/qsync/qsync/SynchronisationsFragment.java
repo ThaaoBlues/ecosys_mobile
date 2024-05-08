@@ -9,11 +9,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.qsync.qsync.databinding.FragmentFirstBinding;
+import com.qsync.qsync.databinding.FragmentSynchronisationsBinding;
 
-public class FirstFragment extends Fragment {
+public class SynchronisationsFragment extends Fragment {
 
-    private FragmentFirstBinding binding;
+    private FragmentSynchronisationsBinding binding;
 
     @Override
     public View onCreateView(
@@ -21,7 +21,7 @@ public class FirstFragment extends Fragment {
             Bundle savedInstanceState
     ) {
 
-        binding = FragmentFirstBinding.inflate(inflater, container, false);
+        binding = FragmentSynchronisationsBinding.inflate(inflater, container, false);
         return binding.getRoot();
 
     }
@@ -29,9 +29,9 @@ public class FirstFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        binding.buttonFirst.setOnClickListener(v ->
-                NavHostFragment.findNavController(FirstFragment.this)
-                        .navigate(R.id.action_FirstFragment_to_SecondFragment)
+        binding.buttonSecond.setOnClickListener(v ->
+                NavHostFragment.findNavController(SynchronisationsFragment.this)
+                        .navigate(R.id.action_SynchronisationsFragment_to_fragment_magasin)
         );
     }
 

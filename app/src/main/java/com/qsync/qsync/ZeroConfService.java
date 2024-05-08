@@ -6,11 +6,13 @@ import android.net.nsd.NsdServiceInfo;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
 
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class ZeroConfService {
@@ -22,85 +24,101 @@ public class ZeroConfService {
     private final NsdManager nsdManager;
     private final Handler handler;
     private final AccesBdd acces;
+    private static Globals.GenArray<Map<String, String>> connected_devices = new Globals.GenArray<>();
+    private static final int PORT = 8274;
+
     public ZeroConfService(Context context) {
         this.context = context;
         this.nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
         this.handler = new Handler(Looper.getMainLooper());
-        this.acces = new AccesBdd(context); // Assuming AccessBdd is the equivalent of bdd.AccesBdd in Java
-        acces.InitConnection();
+        this.acces = new AccesBdd(context);
+        register();
+        startmDnsListener();
     }
 
-    public void browse() {
 
-        // Get online devices from the database
-        Globals.GenArray<String> oldConnectedDevices = acces.getOnlineDevices();
 
-        // Get devices discovered on the network
-        Globals.GenArray<Map<String, String>> newConnectedDevices = getNetworkDevices();
+    public Globals.GenArray<Map<String, String>> getConnectedDevices(){
+        return connected_devices;
+    }
 
-        // Update device connection states
-        for(int i=0;i<oldConnectedDevices.size();i++){
-            acces.SetDevicedbState(oldConnectedDevices.get(i), false);
-        }
 
-        for(int i=0;i<newConnectedDevices.size();i++) {
+    private String getDeviceHostname() {
 
-            Map<String, String> newDevice = newConnectedDevices.get(i);
-
-            String deviceId = newDevice.get("device_id");
-            if (acces.IsDeviceLinked(deviceId)) {
-                Log.d(TAG, "Detected device: " + newDevice);
-                acces.SetDevicedbState(deviceId, true, newDevice.get("ip_addr"));
-                Log.d(TAG, "Checking if it missed any updates:");
-
-                if (acces.needsUpdate(deviceId)) {
-                    // Get the event queues for the device
-                    Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(deviceId);
-
-                    // Process each event queue
-                    for (Map.Entry<String, Globals.GenArray<Globals.QEvent>> entry : multiQueue.entrySet()) {
-                        String secureId = entry.getKey();
-                        Globals.GenArray<Globals.QEvent> ptrQueue = entry.getValue();
-
-                        // Convert the list of pointers to actual values
-                        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-                        for (int j=0;j<multiQueue.size();j++) {
-                            queue.add(ptrQueue.get(i));
-                        }
-
-                        // Send event queue over the network
-                        Globals.GenArray<String> deviceIds = new Globals.GenArray<>();
-                        deviceIds.add(deviceId);
-                        Networking.sendDeviceEventQueueOverNetwork(deviceIds, secureId, queue, newDevice.get("ip_addr"));
-                    }
-
-                    // Remove device from the update queue
-                    acces.removeDeviceFromRetard(deviceId);
+        final String[] hostname = {""};
+        ProcessExecutor.Function gethn = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                try {
+                    // Get the local host address
+                    InetAddress inetAddress = InetAddress.getLocalHost();
+                    hostname[0] = inetAddress.getHostName();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
                 }
             }
-        }
+        };
 
-        acces.closedb();
+        ProcessExecutor.startProcess(gethn);
+
+        return hostname[0];
+
     }
 
 
+    private String getAndroidId() {
+        // Retrieve the Android ID
+        String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        return androidId;
+    }
 
     public void register() {
-        String serviceName = "_qsync";
+        String serviceName = getAndroidId();
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(SERVICE_TYPE);
-        serviceInfo.setPort(8274);
+        serviceInfo.setAttribute("version","0.0.1-PreAlpha");
+        String device_id = acces.getMyDeviceId();
+        serviceInfo.setAttribute("device_id",device_id);
+
+        serviceInfo.setPort(PORT);
 
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
+        Log.d(TAG,"Device Qsync service registered."+serviceInfo.toString());
     }
 
     public void shutdown() {
         nsdManager.unregisterService(registrationListener);
     }
 
-    public Globals.GenArray<Map<String, String>> getNetworkDevices() {
-        final Globals.GenArray<Map<String, String>> devicesList = new Globals.GenArray<>();
+
+
+    private final NsdManager.RegistrationListener registrationListener = new NsdManager.RegistrationListener() {
+        @Override
+        public void onServiceRegistered(NsdServiceInfo serviceInfo) {
+            Log.d(TAG, "Service registered: " + serviceInfo);
+        }
+
+        @Override
+        public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+            Log.e(TAG, "Registration failed: " + errorCode);
+        }
+
+        @Override
+        public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
+            Log.d(TAG, "Service unregistered: " + serviceInfo);
+        }
+
+        @Override
+        public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+            Log.e(TAG, "Unregistration failed: " + errorCode);
+        }
+    };
+
+
+
+
+    public void startmDnsListener() {
 
         NsdManager nsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
         NsdManager.DiscoveryListener discoveryListener = new NsdManager.DiscoveryListener() {
@@ -126,55 +144,104 @@ public class ZeroConfService {
 
             @Override
             public void onServiceFound(NsdServiceInfo serviceInfo) {
-                Log.d(TAG, "Service found: " + serviceInfo);
+
+                if(serviceInfo.getServiceType().equals(SERVICE_TYPE)){
+                    nsdManager.resolveService(serviceInfo,initializeResolveListener());
+                    Log.d(TAG, "Qsync friend service found :D : " + serviceInfo);
+
+                }
+
+
+            }
+
+            @Override
+            public void onServiceLost(NsdServiceInfo serviceInfo) {
+                Log.d(TAG, "Service lost: " + serviceInfo);
+
+                // find a way to devices.get(i).get("hostname")check the service type.
+
+
+                // checking if the lost service is a qsync device and setting it to offline
+                for(int i =0;i<connected_devices.size();i++){
+                    if(!Networking.CheckIfDeviceOnline(connected_devices.get(i).get("ip_addr"),PORT)){
+                        if(acces.IsDeviceLinked(connected_devices.get(i).get("device_id"))){
+                            acces.setDevicedbState(connected_devices.get(i).get("device_id"),false);
+                        }
+                        connected_devices.del(i);
+                        break;
+                    }
+
+                }
+
+
+            }
+        };
+
+        nsdManager.discoverServices("_qsync._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+
+    }
+
+    public NsdManager.ResolveListener initializeResolveListener() {
+       return new NsdManager.ResolveListener() {
+
+            @Override
+            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                // Called when the resolve fails. Use the error code to debug.
+                Log.e(TAG, "Resolve failed: " + errorCode);
+            }
+
+            @Override
+            public void onServiceResolved(NsdServiceInfo serviceInfo) {
+                Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
+
                 Map<String, String> device = new HashMap<>();
                 device.put("host", serviceInfo.getServiceName());
                 device.put("ip_addr", serviceInfo.getHost().getHostAddress());
                 device.put("port", String.valueOf(serviceInfo.getPort()));
                 device.put("version", serviceInfo.getAttributes().get("version").toString());
                 device.put("device_id", serviceInfo.getAttributes().get("device_id").toString());
-                devicesList.add(device);
-            }
+                Log.d(TAG, "Detected device: " + device);
 
-            @Override
-            public void onServiceLost(NsdServiceInfo serviceInfo) {
-                Log.d(TAG, "Service lost: " + serviceInfo);
+                connected_devices.add(device);
+
+                if (acces.IsDeviceLinked(device.get("device_id"))) {
+                    acces.setDevicedbState(device.get("device_id"), true, device.get("ip_addr"));
+                    Log.d(TAG, "Checking if it missed any updates:");
+
+
+                    if (acces.needsUpdate(device.get("device_id"))) {
+                        // Get the event queues for the device
+                        Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(device.get("device_id"));
+
+                        // Process each event queue
+                        for (Map.Entry<String, Globals.GenArray<Globals.QEvent>> entry : multiQueue.entrySet()) {
+                            String secureId = entry.getKey();
+                            Globals.GenArray<Globals.QEvent> ptrQueue = entry.getValue();
+
+                            // Convert the list of pointers to actual values
+                            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+                            for (int j=0;j<multiQueue.size();j++) {
+                                queue.add(ptrQueue.get(j));
+                            }
+
+                            // Send event queue over the network
+                            Globals.GenArray<String> deviceIds = new Globals.GenArray<>();
+                            deviceIds.add(device.get("device_id"));
+                            Networking.sendDeviceEventQueueOverNetwork(deviceIds, secureId, queue, device.get("ip_addr"));
+                        }
+
+                        // Remove device from the update queue
+                        acces.removeDeviceFromRetard(device.get("device_id"));
+                    }
+                }
+
             }
         };
 
-        nsdManager.discoverServices("_qsync._tcp", NsdManager.PROTOCOL_DNS_SD, discoveryListener);
 
-        return devicesList;
     }
 
-    private final NsdManager.RegistrationListener registrationListener = new NsdManager.RegistrationListener() {
-        @Override
-        public void onServiceRegistered(NsdServiceInfo serviceInfo) {
-            Log.d(TAG, "Service registered: " + serviceInfo);
-        }
 
-        @Override
-        public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-            Log.e(TAG, "Registration failed: " + errorCode);
-        }
 
-        @Override
-        public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
-            Log.d(TAG, "Service unregistered: " + serviceInfo);
-        }
-
-        @Override
-        public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-            Log.e(TAG, "Unregistration failed: " + errorCode);
-        }
-    };
-
-    private final Runnable updateLoopRunnable = new Runnable() {
-        @Override
-        public void run() {
-            browse();
-            handler.postDelayed(this, 10 * 1000); // Run every 10 seconds
-        }
-    };
 
 }

@@ -7,10 +7,16 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Toast;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.util.Map;
@@ -184,5 +190,39 @@ public class BackendApi {
 
     public interface EventCallback {
         void onEvent(String context);
+    }
+
+    public interface ButtonCallback{
+        void callback(Map<String,String> device);
+    }
+
+
+    public static void addButtonsFromDevicesGenArray(Context context, Globals.GenArray<Map<String,String>> devices, LinearLayout linearLayout,ButtonCallback callback) {
+
+        // will produce erros when user is not on the linear layout parent's fragment
+        try{
+            linearLayout.removeAllViews();
+        }catch (java.lang.NullPointerException e){
+
+            return;
+        }
+
+
+        for (int i = 0;i<devices.size();i++) {
+            Button button = new Button(context);
+            button.setText(devices.get(i).get("host")+";"+devices.get(i).get("ip_addr"));
+            button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            int finalI = i;
+            button.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    callback.callback(devices.get(finalI));
+                }
+            });
+            linearLayout.addView(button);
+            Log.d("BACKEND API","Adding button for device : "+devices.get(i).toString());
+        }
+
+
     }
 }

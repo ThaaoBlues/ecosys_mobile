@@ -1,14 +1,23 @@
 package com.qsync.qsync;
 
 import android.app.Activity;
+import android.content.ContentUris;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 
@@ -23,11 +32,15 @@ import com.qsync.qsync.databinding.ActivityMainBinding;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.Manifest;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity {
@@ -97,48 +110,37 @@ public class MainActivity extends AppCompatActivity {
 
         ProcessExecutor.startProcess(StartServer);
 
+        ProcessExecutor.Function StartWatcher = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                AccesBdd acces = new AccesBdd(MainActivity.this);
+                Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
+                for(int i=0;i<tasks.size();i++) {
+                    FileSystem.startWatcher(MainActivity.this, tasks.get(i).getPath());
+                }
+
+                acces.closedb();
+            }
+        };
+
+        ProcessExecutor.startProcess(StartWatcher);
+
+
+
 
         binding.fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try{
 
-                    ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
-                        @Override
-                        public void execute() {
-                            try {
-                                String filename = PathUtils.joinPaths(getFilesDir().toString(), "test.txt");
-                                File file = new File(filename);
-                                RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
-                                fileHandler.write("Prout ceci est un test de :\n Contenu de fichier.".getBytes());
-
-
-                                fileHandler.close();
-                                Networking nt = new Networking(MainActivity.this,getFilesDir().toString());
-
-                                nt.sendLargageAerien(filename,"127.0.0.1");
-
-                            } catch (IOException e) {
-                                Log.e("PROUT", "Error Sending dummy Largage Aerien file: " + e.getMessage());
-                            }
-
-                        }
-                    };
-
-                    ProcessExecutor.startProcess(SendLA);
-
-
-
-
-                }catch (Error e){
-                    Log.wtf("Erreur en initialisant la BDD",e);
-                }
 
                 Snackbar.make(view, "Largage Aerien envoyé", Snackbar.LENGTH_LONG)
                         .setAnchorView(R.id.fab)
                         .setAction("Action", null).show();
             }
         });
+
+
+
     }
 
     @Override
@@ -169,4 +171,9 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
     }
+
+
+
+
+
 }

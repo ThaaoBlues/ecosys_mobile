@@ -84,6 +84,8 @@ public class Globals {
         T get(int i);
         int size();
         void popLast();
+
+        void del(int i);
     }
 
     public static class GenArray<T> implements GenArrayInterface<T> {
@@ -112,6 +114,9 @@ public class Globals {
             items.remove(items.size() - 1);
         }
 
+        public void del(int i){
+            items.remove(i);
+        }
 
         public boolean isEmpty() {
             return items.isEmpty();
