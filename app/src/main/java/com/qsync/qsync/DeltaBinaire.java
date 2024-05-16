@@ -60,10 +60,11 @@ public class DeltaBinaire {
 
             Log.d(TAG, "old file size : " + oldFileSize);
             Log.d(TAG, "old file content : " + Arrays.toString(oldFileContent));
+            Log.d(TAG, "new file size : " + newFileSize);
 
             while ((i < oldFileSize || byteIndex < newFileSize)) {
                 int bytesRead = newFileInputStream.read(newFileBuff);
-                if (bytesRead == -1 || newFileBuff[0] == 0) {
+                if (bytesRead == -1) {
                     break;
                 }
 
@@ -109,6 +110,82 @@ public class DeltaBinaire {
         }
 
         Log.d("FILEDELTA","build this delta : ");
+
+        return delta;
+    }
+
+    public static DeltaBinaire.Delta BuildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
+                                                             long oldFileSize, byte[] oldFileContent){
+        Delta delta = new Delta();
+
+        boolean needsTruncature = oldFileSize > newFileSize;
+
+        byte[] newFileBuff = new byte[1];
+        List<DeltaInstruction> fileDelta = new ArrayList<>();
+        long byteIndex = 0;
+
+        // blocking byte index is used to concatenate
+        // multiples consecutives bytes change
+        // into a single delta instruction
+        long blockingByteIndex = 0;
+        int i = 0;
+
+        Log.d(TAG, "old file size : " + oldFileSize);
+        Log.d(TAG, "old file content : " + Arrays.toString(oldFileContent));
+        Log.d(TAG, "new file size : " + newFileSize);
+
+        while ((i < oldFileSize || byteIndex < newFileSize)) {
+            int bytesRead = 0;
+            try {
+                bytesRead = newFileStream.read(newFileBuff);
+                //Log.i("Qsync Server","byte index : "+byteIndex);
+            } catch (IOException e) {
+                Log.i("Qsync Server","Error while reading File for Largage Aerien"+e.getMessage());
+            }
+            if (bytesRead == -1 ) {
+                break;
+            }
+
+            byte oldFileBuff = (i < oldFileSize) ? oldFileContent[i] : 0;
+
+            int deltaIndex = fileDelta.isEmpty() ? 0 : fileDelta.size() - 1;
+
+            boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).byteIndex != blockingByteIndex;
+
+            if ((newFileBuff[0] != oldFileBuff) && byteIndexCond) {
+
+                // To avoid implicit pointer usage, we create a new byte array in the argument
+                DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{newFileBuff[0]}, byteIndex);
+                fileDelta.add(instruction);
+
+                byteIndex++;
+            } else {
+                if (newFileBuff[0] != oldFileBuff) {
+                    fileDelta.get(deltaIndex).data = Arrays.copyOf(fileDelta.get(deltaIndex).data,
+                            fileDelta.get(deltaIndex).data.length + 1);
+
+                    fileDelta.get(deltaIndex).data[fileDelta.get(deltaIndex).data.length-1] = newFileBuff[0];
+                    byteIndex++;
+                } else {
+                    byteIndex++;
+                    blockingByteIndex = byteIndex;
+                }
+            }
+            i++;
+
+            //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
+
+        }
+
+        if (needsTruncature) {
+            DeltaInstruction instruction = new DeltaInstruction("t", new byte[]{0}, newFileSize);
+            fileDelta.add(instruction);
+        }
+
+        delta.instructions.addAll(fileDelta);
+        delta.setFilePath(filename);
+
+        Log.d("FILEDELTA","build this delta : "+delta);
 
         return delta;
     }

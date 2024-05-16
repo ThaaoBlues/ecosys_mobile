@@ -1,7 +1,11 @@
 package com.qsync.qsync;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
+import android.provider.OpenableColumns;
+import android.util.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,7 +45,7 @@ public class PathUtils {
 
             // Delete the original file after successful copy
             sourceFile.delete();
-
+            Log.d("Qsync Path Utils","Downloads file path : "+destinationPath);
             return destinationPath;
         } catch (IOException e) {
             e.printStackTrace();
@@ -89,5 +93,27 @@ public class PathUtils {
             return null;
         }
 
+    }
+
+    public static String getFileNameFromUri(Context context,Uri uri) {
+        String result = null;
+        if (uri.getScheme().equals("content")) {
+            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                }
+            } finally {
+                cursor.close();
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
     }
 }

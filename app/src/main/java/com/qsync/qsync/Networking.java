@@ -2,10 +2,13 @@ package com.qsync.qsync;
 
 import android.content.ContentProvider;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,8 +20,10 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -37,10 +42,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 public class Networking {
 
-    public static final int HEADER_LENGTH = 46;
+    public static final int HEADER_LENGTH = 83;
     private static final String TAG = "Networking";
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
@@ -83,6 +89,7 @@ public class Networking {
             try {
 
 
+                Log.i("Qsync Server","In request handler !");
                 AccesBdd acces = new AccesBdd(context);
 
                 // get the device id and secure sync id from header
@@ -92,6 +99,9 @@ public class Networking {
                 bufferedReader.read(header_buff, 0, HEADER_LENGTH);
                 String device_id = "";
                 String secure_id = "";
+                Log.i("Qsync Server","Header : "+header_buff);
+
+
                 try {
                    device_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[0];
                    secure_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[1];
@@ -458,11 +468,11 @@ public class Networking {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
                     // Now,we move the recently received file to the downloads folder
-
+                    filePath = PathUtils.moveFileToDownloads(context,filePath);
                     BackendApi.displayToast(context,"The file is now available in your Downloads folder.");
                     BackendApi.openFile(context,
                             Uri.parse(
-                                    PathUtils.moveFileToDownloads(context,filePath)
+                                    filePath
                             )
                     );
 
@@ -473,18 +483,21 @@ public class Networking {
         }
     }
 
-    public static void sendLargageAerien(String filePath, String deviceIp) {
+
+
+    public static void sendLargageAerien(Uri fileUri, String deviceIp) {
         try {
-            String fileName = new File(filePath).getName();
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                byte[] fileContent = Files.readAllBytes(Paths.get(filePath));
-            }
-            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(
-                    "",
-                    filePath,
-                    0,
-                    new byte[0]
-            );
+            String fileName = PathUtils.getFileNameFromUri(context,fileUri);
+
+            InputStream inputStream =
+                    context.getContentResolver().openInputStream(fileUri);
+
+
+            ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(fileUri , "r");
+            //long fileSize = context.getContentResolver().query(fileUri,null,null,null,null).getColumnIndex(OpenableColumns.SIZE);
+            long fileSize = fileDescriptor.getStatSize();
+
+            DeltaBinaire.Delta delta = DeltaBinaire.BuildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
             Globals.QEvent event = new Globals.QEvent(
                     "[OTDL]",
                     "file",

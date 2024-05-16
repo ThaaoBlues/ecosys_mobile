@@ -114,6 +114,7 @@ public class BackendApi {
     public static void openFile(Context context, Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(fileUri, "application/*");
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         if (intent.resolveActivity(context.getPackageManager()) != null) {
             context.startActivity(intent);
