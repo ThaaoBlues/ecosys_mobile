@@ -26,7 +26,7 @@ public class BackendApi {
 
     private static final String QSYNC_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
 
-    public static String askInput(String flag, String inputContext,Context context) {
+    public static String askInput(String flag, String inputContext,Context context,Boolean textMode) {
         final String[] result = new String[1];
 
         ProcessExecutor.Function userInput = new ProcessExecutor.Function() {
@@ -43,12 +43,18 @@ public class BackendApi {
                         builder.setMessage(inputContext);
 
                         // Set up the input
-                        /*final EditText input = new EditText(context);
-                        builder.setView(input);*/
+                        EditText input;
+                        if (textMode){
+                            input = new EditText(context);
+                            builder.setView(input);
+                        } else {
+                            input = null;
+                        }
+
 
                         // Set up the buttons
                         builder.setPositiveButton("OK", (dialog, which) -> {
-                            result[0] = "y"; //input.getText().toString();
+                            result[0] = textMode ? input.getText().toString() : "y";
                             dialog.dismiss();
                         });
                         builder.setNegativeButton("Cancel", (dialog, which) -> {
@@ -193,12 +199,15 @@ public class BackendApi {
         void onEvent(String context);
     }
 
-    public interface ButtonCallback{
+    public interface DeviceButtonCallback{
         void callback(Map<String,String> device);
     }
 
 
-    public static void addButtonsFromDevicesGenArray(Context context, Globals.GenArray<Map<String,String>> devices, LinearLayout linearLayout,ButtonCallback callback) {
+
+
+
+    public static void addButtonsFromDevicesGenArray(Context context, Globals.GenArray<Map<String,String>> devices, LinearLayout linearLayout,DeviceButtonCallback callback) {
 
         // will produce erros when user is not on the linear layout parent's fragment
         try{
@@ -221,7 +230,7 @@ public class BackendApi {
                 }
             });
             linearLayout.addView(button);
-            Log.d("BACKEND API","Adding button for device : "+devices.get(i).toString());
+            //Log.d("BACKEND API","Adding button for device : "+devices.get(i).toString());
         }
 
 

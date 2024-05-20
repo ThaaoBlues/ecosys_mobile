@@ -10,70 +10,133 @@ public class Globals {
 
 
     public static class QEvent {
-        public String flag;
-        public String fileType;
-        public DeltaBinaire.Delta delta;
-        public String filePath;
-        private String newFilePath;
-        private String secureId;
+        public String Flag;
+        public String FileType;
+        public DeltaBinaire.Delta Delta;
+        public String FilePath;
+        public String NewFilePath;
+        public String SecureId;
 
         // Constructor
         public QEvent(String flag, String fileType, DeltaBinaire.Delta delta, String filePath, String newFilePath, String secureId) {
-            this.flag = flag;
-            this.fileType = fileType;
-            this.delta = delta;
-            this.filePath = filePath;
-            this.newFilePath = newFilePath;
-            this.secureId = secureId;
+            this.Flag = flag;
+            this.FileType = fileType;
+            this.Delta = delta;
+            this.FilePath = filePath;
+            this.NewFilePath = newFilePath;
+            this.SecureId = secureId;
+        }
+
+        @Override
+        public String toString() {
+            return "QEvent{" +
+                    "flag='" + this.Flag + '\'' +
+                    ", fileType='" + this.FileType + '\'' +
+                    ", delta=" + this.Delta +
+                    ", filePath='" + this.FilePath + '\'' +
+                    ", newFilePath='" + this.NewFilePath + '\'' +
+                    ", secureId='" + this.SecureId + '\'' +
+                    '}';
         }
 
         // Getters and setters
         public String getFlag() {
-            return flag;
+            return Flag;
         }
 
         public void setFlag(String flag) {
-            this.flag = flag;
+            this.Flag = flag;
         }
 
         public String getFileType() {
-            return fileType;
+            return FileType;
         }
 
         public void setFileType(String fileType) {
-            this.fileType = fileType;
+            this.FileType = fileType;
         }
 
         public DeltaBinaire.Delta getDelta() {
-            return delta;
+            return Delta;
         }
 
         public void setDelta(DeltaBinaire.Delta delta) {
-            this.delta = delta;
+            this.Delta = delta;
         }
 
         public String getFilePath() {
-            return filePath;
+            return FilePath;
         }
 
         public void setFilePath(String filePath) {
-            this.filePath = filePath;
+            this.FilePath = filePath;
         }
 
         public String getNewFilePath() {
-            return newFilePath;
+            return NewFilePath;
         }
 
         public void setNewFilePath(String newFilePath) {
-            this.newFilePath = newFilePath;
+            this.NewFilePath = newFilePath;
         }
 
         public String getSecureId() {
-            return secureId;
+            return SecureId;
         }
 
         public void setSecureId(String secureId) {
-            this.secureId = secureId;
+            this.SecureId = secureId;
+        }
+
+
+        public String serialize() {
+            StringBuilder instructionsBuilder = new StringBuilder();
+            for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
+                instructionsBuilder.append(instruction.InstructionType).append(",");
+                for (int data : instruction.Data) {
+                    instructionsBuilder.append(data).append(",");
+                }
+                instructionsBuilder.append(instruction.ByteIndex).append("|");
+            }
+            // Remove the last "|"
+            if (instructionsBuilder.length() > 0) {
+                instructionsBuilder.setLength(instructionsBuilder.length() - 1);
+            }
+
+            return String.join(";",
+                    this.Flag,
+                    this.FileType,
+                    instructionsBuilder.toString(),
+                    this.Delta.getFilePath(),
+                    this.FilePath,
+                    this.NewFilePath,
+                    this.SecureId
+            );
+        }
+
+        public void deserializeQEvent(String data) {
+            String[] parts = data.split(";");
+            String[] instructionParts = parts[2].split("\\|");
+            List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
+            for (String instructionStr : instructionParts) {
+                String[] instructionData = instructionStr.split(",");
+                byte[] dataBytes = new byte[instructionData.length - 2];
+                for (int i = 1; i < instructionData.length - 1; i++) {
+                    dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
+                }
+                long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
+                instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
+            }
+            DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
+            delta.Instructions = instructions;
+            delta.setFilePath(parts[3]);
+            this.Flag = parts[0];
+            this.FileType = parts[1];
+            this.Delta = delta;
+            this.FilePath = parts[4];
+            this.NewFilePath = parts[5];
+            this.SecureId = parts[6];
+
         }
     }
 

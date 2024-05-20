@@ -1,18 +1,10 @@
 package com.qsync.qsync;
 
-import android.content.ContentProvider;
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.provider.OpenableColumns;
 import android.util.Log;
-import android.widget.Toast;
-
-import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -20,29 +12,20 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
 
 public class Networking {
 
@@ -99,14 +82,15 @@ public class Networking {
                 bufferedReader.read(header_buff, 0, HEADER_LENGTH);
                 String device_id = "";
                 String secure_id = "";
-                Log.i("Qsync Server","Header : "+header_buff);
+                Log.i("Qsync Server","Header : "+ Arrays.toString(header_buff));
 
 
                 try {
                    device_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[0];
                    secure_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[1];
+                   Log.d("Qsync server","successfully parsed ids from request");
                 }catch (ArrayIndexOutOfBoundsException e){
-                    Log.i("Qsync Server","Received a malformed request");
+                    Log.i("Qsync Server","Received a malformed request"+ Arrays.toString(header_buff));
                     return;
                 }
                 acces.SetSecureId(secure_id);
@@ -131,8 +115,21 @@ public class Networking {
                 Log.d(TAG, "Request body : " + body_buff);
 
                 // Parse the JSON
-                Gson gson = new Gson();
-                Globals.QEvent data = gson.fromJson(body_buff.toString(),Globals.QEvent.class);
+
+
+                /*Gson gson = new Gson();
+                Globals.QEvent data = gson.fromJson(body_buff.toString(),Globals.QEvent.class);*/
+                //Globals.QEvent data = parseQEvent(body_buff.toString());
+
+                Globals.QEvent data = new Globals.QEvent(
+                        "",
+                        "",
+                        null,
+                        "",
+                        "",
+                        ""
+                );
+                data.deserializeQEvent(body_buff.toString());
 
                 // check if this is a regular file event of a special request
                 Log.d(TAG, "RECEIVING EVENT : " + data);
@@ -151,7 +148,7 @@ public class Networking {
                         // and same secure_id
                         Log.d(TAG, "Initializing env to welcome the other end folder content");
                         acces.SetSecureId(secure_id);
-                        String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context);
+                        String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
                         Log.d(TAG, "Future sync will be stored at : " + path);
                         acces.CreateSyncFromOtherEnd(path, secure_id);
                         Log.d(TAG, "Linking device : " + device_id);
@@ -161,7 +158,24 @@ public class Networking {
                         acces.UnlinkDevice(device_id);
                         break;
                     case "[OTDL]":
-                        handleLargageAerien(data, clientSocket.getInetAddress().getHostAddress());
+                        // signle-file largage aerien
+                        handleLargageAerien(data,
+                                clientSocket.getInetAddress().getHostAddress(),
+                                "Accept the Largage Aerien ? (coming from " + clientSocket.getInetAddress().getHostAddress() + ")\n File name: " + data.FilePath,
+                                false,
+                                false
+                                );
+                        break;
+
+                    case "[MOTDL]":
+                        //unzip and then do the usual things on all the files
+                        Log.d("Qsync Server","Handling MOTDL...");
+                        handleLargageAerien(data,
+                                clientSocket.getInetAddress().getHostAddress(),
+                                "Accept the Multi Largage Aerien ? (coming from " + clientSocket.getInetAddress().getHostAddress() + ")\n Zip File name: " + data.FilePath,
+                                false,
+                                true
+                        );
                         break;
                     default:
                         // regular file event
@@ -195,11 +209,11 @@ public class Networking {
             String relativePath = jsonEvent.getString("FilePath");
             String newRelativePath = jsonEvent.getString("NewFilePath");
             String absoluteFilePath = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 absoluteFilePath = Paths.get(acces.GetRootSyncPath(), relativePath).toString();
             }
             String newAbsoluteFilePath = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 newAbsoluteFilePath = Paths.get(acces.GetRootSyncPath(), newRelativePath).toString();
             }
             String eventType = jsonEvent.getString("Flag");
@@ -258,15 +272,17 @@ public class Networking {
 
                 try {
 
-                    Gson gson = new Gson();
-                    String eventJson = gson.toJson(event);
+                    /*Gson gson = new Gson();
+                    String eventJson = gson.toJson(event);*/
+
+                    String serializedEvent = event.serialize();
 
                     // Initialize the connection
                     Socket socket = new Socket(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId), 8274);
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
                     // Construct the message to be sent
-                    String message = acces.getMyDeviceId() + ";" + secureId + eventJson;
+                    String message = acces.getMyDeviceId() + ";" + secureId + serializedEvent;
 
                     // Send the message
                     outputStream.writeBytes(message);
@@ -284,7 +300,9 @@ public class Networking {
                         Thread.sleep(1000);
                     }
                 } catch (IOException | InterruptedException e) {
-                    acces.setDevicedbState(deviceId,false);
+                    if(acces.IsDeviceLinked(deviceId)){
+                        acces.setDevicedbState(deviceId,false);
+                    }
                     Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
                 }
             }
@@ -328,6 +346,8 @@ public class Networking {
             return false;
         }
     }
+
+
 
     public static void removeFromFilesystem(String path) {
         try {
@@ -449,10 +469,10 @@ public class Networking {
         return new byte[0];
     }
 
-    public static void handleLargageAerien(Globals.QEvent data, String ipAddress) {
-        String fileName = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/"+data.filePath).getName();
-        String userResponse = BackendApi.askInput("[OTDL]", "Accept the airdrop? (coming from " + ipAddress + ")\n File name: " + fileName + "  [y/N]",context);
-        if (userResponse.equalsIgnoreCase("y") || userResponse.equalsIgnoreCase("yes") || userResponse.equalsIgnoreCase("oui")) {
+    public static void handleLargageAerien(Globals.QEvent data, String ipAddress,String msg,boolean assumeYes,boolean multiple) {
+        String fileName = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/"+data.FilePath).getName();
+        String userResponse = BackendApi.askInput("[OTDL]", msg,context,false);
+        if (userResponse.equalsIgnoreCase("y") || userResponse.equalsIgnoreCase("yes") || userResponse.equalsIgnoreCase("oui") || assumeYes) {
             try {
                 boolean directoryExists = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien").exists();
                 if (!directoryExists) {
@@ -460,21 +480,28 @@ public class Networking {
                 }
                 String filePath = PathUtils.joinPaths(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/" + fileName);
                 data.setFilePath(filePath);
-                data.delta.setFilePath(filePath);
+                data.Delta.setFilePath(filePath);
 
 
-                DeltaBinaire.patchFile(data.delta);
+                DeltaBinaire.patchFile(data.Delta);
                 //Log.d("LARGAGE AERIEN","CONTENU DU FICHIER APRES PATCH : "+ Arrays.toString(readBytesFromFile(filePath)));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
                     // Now,we move the recently received file to the downloads folder
                     filePath = PathUtils.moveFileToDownloads(context,filePath);
                     BackendApi.displayToast(context,"The file is now available in your Downloads folder.");
-                    BackendApi.openFile(context,
-                            Uri.parse(
-                                    filePath
-                            )
-                    );
+
+                    if(multiple){
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            FileZipper.unzipFile(filePath,Path.of(filePath).getParent().toString());
+                        }
+                    }else{
+                        BackendApi.openFile(context,
+                                Uri.parse(
+                                        filePath
+                                )
+                        );
+                    }
 
                 }
             } catch (Exception e) {
@@ -485,7 +512,11 @@ public class Networking {
 
 
 
-    public static void sendLargageAerien(Uri fileUri, String deviceIp) {
+
+
+
+
+    public static void sendLargageAerien(Uri fileUri, String deviceIp,boolean multiple) {
         try {
             String fileName = PathUtils.getFileNameFromUri(context,fileUri);
 
@@ -499,7 +530,7 @@ public class Networking {
 
             DeltaBinaire.Delta delta = DeltaBinaire.BuildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
             Globals.QEvent event = new Globals.QEvent(
-                    "[OTDL]",
+                    multiple ? "[MOTDL]":"[OTDL]",
                     "file",
                     delta,
                     fileName,
@@ -533,5 +564,9 @@ public class Networking {
             return false;
         }
     }
+
+
+
+
 
 }

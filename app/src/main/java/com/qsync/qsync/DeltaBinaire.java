@@ -1,6 +1,5 @@
 package com.qsync.qsync;
 
-import android.content.Context;
 import android.util.Log;
 import java.io.*;
 import java.util.*;
@@ -9,31 +8,51 @@ public class DeltaBinaire {
     private static final String TAG = "DeltaBinaire";
 
     static class DeltaInstruction {
-        String instructionType;
-        byte[] data;
-        long byteIndex;
+        String InstructionType;
+        byte[] Data;
+        long ByteIndex;
 
 
         DeltaInstruction(String instructionType, byte[] data, long byteIndex) {
-            this.instructionType = instructionType;
-            this.data = data;
-            this.byteIndex = byteIndex;
+            this.InstructionType = instructionType;
+            this.Data = data;
+            this.ByteIndex = byteIndex;
         }
+
+        @Override
+        public String toString() {
+            return "Instruction{" +
+                    "instructionType='" + this.InstructionType + '\'' +
+                    ", data=" + Arrays.toString(this.Data) +
+                    ", byteIndex=" + this.ByteIndex +
+                    '}';
+        }
+
+
 
 
     }
 
     static class Delta {
 
-        private String filePath;
+        private String FilePath;
+
+
 
         public void setFilePath(String filePath) {
-            this.filePath = filePath;
+            this.FilePath = filePath;
         }
         public String getFilePath() {
-            return filePath;
+            return FilePath;
         }
-        List<DeltaInstruction> instructions = new ArrayList<>();
+        List<DeltaInstruction> Instructions = new ArrayList<>();
+        @Override
+        public String toString() {
+            return "Delta{" +
+                    "instructions=" + this.Instructions +
+                    ", filePath='" + this.FilePath + '\'' +
+                    '}';
+        }
     }
 
 
@@ -72,21 +91,23 @@ public class DeltaBinaire {
 
                 int deltaIndex = fileDelta.isEmpty() ? 0 : fileDelta.size() - 1;
 
-                boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).byteIndex != blockingByteIndex;
+                boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).ByteIndex != blockingByteIndex;
 
                 if ((newFileBuff[0] != oldFileBuff) && byteIndexCond) {
 
                     // To avoid implicit pointer usage, we create a new byte array in the argument
-                    DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{newFileBuff[0]}, byteIndex);
+                    DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{
+                            newFileBuff[0]
+                    }, byteIndex);
                     fileDelta.add(instruction);
 
                     byteIndex++;
                 } else {
                     if (newFileBuff[0] != oldFileBuff) {
-                        fileDelta.get(deltaIndex).data = Arrays.copyOf(fileDelta.get(deltaIndex).data,
-                                fileDelta.get(deltaIndex).data.length + 1);
+                        fileDelta.get(deltaIndex).Data = Arrays.copyOf(fileDelta.get(deltaIndex).Data,
+                                fileDelta.get(deltaIndex).Data.length + 1);
 
-                        fileDelta.get(deltaIndex).data[fileDelta.get(deltaIndex).data.length-1] = newFileBuff[0];
+                        fileDelta.get(deltaIndex).Data[fileDelta.get(deltaIndex).Data.length-1] = newFileBuff[0];
                         byteIndex++;
                     } else {
                         byteIndex++;
@@ -101,7 +122,7 @@ public class DeltaBinaire {
                 fileDelta.add(instruction);
             }
 
-            delta.instructions.addAll(fileDelta);
+            delta.Instructions.addAll(fileDelta);
             delta.setFilePath(relativePath);
 
             newFileInputStream.close();
@@ -114,6 +135,10 @@ public class DeltaBinaire {
         return delta;
     }
 
+
+    public static int javaByteToUnsigned(byte b) {
+        return b & 0xFF;
+    }
     public static DeltaBinaire.Delta BuildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
                                                              long oldFileSize, byte[] oldFileContent){
         Delta delta = new Delta();
@@ -150,21 +175,24 @@ public class DeltaBinaire {
 
             int deltaIndex = fileDelta.isEmpty() ? 0 : fileDelta.size() - 1;
 
-            boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).byteIndex != blockingByteIndex;
+            boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).ByteIndex != blockingByteIndex;
 
             if ((newFileBuff[0] != oldFileBuff) && byteIndexCond) {
 
                 // To avoid implicit pointer usage, we create a new byte array in the argument
-                DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{newFileBuff[0]}, byteIndex);
+                DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{
+                       newFileBuff[0]
+                },
+                        byteIndex);
                 fileDelta.add(instruction);
 
                 byteIndex++;
             } else {
                 if (newFileBuff[0] != oldFileBuff) {
-                    fileDelta.get(deltaIndex).data = Arrays.copyOf(fileDelta.get(deltaIndex).data,
-                            fileDelta.get(deltaIndex).data.length + 1);
+                    fileDelta.get(deltaIndex).Data = Arrays.copyOf(fileDelta.get(deltaIndex).Data,
+                            fileDelta.get(deltaIndex).Data.length + 1);
 
-                    fileDelta.get(deltaIndex).data[fileDelta.get(deltaIndex).data.length-1] = newFileBuff[0];
+                    fileDelta.get(deltaIndex).Data[fileDelta.get(deltaIndex).Data.length-1] = newFileBuff[0];
                     byteIndex++;
                 } else {
                     byteIndex++;
@@ -182,7 +210,7 @@ public class DeltaBinaire {
             fileDelta.add(instruction);
         }
 
-        delta.instructions.addAll(fileDelta);
+        delta.Instructions.addAll(fileDelta);
         delta.setFilePath(filename);
 
         Log.d("FILEDELTA","build this delta : "+delta);
@@ -190,19 +218,31 @@ public class DeltaBinaire {
         return delta;
     }
 
+
+    public static byte goByteToJavaByte(int b) {
+
+        if(b > 127) {
+            return (byte) (b - 256);
+        }
+        return (byte)b;
+    }
+
     public static void patchFile(Delta delta) {
         try {
             File file = new File(delta.getFilePath());
             RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
 
-            for (DeltaInstruction instruction : delta.instructions) {
-                switch (instruction.instructionType) {
+            for (DeltaInstruction instruction : delta.Instructions) {
+                switch (instruction.InstructionType) {
                     case "ab":
-                        fileHandler.seek(instruction.byteIndex);
-                        fileHandler.write(instruction.data);
+                        fileHandler.seek(instruction.ByteIndex);
+                        for(int i = 0;i<instruction.Data.length;i++){
+                            fileHandler.write(instruction.Data[i]);
+                        }
+                        //fileHandler.write(instruction.Data);
                         break;
                     case "t":
-                        fileHandler.setLength(instruction.byteIndex);
+                        fileHandler.setLength(instruction.ByteIndex);
                         break;
                 }
             }
@@ -212,4 +252,7 @@ public class DeltaBinaire {
             Log.e(TAG, "Error patching file: " + e.getMessage());
         }
     }
+
+
+
 }

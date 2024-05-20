@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.View;
 
 import androidx.core.app.ActivityCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -116,7 +117,10 @@ public class MainActivity extends AppCompatActivity {
                 AccesBdd acces = new AccesBdd(MainActivity.this);
                 Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
                 for(int i=0;i<tasks.size();i++) {
-                    FileSystem.startWatcher(MainActivity.this, tasks.get(i).getPath());
+                    FileSystem.startDirectoryMonitoring(
+                            MainActivity.this,
+                            DocumentFile.fromSingleUri(MainActivity.this,Uri.parse(tasks.get(i).getPath()))
+                            );
                 }
 
                 acces.closedb();

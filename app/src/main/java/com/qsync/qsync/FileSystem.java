@@ -1,7 +1,13 @@
 package com.qsync.qsync;
 
 import android.content.Context;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
+
 import org.apache.commons.io.monitor.FileAlterationListener;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
@@ -17,54 +23,90 @@ public class FileSystem {
     private static final String TAG = "FileSystem";
     private static final String QSYNC_WRITEABLE_DIRECTORY = "path_to_your_directory"; // Specify your directory path here
 
-    public static void startWatcher(final Context context, final String rootPath) {
-        // Initialize the database connection
+
+    private static final Handler handler = new Handler(Looper.getMainLooper());
+    private static final Map<String, FileInfo> previousState = new HashMap<>();
+    private static final long POLLING_INTERVAL = 5000; // 5 seconds
+
+
+
+    public static void startDirectoryMonitoring(Context context, DocumentFile directory) {
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                checkForChanges(context,directory);
+                handler.postDelayed(this, POLLING_INTERVAL);
+            }
+        }, POLLING_INTERVAL);
+    }
+
+    private static void checkForChanges(Context context, DocumentFile directory) {
+        Map<String, FileInfo> currentState = new HashMap<>();
+        populateState(directory, currentState, directory.getUri().toString());
         final AccesBdd acces = new AccesBdd(context);
-        acces.getSecureIdFromRootPath(rootPath);
+        acces.getSecureIdFromRootPath(directory.getUri().toString());
 
-        // Start the filesystem watcher
-        FileAlterationObserver observer = new FileAlterationObserver(rootPath);
-        observer.addListener(new FileAlterationListener() {
-            @Override
-            public void onStart(FileAlterationObserver observer) {}
+        // Check for new, modified, or renamed files
+        for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
+            String filePath = entry.getKey();
+            FileInfo fileInfo = entry.getValue();
 
-            @Override
-            public void onDirectoryCreate(File directory) {
-                handleCreateEvent(acces, directory.getAbsolutePath(), true);
+            if (!previousState.containsKey(filePath)) {
+                Log.d("FileMonitor", "New file detected: " + filePath);
+                handleCreateEvent(acces, filePath, true);
+
+            } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified)) {
+                Log.d("FileMonitor", "Modified file detected: " + filePath);
+                handleWriteEvent(acces,filePath);
             }
 
-            @Override
-            public void onDirectoryChange(File directory) {}
-
-            @Override
-            public void onDirectoryDelete(File directory) {}
-
-            @Override
-            public void onFileCreate(File file) {
-                handleCreateEvent(acces, file.getAbsolutePath(), false);
+            // Handle renamed files
+            FileInfo previousFileInfo = previousState.get(filePath);
+            if (previousFileInfo != null && !previousFileInfo.uri.equals(fileInfo.uri)) {
+                Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
             }
+        }
 
-            @Override
-            public void onFileChange(File file) {
-                handleWriteEvent(acces, file.getAbsolutePath());
+        // Check for deleted files and subdirectories
+        for (String filePath : previousState.keySet()) {
+            if (!currentState.containsKey(filePath)) {
+                FileInfo fileInfo = previousState.get(filePath);
+                if (fileInfo.isDirectory) {
+                    Log.d("FileMonitor", "Deleted subdirectory detected: " + filePath);
+                } else {
+                    Log.d("FileMonitor", "Deleted file detected: " + filePath);
+                    handleRemoveEvent(acces, filePath);
+
+                }
             }
+        }
 
-            @Override
-            public void onFileDelete(File file) {
-                handleRemoveEvent(acces, file.getAbsolutePath());
+        // Update the previous state to the current state
+        previousState.clear();
+        previousState.putAll(currentState);
+    }
+
+    private static void populateState(DocumentFile directory, Map<String, FileInfo> state, String basePath) {
+        for (DocumentFile file : directory.listFiles()) {
+            String filePath = basePath + "/" + file.getName();
+            FileInfo fileInfo = new FileInfo(file.getUri(), file.lastModified(), file.isDirectory());
+            state.put(filePath, fileInfo);
+
+            if (file.isDirectory()) {
+                populateState(file, state, filePath);
             }
+        }
+    }
 
-            @Override
-            public void onStop(FileAlterationObserver observer) {}
-        });
+    private static class FileInfo {
+        Uri uri;
+        Long lastModified;
+        boolean isDirectory;
 
-        FileAlterationMonitor monitor = new FileAlterationMonitor(1000); // Check every second
-        monitor.addObserver(observer);
-
-        try {
-            monitor.start();
-        } catch (Exception e) {
-            Log.e(TAG, "Error starting file watcher: " + e.getMessage());
+        FileInfo(Uri uri, Long lastModified, boolean isDirectory) {
+            this.uri = uri;
+            this.lastModified = lastModified;
+            this.isDirectory = isDirectory;
         }
     }
 

@@ -22,9 +22,12 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.qsync.qsync.databinding.FragmentLargageAerienBinding;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.util.Map;
+
+import kotlinx.coroutines.channels.Send;
 
 public class LargageAerienFragment extends Fragment {
 
@@ -32,6 +35,8 @@ public class LargageAerienFragment extends Fragment {
     private static final int PERMISSION_REQUEST_CODE = 456;
 
     private ActivityResultLauncher<Intent> selectFileLauncher;
+
+    private Map<String,String> target_device;
 
     @Override
     public View onCreateView(
@@ -56,6 +61,9 @@ public class LargageAerienFragment extends Fragment {
         );
 
 
+
+
+
         selectFileLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -66,35 +74,23 @@ public class LargageAerienFragment extends Fragment {
                             Intent data = result.getData();
                             if (result.getResultCode() == Activity.RESULT_OK) {
                                 if (data != null) {
-                                    Uri uri = data.getData();
-                                    //String filePath = getPathFromUri(uri);
-                                    //Toast.makeText(this, "Selected file path: " + filePath, Toast.LENGTH_SHORT).show();
+                                    // Check if multiple files were selected
+                                    if (data.getClipData() != null) {
+                                        // Handle multiple files
 
-                                    ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
-                                        @Override
-                                        public void execute() {
-
-
-                                            Networking nt = new Networking(getContext(),getContext().getFilesDir().toString());
-                                            /*ParcelFileDescriptor parcelFileDescriptor =
-                                                    null;
-                                            try {
-                                                parcelFileDescriptor = getContext().getContentResolver().openFileDescriptor(uri, "r");
-                                            } catch (FileNotFoundException e) {
-                                                throw new RuntimeException(e);
-                                            }
-                                            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();*/
-
-                                            nt.sendLargageAerien(uri,"127.0.0.1");
-
-
-
-
+                                        int count = data.getClipData().getItemCount();
+                                        Uri[] queue = new Uri[count];
+                                        for (int i = 0; i < count; i++) {
+                                            Uri uri = data.getClipData().getItemAt(i).getUri();
+                                            queue[i] = uri;
                                         }
-                                    };
+                                        SendMultipleLA(queue);
 
-                                    ProcessExecutor.startProcess(SendLA);
-
+                                    } else if (data.getData() != null) {
+                                        // Handle single file
+                                        Uri uri = data.getData();
+                                        SendLA(uri);
+                                    }
                                 }
                             }
 
@@ -113,39 +109,45 @@ public class LargageAerienFragment extends Fragment {
 
                 while(true){
 
-                    ProcessExecutor.Function upui = new ProcessExecutor.Function(){
+                    if(LargageAerienFragment.this.isVisible()){
 
-                        @Override
-                        public void execute() {
+                        ProcessExecutor.Function upui = new ProcessExecutor.Function(){
 
-                            BackendApi.addButtonsFromDevicesGenArray(
-                                    getContext(),
-                                    zc.getConnectedDevices(),
-                                    (LinearLayout) binding.appareilsLargageLinearlayout,
-                                    new BackendApi.ButtonCallback() {
-                                        @Override
-                                        public void callback(Map<String, String> device) {
-                                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                                            intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                            intent.setType("*/*");
+                            @Override
+                            public void execute() {
 
-                                            // Optionally, specify a URI for the file that should appear in the
-                                            // system file picker when it loads.
-                                            //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, );
+                                BackendApi.addButtonsFromDevicesGenArray(
+                                        getContext(),
+                                        zc.getConnectedDevices(),
+                                        (LinearLayout) binding.appareilsLargageLinearlayout,
+                                        new BackendApi.DeviceButtonCallback() {
+                                            @Override
+                                            public void callback(Map<String, String> device) {
+                                                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                                                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                                                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                                intent.setType("*/*");
 
-                                            selectFileLauncher.launch(intent);
+
+                                                target_device = device;
+                                                // Optionally, specify a URI for the file that should appear in the
+                                                // system file picker when it loads.
+                                                //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, );
+
+                                                selectFileLauncher.launch(intent);
+                                            }
                                         }
-                                    }
-                            );
+                                );
 
 
+                            }
+                        };
+                        ProcessExecutor.executeOnUIThread(upui);
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
-                    };
-                    ProcessExecutor.executeOnUIThread(upui);
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
                     }
                 }
 
@@ -161,6 +163,38 @@ public class LargageAerienFragment extends Fragment {
 
 
 
+    }
+
+
+    private void SendLA(Uri uri) {
+        ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                Networking nt = new Networking(getContext(), getContext().getFilesDir().toString());
+                nt.sendLargageAerien(uri, target_device.get("ip_addr"),false);
+            }
+        };
+        ProcessExecutor.startProcess(SendLA);
+    }
+
+    private void SendMultipleLA(Uri[] uris) {
+        ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                Networking nt = new Networking(getContext(), getContext().getFilesDir().toString());
+                File zipFile = new File(
+                        getContext().getFilesDir(),
+                        "/largage_aerien/mulilargage.zip");
+                Log.d("Qsync Server","Zipping file...");
+
+                FileZipper.zipFiles(getContext(),uris,zipFile.getPath());
+                Log.d("Qsync Server","Zip file built !");
+
+                nt.sendLargageAerien(Uri.fromFile(zipFile), target_device.get("ip_addr"),true);
+                Log.d("Qsync Server","Sending multiple largage aerien :"+zipFile.getName());
+            }
+        };
+        ProcessExecutor.startProcess(SendLA);
     }
 
     @Override
