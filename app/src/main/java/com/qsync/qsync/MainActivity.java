@@ -116,12 +116,18 @@ public class MainActivity extends AppCompatActivity {
             public void execute() {
                 AccesBdd acces = new AccesBdd(MainActivity.this);
                 Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
-                for(int i=0;i<tasks.size();i++) {
+                tasks.forEach((k,v)->{
+
+                    DocumentFile df = DocumentFile.fromTreeUri(MainActivity.this,Uri.parse(v.getPath()));
+                    Log.d("Qsync Server ","Starting to monitor : "+ v.getPath()+"\n Readable = "+df.canRead());
+
+
                     FileSystem.startDirectoryMonitoring(
                             MainActivity.this,
-                            DocumentFile.fromSingleUri(MainActivity.this,Uri.parse(tasks.get(i).getPath()))
-                            );
-                }
+                            df
+                    );
+
+                });
 
                 acces.closedb();
             }

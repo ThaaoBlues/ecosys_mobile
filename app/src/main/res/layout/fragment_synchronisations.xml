@@ -34,9 +34,11 @@
         android:id="@+id/liste_synchronisations_linear_layout"
         android:layout_width="350dp"
         android:layout_height="502dp"
+        android:layout_marginTop="44dp"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="211dp"></LinearLayout>
+        app:layout_constraintTop_toBottomOf="@+id/button_creer_synchronisation"></LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

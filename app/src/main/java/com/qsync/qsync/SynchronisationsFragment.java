@@ -78,6 +78,10 @@ public class SynchronisationsFragment extends Fragment {
 
                                     //Log.d("SynchronisationsFragment","Uri : "+ PathUtils.getPathFromUri(getContext(),data.getData()));
                                     Uri treeUri = data.getData();
+
+                                    getContext().getContentResolver().takePersistableUriPermission(treeUri,
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
                                     DocumentFile directory = DocumentFile.fromTreeUri(getContext(), treeUri);
                                     if (directory != null && directory.isDirectory()) {
                                         acces.createSync(directory.getUri().toString());
@@ -108,7 +112,17 @@ public class SynchronisationsFragment extends Fragment {
                         builder.setItems(choices, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int choice_index) {
+                                switch (choice_index){
+                                    case 0:
+                                        acces.SetSecureId(sync.getSecureId());
+                                        acces.RmSync();
+                                        break;
 
+                                    case 1:
+                                        // get task status -\_(:/)_/-
+                                        break;
+
+                                }
                                 Toast.makeText(getContext(), choices[choice_index], Toast.LENGTH_SHORT).show();
                             }
                         });
