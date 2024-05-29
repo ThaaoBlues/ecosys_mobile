@@ -139,7 +139,7 @@ public class DeltaBinaire {
     public static int javaByteToUnsigned(byte b) {
         return b & 0xFF;
     }
-    public static DeltaBinaire.Delta BuildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
+    public static DeltaBinaire.Delta buildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
                                                              long oldFileSize, byte[] oldFileContent){
         Delta delta = new Delta();
 

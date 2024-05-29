@@ -199,4 +199,14 @@ public class PathUtils {
     private static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
+
+
+    public static String getRelativePath(Uri rootUri, Uri fileUri) {
+        String rootPath = rootUri.getPath();
+        String filePath = fileUri.getPath();
+        if (rootPath != null && filePath != null && filePath.startsWith(rootPath)) {
+            return filePath.substring(rootPath.length() + 1); // +1 to remove the leading '/'
+        }
+        return fileUri.toString();
+    }
 }

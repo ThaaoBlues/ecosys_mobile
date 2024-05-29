@@ -220,7 +220,7 @@ public class BackendApi {
 
         for (int i = 0;i<devices.size();i++) {
             Button button = new Button(context);
-            button.setText(devices.get(i).get("host")+";"+devices.get(i).get("ip_addr"));
+            button.setText(String.format("%s;%s", devices.get(i).get("hostname"), devices.get(i).get("ip_addr")));
             button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             int finalI = i;
             button.setOnClickListener(new View.OnClickListener() {

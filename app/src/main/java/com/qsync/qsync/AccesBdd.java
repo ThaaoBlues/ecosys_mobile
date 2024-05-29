@@ -39,9 +39,6 @@ import android.util.Log;
 
 public class AccesBdd {
 
-    private static final String QSYNC_WRITEABLE_DIRECTORY = "path_to_your_directory"; // Specify your directory path here
-
-    private static final String SQLITE_DB_PATH = "qsync.db";
 
     private String secureId;
     private SQLiteDatabase db;
@@ -190,6 +187,13 @@ public class AccesBdd {
                     "secure_id TEXT," +
                     "uninstaller_path TEXT)");
 
+
+        db.execSQL("CREATE TABLE IF NOT EXISTS reseau(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "device_id TEXT," +
+                "hostname TEXT,"+
+                "ip_addr TEXT)"
+        );
         Log.d("BASE DE DONNEES","LES TABLES ON ETE CREES");
 
         if (!isMyDeviceIdGenerated(db)) {
@@ -663,7 +667,7 @@ public class AccesBdd {
 
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             String relativePath = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 relativePath = rootPath + File.separator + file.getFileName().toString();
             }
             // Add file to the database or perform other actions as needed
@@ -677,7 +681,7 @@ public class AccesBdd {
 
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
             String relativePath = null;
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 relativePath = rootPath + File.separator + dir.getFileName().toString();
             }
             // Add folder to the database or perform other actions as needed
@@ -1246,8 +1250,65 @@ public class AccesBdd {
     }
 
 
+    public void removeDeviceFromNetworkMap(String device_id, String ip_addr){
+
+        db.execSQL("DELETE FROM reseau WHERE device_id=? and ip_addr=?",
+                new String[]{
+                        device_id,
+                        ip_addr
+                }
+                );
+
+    }
 
 
+
+    public void addDeviceInNetworkMap(String device_id, String ip_addr,String hostname){
+        db.execSQL("INSERT INTO reseau(device_id,ip_addr,hostname) VALUES(?,?,?)",
+                new String[]{
+                        device_id,
+                        ip_addr,
+                        hostname
+                }
+        );
+    }
+
+    public Globals.GenArray<Map<String, String>> getNetworkMap(){
+        Cursor cursor = db.rawQuery("SELECT device_id,ip_addr,hostname FROM reseau",null);
+
+
+        Globals.GenArray<Map<String, String>> ret = new Globals.GenArray<>();
+        while(cursor.moveToNext()){
+            Map<String,String> device = new HashMap<>();
+            device.put("device_id",cursor.getString(0));
+            device.put("ip_addr",cursor.getString(1));
+            device.put("hostname",cursor.getString(2));
+
+            Log.d("NETWORK MAP",device.toString());
+            ret.add(device);
+
+        }
+
+        cursor.close();
+        return ret;
+    }
+
+
+    public boolean isDeviceOnNetworkMap(String ip_addr){
+        Cursor cursor = db.rawQuery("SELECT * FROM reseau WHERE ip_addr=?",new String[]{
+                ip_addr
+        });
+
+
+        boolean ret = cursor.moveToFirst();
+
+        cursor.close();
+        return ret;
+    }
+
+    public void cleanNetworkMap(){
+        db.execSQL("DELETE FROM reseau");
+    }
 
 
 }

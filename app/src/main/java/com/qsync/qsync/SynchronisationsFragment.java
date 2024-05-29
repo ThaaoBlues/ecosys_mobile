@@ -27,7 +27,11 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.qsync.qsync.databinding.FragmentSynchronisationsBinding;
 
+import java.lang.reflect.Array;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class SynchronisationsFragment extends Fragment {
@@ -105,24 +109,68 @@ public class SynchronisationsFragment extends Fragment {
 
                     @Override
                     public void callback(Globals.SyncInfos sync) {
-                        String[] choices = {"Delete task", "See devices status"};
+                        String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        builder.setTitle("");
+                        builder.setTitle("Sync Options");
                         builder.setItems(choices, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int choice_index) {
+                                acces.SetSecureId(sync.getSecureId());
+
                                 switch (choice_index){
                                     case 0:
-                                        acces.SetSecureId(sync.getSecureId());
                                         acces.RmSync();
                                         break;
 
                                     case 1:
                                         // get task status -\_(:/)_/-
                                         break;
+                                    case 2:
+                                        // link another device to the designated sync task
+
+                                        // TODO : Select target device from a popup, return device_id and ip addr
+                                        Globals.GenArray<Map<String,String>> devices = acces.getNetworkMap();
+
+                                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                        builder.setTitle("Online devices");
+                                        String[] choices = new String[devices.size()];
+
+                                        for(int i=0;i<devices.size();i++){
+
+                                            choices[i] = devices.get(i).get("hostname");
+
+                                        }
+
+
+
+                                        Log.d("Qsync Server","devices connected : "+ Arrays.toString(choices));
+                                        builder.setItems(choices, new DialogInterface.OnClickListener() {
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int i) {
+
+
+                                                ProcessExecutor.Function sendreqs = new ProcessExecutor.Function() {
+                                                    @Override
+                                                    public void execute() {
+                                                        String ip_addr = devices.get(i).get("ip_addr");
+                                                        String device_id = devices.get(i).get("device_id");
+                                                        Networking.sendLinkDeviceRequest(ip_addr,acces);
+                                                        acces.LinkDevice(device_id,ip_addr);
+                                                    }
+                                                };
+
+                                                ProcessExecutor.startProcess(sendreqs);
+
+                                            }
+                                        });
+
+                                        builder.show();
+
+                                        break;
 
                                 }
+
                                 Toast.makeText(getContext(), choices[choice_index], Toast.LENGTH_SHORT).show();
                             }
                         });

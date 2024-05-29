@@ -91,52 +91,73 @@ public class Globals {
 
         public String serialize() {
             StringBuilder instructionsBuilder = new StringBuilder();
-            for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
-                instructionsBuilder.append(instruction.InstructionType).append(",");
-                for (int data : instruction.Data) {
-                    instructionsBuilder.append(data).append(",");
+
+            if(this.Delta != null){
+                for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
+                    instructionsBuilder.append(instruction.InstructionType).append(",");
+                    for (int data : instruction.Data) {
+                        instructionsBuilder.append(data).append(",");
+                    }
+                    instructionsBuilder.append(instruction.ByteIndex).append("|");
                 }
-                instructionsBuilder.append(instruction.ByteIndex).append("|");
-            }
-            // Remove the last "|"
-            if (instructionsBuilder.length() > 0) {
-                instructionsBuilder.setLength(instructionsBuilder.length() - 1);
+                // Remove the last "|"
+                if (instructionsBuilder.length() > 0) {
+                    instructionsBuilder.setLength(instructionsBuilder.length() - 1);
+                }
+
+                return String.join(";",
+                        this.Flag,
+                        this.FileType,
+                        instructionsBuilder.toString(),
+                        this.Delta.getFilePath(),
+                        this.FilePath,
+                        this.NewFilePath,
+                        this.SecureId
+                );
+            }else{
+                return String.join(";",
+                        this.Flag,
+                        this.FileType,
+                        "",
+                        "",
+                        this.FilePath,
+                        this.NewFilePath,
+                        this.SecureId
+                );
             }
 
-            return String.join(";",
-                    this.Flag,
-                    this.FileType,
-                    instructionsBuilder.toString(),
-                    this.Delta.getFilePath(),
-                    this.FilePath,
-                    this.NewFilePath,
-                    this.SecureId
-            );
+
+
         }
 
         public void deserializeQEvent(String data) {
             String[] parts = data.split(";");
-            String[] instructionParts = parts[2].split("\\|");
-            List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
-            for (String instructionStr : instructionParts) {
-                String[] instructionData = instructionStr.split(",");
-                byte[] dataBytes = new byte[instructionData.length - 2];
-                for (int i = 1; i < instructionData.length - 1; i++) {
-                    dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
+
+            // check if a binary delta is present
+            if(!parts[2].isEmpty()){
+                String[] instructionParts = parts[2].split("\\|");
+                List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
+                for (String instructionStr : instructionParts) {
+                    String[] instructionData = instructionStr.split(",");
+                    byte[] dataBytes = new byte[instructionData.length - 2];
+                    for (int i = 1; i < instructionData.length - 1; i++) {
+                        dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
+                    }
+                    long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
+                    instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
                 }
-                long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
-                instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
+                DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
+                delta.Instructions = instructions;
+                delta.setFilePath(parts[3]);
+
+                this.Delta = delta;
+
             }
-            DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
-            delta.Instructions = instructions;
-            delta.setFilePath(parts[3]);
             this.Flag = parts[0];
             this.FileType = parts[1];
-            this.Delta = delta;
             this.FilePath = parts[4];
             this.NewFilePath = parts[5];
             this.SecureId = parts[6];
-
         }
     }
 

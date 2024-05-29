@@ -96,10 +96,16 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
+        //this.deleteDatabase("qsync.db");
 
-        /* Starting qsync processes
+        // clean old network map at each app startup
+        AccesBdd acces = new AccesBdd(MainActivity.this);
+        acces.cleanNetworkMap();
 
-         */
+
+
+        ZeroConfService zc = new ZeroConfService(MainActivity.this);
+
 
         ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
             @Override

@@ -4,8 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,20 +22,18 @@ import androidx.navigation.fragment.NavHostFragment;
 import com.qsync.qsync.databinding.FragmentLargageAerienBinding;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileNotFoundException;
+
 import java.util.Map;
 
-import kotlinx.coroutines.channels.Send;
 
 public class LargageAerienFragment extends Fragment {
 
     private FragmentLargageAerienBinding binding;
-    private static final int PERMISSION_REQUEST_CODE = 456;
 
     private ActivityResultLauncher<Intent> selectFileLauncher;
 
     private Map<String,String> target_device;
+    //private ZeroConfService zc = new ZeroConfService(getContext());
 
     @Override
     public View onCreateView(
@@ -98,15 +95,12 @@ public class LargageAerienFragment extends Fragment {
                     }
                 });
 
-        ZeroConfService zc = new ZeroConfService(getContext());
-
 
         ProcessExecutor.Function updateDeviceList = new ProcessExecutor.Function() {
             @Override
             public void execute() {
-                //wait(1000);
-                AccesBdd acces = new AccesBdd(getContext());
 
+                AccesBdd acces = new AccesBdd(getContext());
                 while(true){
 
                     if(LargageAerienFragment.this.isVisible()){
@@ -118,7 +112,7 @@ public class LargageAerienFragment extends Fragment {
 
                                 BackendApi.addButtonsFromDevicesGenArray(
                                         getContext(),
-                                        zc.getConnectedDevices(),
+                                        acces.getNetworkMap(),
                                         (LinearLayout) binding.appareilsLargageLinearlayout,
                                         new BackendApi.DeviceButtonCallback() {
                                             @Override
@@ -150,6 +144,9 @@ public class LargageAerienFragment extends Fragment {
                         }
                     }
                 }
+
+
+
 
 
 
@@ -200,6 +197,7 @@ public class LargageAerienFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        //zc.shutdown();
         binding = null;
     }
 

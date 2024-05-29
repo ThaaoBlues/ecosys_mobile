@@ -6,18 +6,24 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -30,7 +36,7 @@ import java.util.Comparator;
 public class Networking {
 
     public static final int HEADER_LENGTH = 83;
-    private static final String TAG = "Networking";
+    private static final String TAG = "QSync Server";
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
     private static Context context;
@@ -42,6 +48,29 @@ public class Networking {
         QSYNC_WRITABLE_DIRECTORY = mFilesDir;
 
     }
+
+    public static String getDeviceHostname(String ip_addr) {
+
+        final String[] hostname = {""};
+        ProcessExecutor.Function gethn = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                try {
+                    // Get the local host address
+                    InetAddress inetAddress = InetAddress.getByName(ip_addr);
+                    hostname[0] = inetAddress.getHostName();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        ProcessExecutor.startProcess(gethn);
+
+        return hostname[0];
+
+    }
+
 
     public void ServerMainLoop(){
         try {
@@ -72,7 +101,7 @@ public class Networking {
             try {
 
 
-                Log.i("Qsync Server","In request handler !");
+                Log.i(TAG,"In request handler !");
                 AccesBdd acces = new AccesBdd(context);
 
                 // get the device id and secure sync id from header
@@ -82,15 +111,15 @@ public class Networking {
                 bufferedReader.read(header_buff, 0, HEADER_LENGTH);
                 String device_id = "";
                 String secure_id = "";
-                Log.i("Qsync Server","Header : "+ Arrays.toString(header_buff));
+                Log.i(TAG,"Header : "+ Arrays.toString(header_buff));
 
 
                 try {
                    device_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[0];
                    secure_id = new String(header_buff, 0, HEADER_LENGTH).split(";")[1];
-                   Log.d("Qsync server","successfully parsed ids from request");
+                   Log.d(TAG,"successfully parsed ids from request");
                 }catch (ArrayIndexOutOfBoundsException e){
-                    Log.i("Qsync Server","Received a malformed request"+ Arrays.toString(header_buff));
+                    Log.i(TAG,"Received a malformed request"+ Arrays.toString(header_buff));
                     return;
                 }
                 acces.SetSecureId(secure_id);
@@ -114,12 +143,7 @@ public class Networking {
 
                 Log.d(TAG, "Request body : " + body_buff);
 
-                // Parse the JSON
 
-
-                /*Gson gson = new Gson();
-                Globals.QEvent data = gson.fromJson(body_buff.toString(),Globals.QEvent.class);*/
-                //Globals.QEvent data = parseQEvent(body_buff.toString());
 
                 Globals.QEvent data = new Globals.QEvent(
                         "",
@@ -169,7 +193,7 @@ public class Networking {
 
                     case "[MOTDL]":
                         //unzip and then do the usual things on all the files
-                        Log.d("Qsync Server","Handling MOTDL...");
+                        Log.d(TAG,"Handling MOTDL...");
                         handleLargageAerien(data,
                                 clientSocket.getInetAddress().getHostAddress(),
                                 "Accept the Multi Largage Aerien ? (coming from " + clientSocket.getInetAddress().getHostAddress() + ")\n Zip File name: " + data.FilePath,
@@ -394,73 +418,90 @@ public class Networking {
         }
     }
 
+
+
     public static void buildSetupQueue(String secureId, String deviceId) {
-        try {
-            AccesBdd acces = new AccesBdd(context);
-            Path rootPath;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                rootPath = Path.of(acces.GetRootSyncPath());
-            } else {
-                rootPath = null;
-            }
+        AccesBdd acces = new AccesBdd(context);
+        acces.SetSecureId(secureId);
 
 
-            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)
-                        .filter(Files::isRegularFile)
-                        .forEach(filePath -> {
-                            String relativePath = rootPath.relativize(filePath).toString();
-                            byte[] fileContent = readBytesFromFile(filePath.toString());
-                            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, filePath.toString(), 0, new byte[0]);
-
-                            Globals.QEvent event = new Globals.QEvent(
-                                    "CREATE",
-                                    "file",
-                                    delta,
-                                    relativePath,
-                                    "",
-                                    secureId
-                            );
-
-                            queue.add(event);
-                        });
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.walk(rootPath, FileVisitOption.FOLLOW_LINKS)
-                        .filter(Files::isDirectory)
-                        .forEach(dirPath -> {
-                            String relativePath = rootPath.relativize(dirPath).toString();
-
-                            Globals.QEvent event = new Globals.QEvent(
-                                    "CREATE",
-                                    "folder",
-                                    null,
-                                    relativePath,
-                                    "",
-                                    secureId);
+        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+        // TODO : utiliser documentfiletree comme and FIleSystem.populateState
 
 
-                            queue.add(event);
-                        });
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Uri rootUri = Uri.parse(acces.GetRootSyncPath());
+            DocumentFile directory = DocumentFile.fromTreeUri(context, rootUri);
+
+            traverseDocumentFile(directory,rootUri,acces,queue);
 
             Globals.GenArray<String> devices = new Globals.GenArray<>();
             devices.add(deviceId);
             sendDeviceEventQueueOverNetwork(devices, secureId, queue);
 
             acces.closedb();
-        } catch (Exception e) {
-            Log.e("BuildSetupQueue", "Error while building setup queue", e);
+
+        }
+
+
+
+    }
+
+
+    private static void traverseDocumentFile(DocumentFile directory, Uri rootUri, AccesBdd acces, Globals.GenArray<Globals.QEvent> queue) {
+        for (DocumentFile file : directory.listFiles()) {
+            String relativePath = PathUtils.getRelativePath(rootUri, file.getUri());
+
+            if (file.isDirectory()) {
+                // Create event for directory
+                Globals.QEvent event = new Globals.QEvent(
+                        "[CREATE]",
+                        "folder",
+                        null,
+                        relativePath,
+                        "",
+                        acces.GetSecureId()
+
+                );
+                queue.add(event);
+                // Recurse into subdirectory
+                traverseDocumentFile(file, rootUri, acces,queue);
+            } else if (file.isFile()) {
+
+                try {
+                    InputStream inputStream =
+                            context.getContentResolver().openInputStream(file.getUri());
+
+
+                    ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(file.getUri() , "r");
+                    long fileSize = fileDescriptor.getStatSize();
+
+                    DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,fileSize,inputStream,0,new byte[0]);
+
+
+                    Globals.QEvent event = new Globals.QEvent(
+                            "[CREATE]",
+                            "file",
+                            delta,
+                            relativePath,
+                            "",
+                            acces.GetSecureId()
+                    );
+                    queue.add(event);
+
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
-    private static byte[] readBytesFromFile(String filePath) {
+
+    private static byte[] readBytesFromFile(DocumentFile file) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return Files.readAllBytes(Paths.get(filePath));
+                return Files.readAllBytes(Paths.get(file.getUri().getPath()));
             }
         } catch (Exception e) {
             Log.e("ReadBytesFromFile", "Error while reading bytes from file", e);
@@ -528,7 +569,7 @@ public class Networking {
             //long fileSize = context.getContentResolver().query(fileUri,null,null,null,null).getColumnIndex(OpenableColumns.SIZE);
             long fileSize = fileDescriptor.getStatSize();
 
-            DeltaBinaire.Delta delta = DeltaBinaire.BuildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
+            DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
             Globals.QEvent event = new Globals.QEvent(
                     multiple ? "[MOTDL]":"[OTDL]",
                     "file",
@@ -563,6 +604,25 @@ public class Networking {
             // Connection failed or timeout occurred
             return false;
         }
+    }
+
+
+    public static void sendLinkDeviceRequest(String deviceIp,AccesBdd acces){
+
+        Globals.QEvent event = new Globals.QEvent(
+                "[LINK_DEVICE]",
+                "",
+                null,
+                "",
+                "",
+                acces.GetSecureId()
+        );
+        Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
+        dummyDevice.add(deviceIp);
+        Globals.GenArray<Globals.QEvent> eventQueue = new Globals.GenArray<>();
+        eventQueue.add(event);
+        sendDeviceEventQueueOverNetwork(dummyDevice, acces.GetSecureId(), eventQueue, deviceIp);
+
     }
 
 

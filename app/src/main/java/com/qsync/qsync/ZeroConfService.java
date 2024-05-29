@@ -39,31 +39,12 @@ public class ZeroConfService {
 
 
     public Globals.GenArray<Map<String, String>> getConnectedDevices(){
+
         return connected_devices;
     }
 
 
-    private String getDeviceHostname() {
 
-        final String[] hostname = {""};
-        ProcessExecutor.Function gethn = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                try {
-                    // Get the local host address
-                    InetAddress inetAddress = InetAddress.getLocalHost();
-                    hostname[0] = inetAddress.getHostName();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        ProcessExecutor.startProcess(gethn);
-
-        return hostname[0];
-
-    }
 
 
     private String getAndroidId() {
@@ -167,6 +148,8 @@ public class ZeroConfService {
                         if(acces.IsDeviceLinked(connected_devices.get(i).get("device_id"))){
                             acces.setDevicedbState(connected_devices.get(i).get("device_id"),false);
                         }
+
+                        acces.removeDeviceFromNetworkMap(connected_devices.get(i).get("device_id"),connected_devices.get(i).get("ip_addr"));
                         connected_devices.del(i);
                         break;
                     }
@@ -202,38 +185,48 @@ public class ZeroConfService {
                 device.put("device_id", serviceInfo.getAttributes().get("device_id").toString());
                 Log.d(TAG, "Detected device: " + device);
 
-                connected_devices.add(device);
 
-                if (acces.IsDeviceLinked(device.get("device_id"))) {
-                    acces.setDevicedbState(device.get("device_id"), true, device.get("ip_addr"));
-                    Log.d(TAG, "Checking if it missed any updates:");
+                // filter duplicates
+                if(!acces.isDeviceOnNetworkMap(device.get("ip_addr"))){
+                    connected_devices.add(device);
 
 
-                    if (acces.needsUpdate(device.get("device_id"))) {
-                        // Get the event queues for the device
-                        Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(device.get("device_id"));
+                    acces.addDeviceInNetworkMap(device.get("device_id"),device.get("ip_addr"),device.get("host"));
 
-                        // Process each event queue
-                        for (Map.Entry<String, Globals.GenArray<Globals.QEvent>> entry : multiQueue.entrySet()) {
-                            String secureId = entry.getKey();
-                            Globals.GenArray<Globals.QEvent> ptrQueue = entry.getValue();
 
-                            // Convert the list of pointers to actual values
-                            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-                            for (int j=0;j<multiQueue.size();j++) {
-                                queue.add(ptrQueue.get(j));
+
+                    if (acces.IsDeviceLinked(device.get("device_id"))) {
+                        acces.setDevicedbState(device.get("device_id"), true, device.get("ip_addr"));
+                        Log.d(TAG, "Checking if it missed any updates:");
+
+
+                        if (acces.needsUpdate(device.get("device_id"))) {
+                            // Get the event queues for the device
+                            Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(device.get("device_id"));
+
+                            // Process each event queue
+                            for (Map.Entry<String, Globals.GenArray<Globals.QEvent>> entry : multiQueue.entrySet()) {
+                                String secureId = entry.getKey();
+                                Globals.GenArray<Globals.QEvent> ptrQueue = entry.getValue();
+
+                                // Convert the list of pointers to actual values
+                                Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+                                for (int j=0;j<multiQueue.size();j++) {
+                                    queue.add(ptrQueue.get(j));
+                                }
+
+                                // Send event queue over the network
+                                Globals.GenArray<String> deviceIds = new Globals.GenArray<>();
+                                deviceIds.add(device.get("device_id"));
+                                Networking.sendDeviceEventQueueOverNetwork(deviceIds, secureId, queue, device.get("ip_addr"));
                             }
 
-                            // Send event queue over the network
-                            Globals.GenArray<String> deviceIds = new Globals.GenArray<>();
-                            deviceIds.add(device.get("device_id"));
-                            Networking.sendDeviceEventQueueOverNetwork(deviceIds, secureId, queue, device.get("ip_addr"));
+                            // Remove device from the update queue
+                            acces.removeDeviceFromRetard(device.get("device_id"));
                         }
-
-                        // Remove device from the update queue
-                        acces.removeDeviceFromRetard(device.get("device_id"));
                     }
                 }
+
 
             }
         };
