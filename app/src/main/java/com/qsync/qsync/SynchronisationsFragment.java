@@ -59,7 +59,6 @@ public class SynchronisationsFragment extends Fragment {
                         .navigate(R.id.action_SynchronisationsFragment_to_fragment_magasin)
         );
 
-        AccesBdd acces = new AccesBdd(getContext());
 
 
         selectFolderLauncher = registerForActivityResult(
@@ -88,8 +87,12 @@ public class SynchronisationsFragment extends Fragment {
 
                                     DocumentFile directory = DocumentFile.fromTreeUri(getContext(), treeUri);
                                     if (directory != null && directory.isDirectory()) {
+                                        AccesBdd acces = new AccesBdd(getContext());
+
                                         acces.createSync(directory.getUri().toString());
                                         FileSystem.startDirectoryMonitoring(getContext(),directory);
+
+                                        acces.closedb();
                                     }
                                 }
                             }
@@ -99,8 +102,11 @@ public class SynchronisationsFragment extends Fragment {
                 });
 
 
+        AccesBdd acces = new AccesBdd(getContext());
 
         Map<String, Globals.SyncInfos> synchros = acces.ListSyncAllTasks();
+        acces.closedb();
+
         addButtonsFromSynchroGenArray(
                 getContext(),
                 syncMapToGenArray(synchros),
@@ -109,6 +115,9 @@ public class SynchronisationsFragment extends Fragment {
 
                     @Override
                     public void callback(Globals.SyncInfos sync) {
+
+                        AccesBdd acces = new AccesBdd(getContext());
+
                         String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -174,6 +183,8 @@ public class SynchronisationsFragment extends Fragment {
                                 Toast.makeText(getContext(), choices[choice_index], Toast.LENGTH_SHORT).show();
                             }
                         });
+
+                        acces.closedb();
                         builder.show();
                     }
                 }
@@ -241,6 +252,7 @@ public class SynchronisationsFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
+
         super.onDestroyView();
         binding = null;
     }

@@ -235,4 +235,33 @@ public class BackendApi {
 
 
     }
+
+    public static void showLargageAerienEmissionNotification(Context context,String msg){
+
+        ProcessExecutor.Function nt = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                NotificationHelper.showLoadingNotification(context,msg);
+            }
+        };
+
+        ProcessExecutor.executeOnUIThread(nt);
+
+    }
+
+    public static void discardLargageAerienEmissionNotification(Context context){
+
+        ProcessExecutor.Function nt = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                NotificationHelper.removeLoadingNotification(context);
+            }
+        };
+
+        ProcessExecutor.executeOnUIThread(nt);
+
+    }
+
+
+
 }

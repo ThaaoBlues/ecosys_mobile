@@ -1,25 +1,31 @@
 package com.qsync.qsync;
 
 import static com.qsync.qsync.DeltaBinaire.buildDelta;
+import static com.qsync.qsync.DeltaBinaire.buildDeltaFromInputStream;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
+import androidx.documentfile.provider.DocumentFile;
 
-import com.google.gson.Gson;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayInputStream;
@@ -107,6 +113,7 @@ public class AccesBdd {
 
     public void closedb() {
         if (db != null) {
+
             db.close();
         }
 
@@ -116,6 +123,20 @@ public class AccesBdd {
     // to store different objects in the database
     // this one is specifically made for the binary delta object
     public byte[] serialize(DeltaBinaire.Delta delta) throws IOException {
+        /*StringBuilder instructionsBuilder = new StringBuilder();
+        for (DeltaBinaire.DeltaInstruction instruction : delta.Instructions) {
+            instructionsBuilder.append(instruction.InstructionType).append(",");
+            for (int data : instruction.Data) {
+                instructionsBuilder.append(data).append(",");
+            }
+            instructionsBuilder.append(instruction.ByteIndex).append("|");
+        }
+        // Remove the last "|"
+        if (instructionsBuilder.length() > 0) {
+            instructionsBuilder.setLength(instructionsBuilder.length() - 1);
+        }
+        return String.join(";",instructionsBuilder.toString(),delta.getFilePath()).getBytes(StandardCharsets.UTF_8);*/
+
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(delta);
@@ -124,10 +145,29 @@ public class AccesBdd {
     }
 
     // Deserialization method
-    public static DeltaBinaire.Delta deserialize(byte[] byteArray) throws IOException, ClassNotFoundException {
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
+    public static DeltaBinaire.Delta deserialize(String data) throws IOException, ClassNotFoundException {
+        /*String[] parts = data.split(";");
+
+        String[] instructionParts = parts[0].split("\\|");
+        List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
+        for (String instructionStr : instructionParts) {
+            String[] instructionData = instructionStr.split(",");
+            byte[] dataBytes = new byte[instructionData.length - 2];
+            for (int i = 1; i < instructionData.length - 1; i++) {
+                dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
+            }
+            long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
+            instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
+        }
+        DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
+        delta.Instructions = instructions;
+        delta.setFilePath(parts[1]);
+
+        return delta;*/
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data.getBytes());
         ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         return (DeltaBinaire.Delta) objectInputStream.readObject();
+
     }
 
     private void createTables(SQLiteDatabase db) {
@@ -194,7 +234,6 @@ public class AccesBdd {
                 "hostname TEXT,"+
                 "ip_addr TEXT)"
         );
-        Log.d("BASE DE DONNEES","LES TABLES ON ETE CREES");
 
         if (!isMyDeviceIdGenerated(db)) {
             generateMyDeviceId(db);
@@ -233,10 +272,6 @@ public class AccesBdd {
         return ret;
     }
 
-    public boolean isFile(String path) {
-        return new File(path).isFile();
-    }
-
     public void getSecureIdFromRootPath(String rootPath) {
         String[] args = {rootPath};
         Cursor cursor = db.rawQuery("SELECT secure_id FROM sync WHERE root=?",args);
@@ -249,83 +284,92 @@ public class AccesBdd {
 
     }
 
-    public void createFile(String relativePath, String absolutePath, String flag){
-
-
+    public void createFile(String relativePath, DocumentFile file, String flag){
         try {
-            InputStream inputStream = new FileInputStream(absolutePath);
+
+            InputStream inputStream = context.getContentResolver().openInputStream(file.getUri());
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             GZIPOutputStream gzipOutputStream = new GZIPOutputStream(outputStream);
 
 
-
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.copy(Paths.get(absolutePath), gzipOutputStream);
+                copyFileToGZipOutputStream( inputStream,gzipOutputStream);
             }
             byte[] contentBytes = outputStream.toByteArray();
-            String[] args = {
+            Object[] args = {
                     relativePath,
-                    String.valueOf(new File(absolutePath).length()),
+                    0,
+                    "file",
+                    file.length(),
                     secureId,
-                    Arrays.toString(contentBytes)
+                    contentBytes
             };
 
-           db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?, 0, 'file', ?, ?, ?)",args);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+            /*ContentValues ctv = new ContentValues();
+            ctv.put("path",relativePath);
+            ctv.put("version_id",0);
+            ctv.put("type","file");
+            ctv.put("size",file.length());
+            ctv.put("secure_id",secureId);
+            ctv.put("content",contentBytes);
+            long res = db.insert("filesystem",null,ctv);*/
 
-        // Handle adding file to retard
-        if ("[ADD_TO_RETARD]".equals(flag)) {
-            // Build delta
-            DeltaBinaire.Delta delta = buildDelta(relativePath, absolutePath, 0, new byte[0]);
+            db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?,?,?, ?, ?, ?)",args);
+            Log.d("Qsync Server : Database","Added file to filesystem map. return value : ");
 
-            // Get offline devices
-            Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
 
-            // Insert delta into delta table
+            // Handle adding file to retard
+            if ("[ADD_TO_RETARD]".equals(flag)) {
+                // Build delta
+                DeltaBinaire.Delta delta = buildDeltaFromInputStream(relativePath, file.length(), inputStream, 0, new byte[0]);
 
-            try {
+                // Get offline devices
+                Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
+
+                // Insert delta into delta table
+
                 byte[] serializedData = serialize(delta);
                 String deltaInsertQuery = "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)";
-                db.execSQL(deltaInsertQuery,new Object[]{
+                db.execSQL(deltaInsertQuery, new Object[]{
                         relativePath,
                         String.valueOf(getFileLastVersionId(relativePath) + 1),
                         serializedData,
                         secureId
-            });
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                });
+
+
+                // Insert into retard table
+                if(!offlineDevices.isEmpty()){
+                    HashMap<String, String> modtypes = Globals.modTypes();
+
+                    StringBuilder strIds = new StringBuilder();
+                    for (int i = 0; i < offlineDevices.size(); i++) {
+                        strIds.append(offlineDevices.get(i)).append(";");
+                    }
+                    strIds.deleteCharAt(strIds.length() - 1);
+
+                    String retardInsertQuery = "INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)";
+                    db.execSQL(retardInsertQuery,new String[]{
+                            String.valueOf(getFileLastVersionId(relativePath) + 1),
+                            relativePath,
+                            modtypes.get("creation"),
+                            strIds.toString(),
+                            secureId
+                    });
+                }
+
+
             }
 
-
-
-
-
-        // Insert into retard table
-
-            HashMap<String, String> modtypes = Globals.modTypes();
-
-            StringBuilder strIds = new StringBuilder();
-            for (int i = 0; i < offlineDevices.size(); i++) {
-                strIds.append(offlineDevices.get(i)).append(";");
-            }
-            strIds.deleteCharAt(strIds.length() - 1);
-
-            String retardInsertQuery = "INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)";
-           db.execSQL(retardInsertQuery,new String[]{
-                    String.valueOf(getFileLastVersionId(relativePath) + 1),
-                    relativePath,
-                    modtypes.get("creation"),
-                    strIds.toString(),
-                    secureId
-            });
-
-
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
 
 
-        UpdateCachedFile(absolutePath);
+
+
+        UpdateCachedFile(file,relativePath);
     }
 
 
@@ -413,8 +457,11 @@ public class AccesBdd {
 
     public Globals.GenArray<String> getSyncOfflineDevices() {
         Globals.GenArray<String> offlineDevices = new Globals.GenArray<>();
+        Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
+
+
         Cursor cursor = db.rawQuery(
-        "SELECT device_id, is_connected FROM linked_devices WHERE device_id IN (SELECT device_id FROM linked_devices)",
+        "SELECT device_id, is_connected FROM linked_devices WHERE device_id IN ("+linkedDevices.join(",")+")",
             null
         );
         while (cursor.moveToNext()) {
@@ -666,12 +713,21 @@ public class AccesBdd {
         }
 
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            String relativePath = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                relativePath = rootPath + File.separator + file.getFileName().toString();
+
+
+            DocumentFile dcf;
+            if(file.toFile().isDirectory()){
+                dcf = DocumentFile.fromTreeUri(context,Uri.parse(file.toUri().toString()));
+
+            }else{
+                dcf = DocumentFile.fromSingleUri(context,Uri.parse(file.toUri().toString()));
+
             }
+
+            String relativePath = dcf.getUri().getPath().replace(GetRootSyncPath(),"");
+
             // Add file to the database or perform other actions as needed
-            createFile(relativePath, file.toAbsolutePath().toString(), "[ADD_TO_RETARD]");
+            createFile(relativePath,dcf, "[ADD_TO_RETARD]");
             System.out.println("Registering: " + relativePath);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 return FileVisitResult.CONTINUE;
@@ -795,22 +851,18 @@ public class AccesBdd {
                         secureId
                 }
                 );
-                if (cursor.moveToFirst()) {
-                    rootPath = cursor.getString(0);
-                }
+        if (cursor.moveToFirst()) {
+            rootPath = cursor.getString(0);
+        }
+
+        cursor.close();
 
         return rootPath;
     }
 
     public void setDevicedbState(String deviceId, boolean value, String... ipAddr) {
-        if (ipAddr.length == 0) {
-            db.execSQL("UPDATE linked_devices SET is_connected=? WHERE device_id=?",
-                    new Object[]{
-                            value,
-                            deviceId
-                    }
-                    );
-        }
+
+
         db.execSQL("UPDATE linked_devices SET is_connected=?,ip_addr=? WHERE device_id=?",
                 new  Object[]{
                         value,
@@ -821,6 +873,15 @@ public class AccesBdd {
 
     }
 
+    public void setDevicedbState(String deviceId, boolean value) {
+
+        db.execSQL("UPDATE linked_devices SET is_connected=? WHERE device_id=?",
+                new Object[]{
+                        value,
+                        deviceId
+                }
+        );
+    }
     public boolean GetDevicedbState(String deviceId) {
         boolean dbState = false;
         Cursor cursor = db.rawQuery("SELECT is_connected FROM linked_devices WHERE device_id=?",
@@ -886,8 +947,8 @@ public class AccesBdd {
                                 newIdsStr.toString()
                         }
                         );
-                cursor.close();
             }
+            cursor.close();
         }
 
     }
@@ -919,17 +980,17 @@ public class AccesBdd {
         if (cursor.moveToNext()) {
             SerializedData = cursor.getBlob(0);
 
-            try{
-                DeltaBinaire.Delta delta = deserialize(SerializedData);
-                return delta;
+            try (cursor) {
+                return deserialize(SerializedData.toString());
 
-            }catch (IOException | ClassNotFoundException e){
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
 
         }
 
         return  null;
+
 
     }
 
@@ -946,16 +1007,18 @@ public class AccesBdd {
             isLinked = count > 0;
         }
 
+        cursor.close();
+
         return isLinked;
     }
 
 
 
 
-    public void UpdateCachedFile(String path) {
+    public void UpdateCachedFile(DocumentFile file,String relativePath) {
         try {
             // Read the current state of the given file and update it in the database
-            try (FileInputStream fis = new FileInputStream(path);
+            try (InputStream fis = context.getContentResolver().openInputStream(file.getUri());
                  ByteArrayOutputStream bos = new ByteArrayOutputStream();
                  GZIPOutputStream gzipos = new GZIPOutputStream(bos)) {
 
@@ -967,10 +1030,11 @@ public class AccesBdd {
                 gzipos.close();
                 byte[] compressedData = bos.toByteArray();
 
+
                 db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
                         new Object[]{
                                 compressedData,
-                                path,
+                                relativePath,
                                 secureId
                         }
                         );
@@ -1019,7 +1083,7 @@ public class AccesBdd {
             event.setFileType(cursor.getString(4));
 
             try{
-                DeltaBinaire.Delta delta = deserialize(cursor.getBlob(1));
+                DeltaBinaire.Delta delta = deserialize(cursor.getBlob(1).toString());
                 event.setDelta(delta);
                 event.setFilePath(cursor.getString(3));
                 event.setSecureId(secureId);
@@ -1046,22 +1110,24 @@ public class AccesBdd {
                         "%"+deviceId+"%"
                 }
                 );
-                while (cursor.moveToNext()) {
-                    // build delta
-                    Globals.QEvent event = new Globals.QEvent("","",null,"","","");
-                    event.setFlag(Globals.modTypesReverse().get(cursor.getString(1)));
-                    event.setFileType(cursor.getString(3));
-                    event.setFilePath(cursor.getString(2));
-                    event.setSecureId(secureId);
+        while (cursor.moveToNext()) {
+            // build delta
+            Globals.QEvent event = new Globals.QEvent("","",null,"","","");
+            event.setFlag(Globals.modTypesReverse().get(cursor.getString(1)));
+            event.setFileType(cursor.getString(3));
+            event.setFilePath(cursor.getString(2));
+            event.setSecureId(secureId);
 
-                    if (!queue.containsKey(event.getSecureId())) {
-                        queue.put(event.getSecureId(), new Globals.GenArray<>());
-                    }
-                    Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
-                    assert events != null;
-                    events.add(event);
-                    queue.put(event.getSecureId(), events);
-                }
+            if (!queue.containsKey(event.getSecureId())) {
+                queue.put(event.getSecureId(), new Globals.GenArray<>());
+            }
+            Globals.GenArray<Globals.QEvent> events = queue.get(event.getSecureId());
+            assert events != null;
+            events.add(event);
+            queue.put(event.getSecureId(), events);
+        }
+
+        cursor.close();
 
         return queue;
     }
@@ -1284,7 +1350,6 @@ public class AccesBdd {
             device.put("ip_addr",cursor.getString(1));
             device.put("hostname",cursor.getString(2));
 
-            Log.d("NETWORK MAP",device.toString());
             ret.add(device);
 
         }
@@ -1308,6 +1373,18 @@ public class AccesBdd {
 
     public void cleanNetworkMap(){
         db.execSQL("DELETE FROM reseau");
+    }
+
+
+    public static void copyFileToGZipOutputStream(InputStream in, GZIPOutputStream out) throws IOException {
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+
+
     }
 
 

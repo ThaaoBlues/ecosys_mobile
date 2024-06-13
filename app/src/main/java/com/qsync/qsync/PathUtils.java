@@ -10,6 +10,8 @@ import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
+import androidx.documentfile.provider.DocumentFile;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -114,6 +116,29 @@ public class PathUtils {
             result = uri.getPath();
             int cut = result.lastIndexOf('/');
             if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    private static String getFileName(Context context, Uri uri) {
+        String result = null;
+        if ("content".equals(uri.getScheme())) {
+            String[] projection = { android.provider.MediaStore.Images.Media.DISPLAY_NAME };
+            try (Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DISPLAY_NAME);
+                    result = cursor.getString(index);
+                }
+            } catch (Exception e) {
+                Log.e("Qsync Server", "Error getting file name", e);
+            }
+        }
+        if (result == null) {
+            result = uri.getPath();
+            int cut = result != null ? result.lastIndexOf('/') : -1;
+            if (cut != -1 && result != null) {
                 result = result.substring(cut + 1);
             }
         }

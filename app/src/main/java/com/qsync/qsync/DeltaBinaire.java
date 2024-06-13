@@ -7,7 +7,7 @@ import java.util.*;
 public class DeltaBinaire {
     private static final String TAG = "DeltaBinaire";
 
-    static class DeltaInstruction {
+    static class DeltaInstruction implements Serializable{
         String InstructionType;
         byte[] Data;
         long ByteIndex;
@@ -33,7 +33,7 @@ public class DeltaBinaire {
 
     }
 
-    static class Delta {
+    static class Delta implements Serializable{
 
         private String FilePath;
 
@@ -53,6 +53,9 @@ public class DeltaBinaire {
                     ", filePath='" + this.FilePath + '\'' +
                     '}';
         }
+
+
+
     }
 
 
@@ -93,7 +96,7 @@ public class DeltaBinaire {
 
                 boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).ByteIndex != blockingByteIndex;
 
-                if ((newFileBuff[0] != oldFileBuff) && byteIndexCond) {
+                if ( ( (newFileBuff[0] != oldFileBuff) || i >= oldFileSize) && byteIndexCond) {
 
                     // To avoid implicit pointer usage, we create a new byte array in the argument
                     DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{
@@ -103,7 +106,7 @@ public class DeltaBinaire {
 
                     byteIndex++;
                 } else {
-                    if (newFileBuff[0] != oldFileBuff) {
+                    if ((newFileBuff[0] != oldFileBuff) || i >= oldFileSize) {
                         fileDelta.get(deltaIndex).Data = Arrays.copyOf(fileDelta.get(deltaIndex).Data,
                                 fileDelta.get(deltaIndex).Data.length + 1);
 
@@ -130,7 +133,7 @@ public class DeltaBinaire {
             Log.e(TAG, "Error building delta: " + e.getMessage());
         }
 
-        Log.d("FILEDELTA","build this delta : ");
+        Log.d("Qsync Server : binary delta","build this delta : ");
 
         return delta;
     }

@@ -12,12 +12,13 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ZeroConfService {
 
-    private static final String TAG = "ZeroConfService";
+    private static final String TAG = "Qsync Server : ZeroConfService";
     private static final String SERVICE_TYPE = "_qsync._tcp.";
 
     private final Context context;
@@ -146,7 +147,11 @@ public class ZeroConfService {
                 for(int i =0;i<connected_devices.size();i++){
                     if(!Networking.CheckIfDeviceOnline(connected_devices.get(i).get("ip_addr"),PORT)){
                         if(acces.IsDeviceLinked(connected_devices.get(i).get("device_id"))){
-                            acces.setDevicedbState(connected_devices.get(i).get("device_id"),false);
+                            acces.setDevicedbState(
+                                    connected_devices.get(i).get("device_id"),
+                                    false,
+                                    connected_devices.get(i).get("ip_addr")
+                            );
                         }
 
                         acces.removeDeviceFromNetworkMap(connected_devices.get(i).get("device_id"),connected_devices.get(i).get("ip_addr"));
@@ -181,8 +186,8 @@ public class ZeroConfService {
                 device.put("host", serviceInfo.getServiceName());
                 device.put("ip_addr", serviceInfo.getHost().getHostAddress());
                 device.put("port", String.valueOf(serviceInfo.getPort()));
-                device.put("version", serviceInfo.getAttributes().get("version").toString());
-                device.put("device_id", serviceInfo.getAttributes().get("device_id").toString());
+                device.put("version", new String(serviceInfo.getAttributes().get("version"), StandardCharsets.UTF_8));
+                device.put("device_id", new String(serviceInfo.getAttributes().get("device_id"), StandardCharsets.UTF_8));
                 Log.d(TAG, "Detected device: " + device);
 
 

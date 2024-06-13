@@ -8,13 +8,10 @@ import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -109,8 +106,8 @@ public class Networking {
                 InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
                 BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
                 bufferedReader.read(header_buff, 0, HEADER_LENGTH);
-                String device_id = "";
-                String secure_id = "";
+                String device_id;
+                String secure_id;
                 Log.i(TAG,"Header : "+ Arrays.toString(header_buff));
 
 
@@ -157,13 +154,22 @@ public class Networking {
 
                 // check if this is a regular file event of a special request
                 Log.d(TAG, "RECEIVING EVENT : " + data);
+
+                DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
+
                 switch (data.getFlag()) {
                     case "[MODIFICATION_DONE]":
                         setEventNetworkLockForDevice(device_id, false);
                         break;
                     case "[SETUP_DL]":
-                        Log.d(TAG, "GOT FLAG, BUILDING SETUP QUEUE...");
-                        buildSetupQueue(secure_id, device_id);
+
+                        if(acces.IsDeviceLinked(device_id)){
+                            Log.d(TAG, "GOT FLAG, BUILDING SETUP QUEUE...");
+                            buildSetupQueue(secure_id, device_id);
+                            String response = acces.getMyDeviceId() + ";" + acces.GetSecureId() + ";" + "[MODIFICATION_DONE]";
+                            outputStream.writeBytes(response);
+                        }
+
                         break;
                     case "[LINK_DEVICE]":
                         // as this is triggered by another machine telling this one to create a sync task,
@@ -203,15 +209,15 @@ public class Networking {
                         break;
                     default:
                         // regular file event
-                        handleEvent(secure_id, device_id, body_buff.toString().getBytes());
+                        handleEvent(device_id, data);
                         // send back a modification confirmation, so the other end can remove this machine device_id
                         // from concerned sync task retard entries
                         String response = acces.getMyDeviceId() + ";" + acces.GetSecureId() + ";" + "[MODIFICATION_DONE]";
-                        DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
                         outputStream.writeBytes(response);
                         break;
                 }
-
+                outputStream.flush();
+                outputStream.close();
                 acces.closedb();
             } catch (IOException e) {
                 Log.e(TAG, "Error in ClientHandler: ", e);
@@ -220,96 +226,87 @@ public class Networking {
     }
 
     // used to process a request when it is a regular file event
-    public static void handleEvent(String secureId, String deviceId, byte[] buffer) {
-        try {
-            String bufferData = new String(buffer);
-            JSONObject jsonEvent = new JSONObject(bufferData);
+    public static void handleEvent(String deviceId, Globals.QEvent event) {
 
-            AccesBdd acces = new AccesBdd(context);
-            // First, we lock the filesystem watcher to prevent a ping-pong effect
-            acces.SetFileSystemPatchLockState(deviceId, true);
+        AccesBdd acces = new AccesBdd(context);
+        // First, we lock the filesystem watcher to prevent a ping-pong effect
+        acces.SetFileSystemPatchLockState(deviceId, true);
 
-            // Get the necessary data from the JSON event
-            String relativePath = jsonEvent.getString("FilePath");
-            String newRelativePath = jsonEvent.getString("NewFilePath");
-            String absoluteFilePath = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                absoluteFilePath = Paths.get(acces.GetRootSyncPath(), relativePath).toString();
-            }
-            String newAbsoluteFilePath = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                newAbsoluteFilePath = Paths.get(acces.GetRootSyncPath(), newRelativePath).toString();
-            }
-            String eventType = jsonEvent.getString("Flag");
-            String fileType = jsonEvent.getString("FileType");
-
-            switch (eventType) {
-                case "MOVE":
-                    acces.move(relativePath, newRelativePath, fileType);
-                    moveInFilesystem(absoluteFilePath, newAbsoluteFilePath);
-                    break;
-                case "REMOVE":
-                    if ("file".equals(fileType)) {
-                        acces.rmFile(absoluteFilePath);
-                    } else {
-                        acces.rmFolder(absoluteFilePath);
-                    }
-                    removeFromFilesystem(absoluteFilePath);
-                    break;
-                case "CREATE":
-                    if ("file".equals(fileType)) {
-                        acces.createFile(relativePath,absoluteFilePath,"[SENT_FROM_OTHER_DEVICE]");
-                    } else {
-                        acces.createFolder(absoluteFilePath);
-                    }
-                    break;
-                case "UPDATE":
-                    acces.incrementFileVersion(relativePath);
-                    break;
-                default:
-                    Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
-                    break;
-            }
-
-            // Release the filesystem lock
-            acces.SetFileSystemPatchLockState(deviceId, false);
-
-            acces.closedb();
-        } catch (JSONException e) {
-            Log.e("HandleEventAdapter", "Error decoding JSON data from request buffer", e);
+        // Get the necessary data from the JSON event
+        String relativePath = event.FilePath;
+        String newRelativePath = event.NewFilePath;
+        String absoluteFilePath = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            absoluteFilePath = Paths.get(acces.GetRootSyncPath(), relativePath).toString();
         }
+        String newAbsoluteFilePath = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            newAbsoluteFilePath = Paths.get(acces.GetRootSyncPath(), newRelativePath).toString();
+        }
+        String eventType = event.Flag;
+        String fileType = event.FileType;
+
+        switch (eventType) {
+            case "[MOVE]":
+                acces.move(relativePath, newRelativePath, fileType);
+                moveInFilesystem(absoluteFilePath, newAbsoluteFilePath);
+                break;
+            case "[REMOVE]":
+                if ("file".equals(fileType)) {
+                    acces.rmFile(absoluteFilePath);
+                } else {
+                    acces.rmFolder(absoluteFilePath);
+                }
+                removeFromFilesystem(absoluteFilePath);
+                break;
+            case "[CREATE]":
+                if ("file".equals(fileType)) {
+                    acces.createFile(relativePath,
+                            DocumentFile.fromSingleUri(context,Uri.parse(absoluteFilePath)),
+                            "[SENT_FROM_OTHER_DEVICE]");
+                } else {
+                    acces.createFolder(absoluteFilePath);
+                }
+                break;
+            case "[UPDATE]":
+                acces.incrementFileVersion(relativePath);
+                break;
+            default:
+                Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
+                break;
+        }
+
+        // Release the filesystem lock
+        acces.SetFileSystemPatchLockState(deviceId, false);
+
+        acces.closedb();
     }
 
 
     public static void sendDeviceEventQueueOverNetwork(Globals.GenArray<String> connectedDevices, String secureId, Globals.GenArray<Globals.QEvent> eventQueue, String... ipAddress) {
         AccesBdd acces = new AccesBdd(context);
+
+
+
         for (int i=0;i<connectedDevices.size();i++) {
             String deviceId = connectedDevices.get(i);
 
             for (int j=0;j<eventQueue.size();j++) {
 
 
-                Globals.QEvent event = eventQueue.get(j);
-                Log.d("SendDeviceEvent", "SENDING EVENT : " + event);
+                Log.d("SendDeviceEvent", "SENDING EVENT : " +  eventQueue.get(j));
 
                 setEventNetworkLockForDevice(deviceId, true);
 
                 try {
 
-                    /*Gson gson = new Gson();
-                    String eventJson = gson.toJson(event);*/
-
-                    String serializedEvent = event.serialize();
 
                     // Initialize the connection
                     Socket socket = new Socket(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId), 8274);
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-                    // Construct the message to be sent
-                    String message = acces.getMyDeviceId() + ";" + secureId + serializedEvent;
-
                     // Send the message
-                    outputStream.writeBytes(message);
+                    outputStream.writeBytes(acces.getMyDeviceId() + ";" + secureId + eventQueue.get(j).serialize());
                     outputStream.flush();
 
                     // Close the connection
@@ -330,7 +327,11 @@ public class Networking {
                     Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
                 }
             }
+
         }
+
+        acces.closedb();
+
     }
 
 
@@ -425,33 +426,33 @@ public class Networking {
         acces.SetSecureId(secureId);
 
 
-
-        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-        // TODO : utiliser documentfiletree comme and FIleSystem.populateState
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Uri rootUri = Uri.parse(acces.GetRootSyncPath());
             DocumentFile directory = DocumentFile.fromTreeUri(context, rootUri);
 
-            traverseDocumentFile(directory,rootUri,acces,queue);
+            // At setup, we must send files one by one
+            // so the queue is not huge and does not overflow the RAM
+            traverseDocumentFileAndSendOneByOne(directory,rootUri,acces,deviceId,secureId);
 
-            Globals.GenArray<String> devices = new Globals.GenArray<>();
-            devices.add(deviceId);
-            sendDeviceEventQueueOverNetwork(devices, secureId, queue);
 
-            acces.closedb();
+
 
         }
 
+        acces.closedb();
 
 
     }
 
 
-    private static void traverseDocumentFile(DocumentFile directory, Uri rootUri, AccesBdd acces, Globals.GenArray<Globals.QEvent> queue) {
+    private static void traverseDocumentFileAndSendOneByOne(DocumentFile directory, Uri rootUri, AccesBdd acces,String deviceId,String secureId) {
+
+        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
         for (DocumentFile file : directory.listFiles()) {
             String relativePath = PathUtils.getRelativePath(rootUri, file.getUri());
+            Globals.GenArray<String> devices = new Globals.GenArray<>();
+            devices.add(deviceId);
 
             if (file.isDirectory()) {
                 // Create event for directory
@@ -464,9 +465,16 @@ public class Networking {
                         acces.GetSecureId()
 
                 );
+
+
                 queue.add(event);
+
+                // send before recursive call so we don't take to many ram
+                sendDeviceEventQueueOverNetwork(devices, secureId, queue);
+                queue.popLast();
+
                 // Recurse into subdirectory
-                traverseDocumentFile(file, rootUri, acces,queue);
+                traverseDocumentFileAndSendOneByOne(file, rootUri, acces,deviceId,secureId);
             } else if (file.isFile()) {
 
                 try {
@@ -477,22 +485,29 @@ public class Networking {
                     ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(file.getUri() , "r");
                     long fileSize = fileDescriptor.getStatSize();
 
-                    DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,fileSize,inputStream,0,new byte[0]);
 
 
                     Globals.QEvent event = new Globals.QEvent(
                             "[CREATE]",
                             "file",
-                            delta,
+                            DeltaBinaire.buildDeltaFromInputStream(relativePath,fileSize,inputStream,0,new byte[0]),
                             relativePath,
                             "",
                             acces.GetSecureId()
                     );
+                    inputStream.close();
+
                     queue.add(event);
+                    sendDeviceEventQueueOverNetwork(devices, secureId, queue);
+                    queue.popLast();
 
                 } catch (FileNotFoundException e) {
                     throw new RuntimeException(e);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
+
+
             }
         }
     }
@@ -534,7 +549,7 @@ public class Networking {
 
                     if(multiple){
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            FileZipper.unzipFile(filePath,Path.of(filePath).getParent().toString());
+                            FileTar.untarFile(filePath,Path.of(filePath).getParent().toString());
                         }
                     }else{
                         BackendApi.openFile(context,
@@ -558,6 +573,9 @@ public class Networking {
 
 
     public static void sendLargageAerien(Uri fileUri, String deviceIp,boolean multiple) {
+
+
+        BackendApi.showLargageAerienEmissionNotification(context,"Sending Largage Aerien...");
         try {
             String fileName = PathUtils.getFileNameFromUri(context,fileUri);
 
@@ -566,7 +584,6 @@ public class Networking {
 
 
             ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(fileUri , "r");
-            //long fileSize = context.getContentResolver().query(fileUri,null,null,null,null).getColumnIndex(OpenableColumns.SIZE);
             long fileSize = fileDescriptor.getStatSize();
 
             DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
@@ -587,6 +604,9 @@ public class Networking {
         } catch (IOException e) {
             Log.e("SendAirdrop", "Error while sending Largage Aerien", e);
         }
+
+
+        BackendApi.discardLargageAerienEmissionNotification(context);
     }
 
     public static boolean CheckIfDeviceOnline(String ipAddress, int port) {

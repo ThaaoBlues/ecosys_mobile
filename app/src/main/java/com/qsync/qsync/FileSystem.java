@@ -1,5 +1,6 @@
 package com.qsync.qsync;
 
+
 import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
@@ -8,15 +9,11 @@ import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
 
-import org.apache.commons.io.monitor.FileAlterationListener;
-import org.apache.commons.io.monitor.FileAlterationMonitor;
-import org.apache.commons.io.monitor.FileAlterationObserver;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.*;
+
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class FileSystem {
 
@@ -53,11 +50,16 @@ public class FileSystem {
 
             if (!previousState.containsKey(filePath)) {
                 Log.d("FileMonitor", "New file detected: " + filePath);
-                handleCreateEvent(acces, filePath, true);
+                if(fileInfo.isDirectory){
+                    handleCreateEvent(acces, DocumentFile.fromTreeUri(context,fileInfo.uri));
+                }else{
+                    handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+
+                }
 
             } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified)) {
                 Log.d("FileMonitor", "Modified file detected: " + filePath);
-                handleWriteEvent(acces,filePath);
+                handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
             }
 
             // Handle renamed files
@@ -73,9 +75,11 @@ public class FileSystem {
                 FileInfo fileInfo = previousState.get(filePath);
                 if (fileInfo.isDirectory) {
                     Log.d("FileMonitor", "Deleted subdirectory detected: " + filePath);
+                    handleRemoveEvent(acces,DocumentFile.fromTreeUri(context,fileInfo.uri) );
+
                 } else {
                     Log.d("FileMonitor", "Deleted file detected: " + filePath);
-                    handleRemoveEvent(acces, filePath);
+                    handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
 
                 }
             }
@@ -110,26 +114,49 @@ public class FileSystem {
         }
     }
 
-    private static void handleCreateEvent(AccesBdd acces, String path, boolean isDirectory) {
-        String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        if (isDirectory) {
-            Log.d(TAG, "Adding " + path + " to the directories to watch.");
-            acces.createFolder(relativePath);
-        } else {
-            DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, 0, new byte[0]); // Assuming BuilDelta is adapted for Java
-            acces.createFile(relativePath, path, "[ADD_TO_RETARD]");
+    private static void handleCreateEvent(AccesBdd acces, DocumentFile file) {
+
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+        // check if file isn't already mapped as this method may be called at each startup
+        if(!acces.checkFileExists(relativePath)){
+            if (file.isDirectory()) {
+                Log.d(TAG, "Adding " + relativePath + " to the directories to watch.");
+
+                acces.createFolder(relativePath);
+            } else {
+                Log.d(TAG, "Adding " + relativePath + " to the files to watch.");
+
+                acces.createFile(relativePath,file, "[ADD_TO_RETARD]");
+            }
+        }else{
+            Log.d("Qsync Server : FileSystem",relativePath+" File already mapped.");
         }
+
     }
 
-    private static void handleWriteEvent(AccesBdd acces, String path) {
-        String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        DeltaBinaire.Delta delta = DeltaBinaire.buildDelta(relativePath, path, acces.GetFileSizeFromBdd(relativePath), acces.getFileContent(relativePath));
-        acces.updateFile(relativePath, delta); // Assuming updateFile is adapted for Java
+    private static void handleWriteEvent(Context context,AccesBdd acces, DocumentFile file) {
+
+        try{
+            String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+
+            InputStream in = context.getContentResolver().openInputStream(file.getUri());
+            DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,
+                    file.length(),
+                    in,
+                    acces.GetFileSizeFromBdd(relativePath),
+                    acces.getFileContent(relativePath)
+            );
+            acces.updateFile(relativePath, delta); // Assuming updateFile is adapted for Java
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
-    private static void handleRemoveEvent(AccesBdd acces, String path) {
-        String relativePath = path.replace(QSYNC_WRITEABLE_DIRECTORY, "");
-        if (acces.wasFile(relativePath)) {
+    private static void handleRemoveEvent(AccesBdd acces, DocumentFile file) {
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+        if (file.isFile()) {
             acces.rmFile(relativePath);
         } else {
             acces.rmFolder(relativePath);

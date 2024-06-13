@@ -179,16 +179,16 @@ public class LargageAerienFragment extends Fragment {
             @Override
             public void execute() {
                 Networking nt = new Networking(getContext(), getContext().getFilesDir().toString());
-                File zipFile = new File(
+                File tarFile = new File(
                         getContext().getFilesDir(),
-                        "/largage_aerien/mulilargage.zip");
+                        "/largage_aerien/multilargage.tar");
                 Log.d("Qsync Server","Zipping file...");
 
-                FileZipper.zipFiles(getContext(),uris,zipFile.getPath());
+                FileTar.tarFiles(getContext(),uris,tarFile.getPath());
                 Log.d("Qsync Server","Zip file built !");
 
-                nt.sendLargageAerien(Uri.fromFile(zipFile), target_device.get("ip_addr"),true);
-                Log.d("Qsync Server","Sending multiple largage aerien :"+zipFile.getName());
+                nt.sendLargageAerien(Uri.fromFile(tarFile), target_device.get("ip_addr"),true);
+                Log.d("Qsync Server","Sending multiple largage aerien :"+tarFile.getName());
             }
         };
         ProcessExecutor.startProcess(SendLA);

@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        //this.deleteDatabase("qsync.db");
+        //deleteDatabase("qsync");
 
         // clean old network map at each app startup
         AccesBdd acces = new AccesBdd(MainActivity.this);
