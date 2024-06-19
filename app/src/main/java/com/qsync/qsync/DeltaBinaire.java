@@ -143,11 +143,15 @@ public class DeltaBinaire {
         // we stop when we have a chunk size
         // that is the maximum one
         // that can still fit 2 times in the file
-        int c = 1;
-
-        while( (c<=10<<10) && (c<(fileSize>>2)) ){
-           c = c << 1;
+        int c = 10;
+        if(fileSize > 10<<10){
+            c = c<<10;
+        }else{
+            while( (c<=10<<10) && (c<(fileSize>>2)) ){
+                c = c << 1;
+            }
         }
+
 
         return c;
     }
