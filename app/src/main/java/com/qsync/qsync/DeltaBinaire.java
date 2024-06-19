@@ -138,28 +138,42 @@ public class DeltaBinaire {
         return delta;
     }*/
 
+    private static int calculateBufferSize(long fileSize){
+        // do not make chunk of more than 10Mb
+        // we stop when we have a chunk size
+        // that is the maximum one
+        // that can still fit 2 times in the file
+        int c = 1;
 
+        while( (c<=10<<10) && (c<(fileSize>>2)) ){
+           c = c << 1;
+        }
+
+        return c;
+    }
     public static DeltaBinaire.Delta buildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
                                                              long oldFileSize, byte[] oldFileContent){
         Delta delta = new Delta();
 
         boolean needsTruncature = oldFileSize > newFileSize;
 
-        byte[] newFileBuff = new byte[1024];
+        int BUFF_SIZE = calculateBufferSize(newFileSize);
+
+        byte[] newFileBuff = new byte[BUFF_SIZE];
         long byteIndex = 0;
 
         // blocking byte index is used to concatenate
         // multiples consecutives bytes change
         // into a single delta instruction
         long blockingByteIndex = 0;
-        int oldFileIndex = 0;
+        int globalIndex = 0;
 
         Log.d(TAG, "old file size : " + oldFileSize);
         Log.d(TAG, "old file content : " + Arrays.toString(oldFileContent));
         Log.d(TAG, "new file size : " + newFileSize);
 
 
-        while ((oldFileIndex < oldFileSize || byteIndex < newFileSize)) {
+        while ((globalIndex < oldFileSize || byteIndex < newFileSize)) {
             int bytesRead = 0;
             try {
                 bytesRead = newFileStream.read(newFileBuff);
@@ -174,7 +188,7 @@ public class DeltaBinaire {
             // we read a block and loop in the buffer that we just filled
             // it is quicker than reading byte by byte
             for(int buff_index = 0; buff_index < bytesRead; buff_index++){
-                byte oldFileBuff = (oldFileIndex < oldFileSize) ? oldFileContent[oldFileIndex] : 0;
+                byte oldFileBuff = (globalIndex < oldFileSize) ? oldFileContent[globalIndex] : 0;
 
                 int deltaIndex = delta.Instructions.isEmpty() ? 0 : delta.Instructions.size() - 1;
 
@@ -213,7 +227,7 @@ public class DeltaBinaire {
                     }
                 }
 
-                oldFileIndex++;
+                globalIndex++;
 
                 //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
 
