@@ -1,6 +1,5 @@
 package com.qsync.qsync;
 
-import static com.qsync.qsync.DeltaBinaire.buildDelta;
 import static com.qsync.qsync.DeltaBinaire.buildDeltaFromInputStream;
 
 import android.content.ContentValues;

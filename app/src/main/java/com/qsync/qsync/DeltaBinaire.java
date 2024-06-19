@@ -59,7 +59,7 @@ public class DeltaBinaire {
     }
 
 
-    public static Delta buildDelta(String relativePath, String absolutePath,
+    /*public static Delta buildDelta(String relativePath, String absolutePath,
                                    long oldFileSize, byte[] oldFileContent) {
         Delta delta = new Delta();
 
@@ -136,33 +136,30 @@ public class DeltaBinaire {
         Log.d("Qsync Server : binary delta","build this delta : ");
 
         return delta;
-    }
+    }*/
 
 
-    public static int javaByteToUnsigned(byte b) {
-        return b & 0xFF;
-    }
     public static DeltaBinaire.Delta buildDeltaFromInputStream(String filename,long newFileSize,InputStream newFileStream,
                                                              long oldFileSize, byte[] oldFileContent){
         Delta delta = new Delta();
 
         boolean needsTruncature = oldFileSize > newFileSize;
 
-        byte[] newFileBuff = new byte[1];
-        List<DeltaInstruction> fileDelta = new ArrayList<>();
+        byte[] newFileBuff = new byte[1024];
         long byteIndex = 0;
 
         // blocking byte index is used to concatenate
         // multiples consecutives bytes change
         // into a single delta instruction
         long blockingByteIndex = 0;
-        int i = 0;
+        int oldFileIndex = 0;
 
         Log.d(TAG, "old file size : " + oldFileSize);
         Log.d(TAG, "old file content : " + Arrays.toString(oldFileContent));
         Log.d(TAG, "new file size : " + newFileSize);
 
-        while ((i < oldFileSize || byteIndex < newFileSize)) {
+
+        while ((oldFileIndex < oldFileSize || byteIndex < newFileSize)) {
             int bytesRead = 0;
             try {
                 bytesRead = newFileStream.read(newFileBuff);
@@ -174,46 +171,67 @@ public class DeltaBinaire {
                 break;
             }
 
-            byte oldFileBuff = (i < oldFileSize) ? oldFileContent[i] : 0;
+            // we read a block and loop in the buffer that we just filled
+            // it is quicker than reading byte by byte
+            for(int buff_index = 0; buff_index < bytesRead; buff_index++){
+                byte oldFileBuff = (oldFileIndex < oldFileSize) ? oldFileContent[oldFileIndex] : 0;
 
-            int deltaIndex = fileDelta.isEmpty() ? 0 : fileDelta.size() - 1;
+                int deltaIndex = delta.Instructions.isEmpty() ? 0 : delta.Instructions.size() - 1;
 
-            boolean byteIndexCond = fileDelta.isEmpty() || fileDelta.get(deltaIndex).ByteIndex != blockingByteIndex;
+                boolean byteIndexCond = delta.Instructions.isEmpty() || delta.Instructions.get(deltaIndex).ByteIndex != blockingByteIndex;
 
-            if ((newFileBuff[0] != oldFileBuff) && byteIndexCond) {
+                ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
+                if ((newFileBuff[buff_index] != oldFileBuff) && byteIndexCond) {
 
-                // To avoid implicit pointer usage, we create a new byte array in the argument
-                DeltaInstruction instruction = new DeltaInstruction("ab", new byte[]{
-                       newFileBuff[0]
-                },
-                        byteIndex);
-                fileDelta.add(instruction);
+                    DeltaInstruction instruction = new DeltaInstruction("ab",
+                            new byte[]{
+                                    newFileBuff[buff_index]
+                            },
+                            byteIndex
+                    );
 
-                byteIndex++;
-            } else {
-                if (newFileBuff[0] != oldFileBuff) {
-                    fileDelta.get(deltaIndex).Data = Arrays.copyOf(fileDelta.get(deltaIndex).Data,
-                            fileDelta.get(deltaIndex).Data.length + 1);
+                    // To avoid implicit pointer usage, we create a new byte array in the argument
 
-                    fileDelta.get(deltaIndex).Data[fileDelta.get(deltaIndex).Data.length-1] = newFileBuff[0];
+                    delta.Instructions.add(instruction);
+
                     byteIndex++;
                 } else {
-                    byteIndex++;
-                    blockingByteIndex = byteIndex;
+                    if (newFileBuff[buff_index] != oldFileBuff) {
+                        dataStream.write(newFileBuff[buff_index]);
+                        byteIndex++;
+
+                        // end of block with changes or just not any changes for this byte
+                    } else {
+                        // check if we are at the end of a block change ( i.e the data stream has bytes in it )
+                        // this operation removes the need to clone a byte array to extend it at each new byte in a block
+                        if(dataStream.size() > 0){
+                            delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
+                            dataStream.reset();
+                        }
+                        byteIndex++;
+                        blockingByteIndex = byteIndex;
+                    }
                 }
+
+                oldFileIndex++;
+
+                //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
+
             }
-            i++;
+            }
 
-            //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
 
-        }
 
         if (needsTruncature) {
-            DeltaInstruction instruction = new DeltaInstruction("t", new byte[]{0}, newFileSize);
-            fileDelta.add(instruction);
+            DeltaInstruction instruction = new DeltaInstruction(
+                    "t",
+                    new byte[]{0},
+                    newFileSize
+            );
+
+            delta.Instructions.add(instruction);
         }
 
-        delta.Instructions.addAll(fileDelta);
         delta.setFilePath(filename);
 
         Log.d("FILEDELTA","build this delta : "+delta);
@@ -221,14 +239,6 @@ public class DeltaBinaire {
         return delta;
     }
 
-
-    public static byte goByteToJavaByte(int b) {
-
-        if(b > 127) {
-            return (byte) (b - 256);
-        }
-        return (byte)b;
-    }
 
     public static void patchFile(Delta delta) {
         try {

@@ -59,9 +59,10 @@ public class ZeroConfService {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(SERVICE_TYPE);
-        serviceInfo.setAttribute("version","0.0.1-PreAlpha");
         String device_id = acces.getMyDeviceId();
         serviceInfo.setAttribute("device_id",device_id);
+        serviceInfo.setAttribute("version","0.0.1-PreAlpha");
+
 
         serviceInfo.setPort(PORT);
 

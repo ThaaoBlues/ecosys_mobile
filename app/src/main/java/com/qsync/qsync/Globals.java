@@ -90,41 +90,39 @@ public class Globals {
 
 
         public String serialize() {
-            StringBuilder instructionsBuilder = new StringBuilder();
+            StringBuilder EventStringBuilder = new StringBuilder();
+            EventStringBuilder.append(this.Flag);
+            EventStringBuilder.append(";");
+            EventStringBuilder.append(this.FileType);
+            EventStringBuilder.append(";");
 
-            if(this.Delta != null){
+            if(this.Delta != null) {
                 for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
-                    instructionsBuilder.append(instruction.InstructionType).append(",");
+                    EventStringBuilder.append(instruction.InstructionType).append(",");
                     for (int data : instruction.Data) {
-                        instructionsBuilder.append(data).append(",");
+                        EventStringBuilder.append(data).append(",");
                     }
-                    instructionsBuilder.append(instruction.ByteIndex).append("|");
+                    EventStringBuilder.append(instruction.ByteIndex).append("|");
                 }
                 // Remove the last "|"
-                if (instructionsBuilder.length() > 0) {
-                    instructionsBuilder.setLength(instructionsBuilder.length() - 1);
+                if (EventStringBuilder.length() > 0) {
+                    EventStringBuilder.setLength(EventStringBuilder.length() - 1);
                 }
+                EventStringBuilder.append(";");
+                EventStringBuilder.append(this.Delta.getFilePath());
 
-                return String.join(";",
-                        this.Flag,
-                        this.FileType,
-                        instructionsBuilder.toString(),
-                        this.Delta.getFilePath(),
-                        this.FilePath,
-                        this.NewFilePath,
-                        this.SecureId
-                );
-            }else{
-                return String.join(";",
-                        this.Flag,
-                        this.FileType,
-                        "",
-                        "",
-                        this.FilePath,
-                        this.NewFilePath,
-                        this.SecureId
-                );
+            }else {
+                EventStringBuilder.append(";");
             }
+
+            EventStringBuilder.append(";");
+            EventStringBuilder.append(this.FilePath);
+            EventStringBuilder.append(";");
+            EventStringBuilder.append(this.NewFilePath);
+            EventStringBuilder.append(";");
+            EventStringBuilder.append(this.SecureId);
+
+            return EventStringBuilder.toString();
 
 
 

@@ -125,6 +125,8 @@ public class SynchronisationsFragment extends Fragment {
                         builder.setItems(choices, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int choice_index) {
+
+
                                 acces.SetSecureId(sync.getSecureId());
 
                                 switch (choice_index){
@@ -181,10 +183,10 @@ public class SynchronisationsFragment extends Fragment {
                                 }
 
                                 Toast.makeText(getContext(), choices[choice_index], Toast.LENGTH_SHORT).show();
+
                             }
                         });
 
-                        acces.closedb();
                         builder.show();
                     }
                 }
