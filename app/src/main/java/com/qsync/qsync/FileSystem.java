@@ -75,11 +75,18 @@ public class FileSystem {
                 FileInfo fileInfo = previousState.get(filePath);
                 if (fileInfo.isDirectory) {
                     Log.d("FileMonitor", "Deleted subdirectory detected: " + filePath);
-                    handleRemoveEvent(acces,DocumentFile.fromTreeUri(context,fileInfo.uri) );
-
+                    if(!acces.isSyncInBackupMode()){
+                        handleRemoveEvent(acces,DocumentFile.fromTreeUri(context,fileInfo.uri) );
+                    }else{
+                        Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
+                    }
                 } else {
                     Log.d("FileMonitor", "Deleted file detected: " + filePath);
-                    handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
+                    if(!acces.isSyncInBackupMode()){
+                        handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
+                    }else{
+                        Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
+                    }
 
                 }
             }

@@ -139,15 +139,15 @@ public class DeltaBinaire {
     }*/
 
     private static int calculateBufferSize(long fileSize){
-        // do not make chunk of more than 10Mb
+        // do not make chunk of more than 100Mb
         // we stop when we have a chunk size
         // that is the maximum one
         // that can still fit 2 times in the file
-        int c = 10;
-        if(fileSize > 10<<10){
+        int c = 100;
+        if(fileSize > 100<<10){
             c = c<<10;
         }else{
-            while( (c<=10<<10) && (c<(fileSize>>2)) ){
+            while((c<(fileSize>>2)) ){
                 c = c << 1;
             }
         }

@@ -117,11 +117,21 @@ public class SynchronisationsFragment extends Fragment {
                     public void callback(Globals.SyncInfos sync) {
 
                         AccesBdd acces = new AccesBdd(getContext());
+                        acces.SetSecureId(sync.getSecureId());
 
                         String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
+                        choices = Arrays.copyOf(choices,choices.length+1);
+
+                        if(!acces.isSyncInBackupMode()){
+                            choices[choices.length-1] = "Enable backup mode";
+                        }else{
+                            choices[choices.length-1] = "Disable backup mode";
+
+                        }
 
                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                         builder.setTitle("Sync Options");
+                        String[] finalChoices = choices;
                         builder.setItems(choices, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int choice_index) {
@@ -179,10 +189,14 @@ public class SynchronisationsFragment extends Fragment {
                                         builder.show();
 
                                         break;
+                                    case 3:
+                                        acces.toggleBackupMode();
+
+                                        break;
 
                                 }
 
-                                Toast.makeText(getContext(), choices[choice_index], Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), finalChoices[choice_index], Toast.LENGTH_SHORT).show();
 
                             }
                         });

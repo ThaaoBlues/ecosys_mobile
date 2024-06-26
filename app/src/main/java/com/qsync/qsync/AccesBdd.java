@@ -122,20 +122,6 @@ public class AccesBdd {
     // to store different objects in the database
     // this one is specifically made for the binary delta object
     public byte[] serialize(DeltaBinaire.Delta delta) throws IOException {
-        /*StringBuilder instructionsBuilder = new StringBuilder();
-        for (DeltaBinaire.DeltaInstruction instruction : delta.Instructions) {
-            instructionsBuilder.append(instruction.InstructionType).append(",");
-            for (int data : instruction.Data) {
-                instructionsBuilder.append(data).append(",");
-            }
-            instructionsBuilder.append(instruction.ByteIndex).append("|");
-        }
-        // Remove the last "|"
-        if (instructionsBuilder.length() > 0) {
-            instructionsBuilder.setLength(instructionsBuilder.length() - 1);
-        }
-        return String.join(";",instructionsBuilder.toString(),delta.getFilePath()).getBytes(StandardCharsets.UTF_8);*/
-
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
         objectOutputStream.writeObject(delta);
@@ -145,24 +131,7 @@ public class AccesBdd {
 
     // Deserialization method
     public static DeltaBinaire.Delta deserialize(String data) throws IOException, ClassNotFoundException {
-        /*String[] parts = data.split(";");
 
-        String[] instructionParts = parts[0].split("\\|");
-        List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
-        for (String instructionStr : instructionParts) {
-            String[] instructionData = instructionStr.split(",");
-            byte[] dataBytes = new byte[instructionData.length - 2];
-            for (int i = 1; i < instructionData.length - 1; i++) {
-                dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
-            }
-            long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
-            instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
-        }
-        DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
-        delta.Instructions = instructions;
-        delta.setFilePath(parts[1]);
-
-        return delta;*/
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data.getBytes());
         ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         return (DeltaBinaire.Delta) objectInputStream.readObject();
@@ -201,7 +170,9 @@ public class AccesBdd {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "secure_id TEXT," +
                     "linked_devices_id TEXT DEFAULT ''," +
-                    "root TEXT)");
+                    "root TEXT," +
+                    "backup_mode BOOLEAN DEFAULT 0)"
+        );
 
             // CREATE TABLE linked_devices
         db.execSQL("CREATE TABLE IF NOT EXISTS linked_devices(" +
@@ -1385,6 +1356,31 @@ public class AccesBdd {
 
 
     }
+
+    public boolean isSyncInBackupMode() {
+        Cursor cursor = db.rawQuery("SELECT backup_mode FROM sync WHERE secure_id=?",
+                new String[]{
+                        this.secureId
+                    }
+                );
+        boolean bcp_mode = false;
+
+        if(cursor.moveToFirst()){
+            bcp_mode = cursor.getInt(0) == 1;
+        }
+
+        return bcp_mode;
+
+    }
+    public void toggleBackupMode() {
+        db.execSQL("UPDATE sync SET backup_mode = NOT backup_mode WHERE secure_id=?", new String[]{
+                this.secureId
+        });
+
+
+    }
+
+
 
 
 }
