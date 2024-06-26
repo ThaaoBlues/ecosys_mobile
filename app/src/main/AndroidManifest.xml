@@ -12,35 +12,45 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Qsync"
-        tools:targetApi="31"
-        android:largeHeap="true"
-        >
+        tools:targetApi="31">
+        <activity
+            android:name=".AppsIntentActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Qsync">
+        <intent-filter>
+            <action android:name="android.intent.action.SYNC" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="text/plain" />
+        </intent-filter>
 
-
+        </activity>
 
         <provider
             android:name=".FileProvider"
             android:authorities="com.qsync.fileprovider"
             android:exported="true" />
 
-        <activity android:name=".ReceiveFileActivity"
+        <activity
+            android:name=".ReceiveFileActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
-
-
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Qsync">
-            <intent-filter>SetFileS
+            <intent-filter>
+                SetFileS
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />

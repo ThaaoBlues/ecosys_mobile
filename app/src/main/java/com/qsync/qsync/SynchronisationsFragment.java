@@ -122,7 +122,7 @@ public class SynchronisationsFragment extends Fragment {
                         String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
                         choices = Arrays.copyOf(choices,choices.length+1);
 
-                        if(!acces.isSyncInBackupMode()){
+                        if(!sync.getBackup_mode()){
                             choices[choices.length-1] = "Enable backup mode";
                         }else{
                             choices[choices.length-1] = "Disable backup mode";

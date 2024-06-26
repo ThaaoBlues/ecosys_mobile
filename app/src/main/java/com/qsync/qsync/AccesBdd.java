@@ -15,31 +15,22 @@ import androidx.documentfile.provider.DocumentFile;
 
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
 import java.util.zip.GZIPInputStream;
 import java.util.HashMap;
 import java.nio.file.SimpleFileVisitor;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 public class AccesBdd {
@@ -1024,13 +1015,48 @@ public class AccesBdd {
         while (cursor.moveToNext()) {
             Globals.SyncInfos info = new Globals.SyncInfos("","");
             info.setSecureId(cursor.getString(0));
-            info.setPath(cursor.getString(1));
+            secureId = info.getSecureId();
+
+            info.setApp(isApp());
+
+            if(info.isApp()){
+                info.setName("(application) "+getAppName());
+            }
+            info.setBackup_mode(isSyncInBackupMode());
             list.put(info.getSecureId(), info);
         }
+
+        secureId = null;
 
         cursor.close();
 
         return list;
+    }
+
+    public boolean isApp(){
+        Cursor cursor = db.rawQuery("SELECT * FROM apps WHERE secure_id=?",new String[]{
+                this.secureId
+        });
+
+        boolean ex = cursor.moveToFirst();
+
+        cursor.close();
+
+        return ex;
+    }
+
+    public String getAppName(){
+        Cursor cursor = db.rawQuery("SELECT name FROM apps WHERE secure_id=?",new String[]{
+                this.secureId
+        });
+
+        cursor.moveToFirst();
+
+        String name = cursor.getString(0);
+
+        cursor.close();
+
+        return name;
     }
 
     public Map<String, Globals.GenArray<Globals.QEvent>> BuildEventQueueFromRetard(String deviceId) {
@@ -1369,6 +1395,8 @@ public class AccesBdd {
             bcp_mode = cursor.getInt(0) == 1;
         }
 
+        cursor.close();
+
         return bcp_mode;
 
     }
@@ -1381,6 +1409,26 @@ public class AccesBdd {
     }
 
 
+    public boolean checkAppExistenceFromName(String name){
+        Cursor cursor = db.rawQuery("SELECT * FROM apps WHERE name=?",new String[]{
+                name
+        });
 
+        boolean ex = cursor.moveToFirst();
+
+        cursor.close();
+
+        return ex;
+    }
+
+
+    public void updateSyncId(String root,String secure_id) {
+        db.execSQL("UPDATE sync SET secure_id = ? WHERE root=?", new String[]{
+                secure_id,
+                root
+        });
+
+
+    }
 
 }

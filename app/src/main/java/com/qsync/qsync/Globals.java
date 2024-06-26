@@ -490,14 +490,21 @@ public class Globals {
     }
 
 
-    // SyncInfos.java
     public static class SyncInfos {
         private String path;
         private String secureId;
+        private boolean backup_mode;
+
+        private String name;
+
+        private boolean isApp;
 
         public SyncInfos(String path, String secureId) {
             this.path = path;
             this.secureId = secureId;
+            this.backup_mode = false;
+            this.isApp = false;
+            this.name = "prout";
         }
 
         public String getPath() {
@@ -514,6 +521,29 @@ public class Globals {
 
         public void setSecureId(String secureId) {
             this.secureId = secureId;
+        }
+        public Boolean getBackup_mode() {
+            return backup_mode;
+        }
+
+        public void setBackup_mode(Boolean backup_mode) {
+            this.backup_mode = backup_mode;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isApp() {
+            return isApp;
+        }
+
+        public void setApp(boolean app) {
+            isApp = app;
         }
     }
 

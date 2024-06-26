@@ -21,9 +21,8 @@ import java.io.OutputStream;
 
 public class FileProvider extends ContentProvider {
 
-    private static final String TAG = FileProvider.class.getSimpleName();
     private static final String AUTHORITY = "com.qsync.fileprovider";
-    private static final String FOLDER_NAME = "test_folder";
+    private static final String FOLDER_NAME = "apps";
 
     private static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" + FOLDER_NAME);
     private static final int FOLDER_CODE = 1;

@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 
 public class Networking {
 
@@ -178,9 +179,27 @@ public class Networking {
                         // and same secure_id
                         Log.d(TAG, "Initializing env to welcome the other end folder content");
                         acces.SetSecureId(secure_id);
-                        String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
-                        Log.d(TAG, "Future sync will be stored at : " + path);
-                        acces.CreateSyncFromOtherEnd(path, secure_id);
+
+                        if(Objects.equals(data.FileType, "[APPLICATION]")){
+
+                            String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
+                            if(acces.checkAppExistenceFromName(data.getFilePath())){
+                                acces.updateSyncId(app_path,secure_id);
+                            }else{
+                                String ret = BackendApi.askInput(
+                                        "[ALERT_USER]",
+                                        "Please install the "+data.getFilePath()+" app before linking it to another device.",
+                                        context,
+                                        false
+                                );
+                            }
+                        }else{
+                            String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
+                            Log.d(TAG, "Future sync will be stored at : " + path);
+                            acces.CreateSyncFromOtherEnd(path, secure_id);
+                        }
+
+
                         Log.d(TAG, "Linking device : " + device_id);
                         acces.LinkDevice(device_id, clientSocket.getInetAddress().getHostAddress());
                         break;
@@ -631,9 +650,9 @@ public class Networking {
 
         Globals.QEvent event = new Globals.QEvent(
                 "[LINK_DEVICE]",
-                "",
+                acces.isApp() ? "[APPLICATION]" :"[CLASSIC]",
                 null,
-                "",
+                acces.isApp() ? acces.getAppName() : "",
                 "",
                 acces.GetSecureId()
         );
