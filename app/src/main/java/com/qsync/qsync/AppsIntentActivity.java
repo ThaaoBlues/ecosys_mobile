@@ -1,3 +1,11 @@
+/*
+ * *
+ *  * Created by Théo Mougnibas on 27/06/2024 17:18
+ *  * Copyright (c) 2024 . All rights reserved.
+ *  * Last modified 27/06/2024 17:18
+ *
+ */
+
 package com.qsync.qsync;
 
 import android.content.ContentValues;
@@ -39,31 +47,41 @@ public class AppsIntentActivity extends AppCompatActivity {
             String appName = intent.getStringExtra("app_name");
 
             // Display the received values (you can handle them as needed)
+
+
             TextView textView = findViewById(R.id.textView);
             textView.setText("Action Flag: " + actionFlag + "\nApp Name: " + appName);
 
+            AccesBdd acces = new AccesBdd(AppsIntentActivity.this);
+
+
+
             if(Objects.equals(actionFlag, "[INSTALL_APP]")){
-                // create app folder
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.MediaColumns.DISPLAY_NAME, appName);
-                values.put(MediaStore.MediaColumns.MIME_TYPE, "vnd.android.document/directory");
-                Uri folderUri = Uri.parse("content://" + "com.qsync.fileprovider" + "/" + appName);
 
-                Uri newFolderUri = getContentResolver().insert(folderUri, values);
+                if(acces.checkAppExistenceFromName(appName)){
+                    textView.setText("An application with this name is already registered");
+                }else{
+                    // create app folder
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, appName);
+                    values.put(MediaStore.MediaColumns.MIME_TYPE, "vnd.android.document/directory");
+                    Uri folderUri = Uri.parse("content://" + "com.qsync.fileprovider" + "/" + appName);
 
-                if (newFolderUri != null) {
-                    Log.d(TAG, "Folder created successfully: " + newFolderUri);
-                } else {
-                    // app must already exists, don't link the new one
-                    Log.e(TAG, "Failed to create folder: " + appName);
-                    return;
+                    Uri newFolderUri = getContentResolver().insert(folderUri, values);
+
+                    if (newFolderUri != null) {
+                        Log.d(TAG, "Folder created successfully: " + newFolderUri);
+                    } else {
+                        // app must already exists, don't link the new one
+                        Log.e(TAG, "Failed to create folder: " + appName);
+                        return;
+                    }
+
+
+                    // create a sync in it
+                    acces.createSync(folderUri.getPath());
                 }
 
-
-                // create a sync in it
-                AccesBdd acces = new AccesBdd(AppsIntentActivity.this);
-
-                acces.createSync(folderUri.getPath());
 
             }
         }

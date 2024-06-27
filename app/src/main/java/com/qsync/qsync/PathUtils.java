@@ -1,3 +1,11 @@
+/*
+ * *
+ *  * Created by Théo Mougnibas on 27/06/2024 17:18
+ *  * Copyright (c) 2024 . All rights reserved.
+ *  * Last modified 27/06/2024 17:18
+ *
+ */
+
 package com.qsync.qsync;
 
 import android.content.ContentUris;

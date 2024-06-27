@@ -1,3 +1,11 @@
+/*
+ * *
+ *  * Created by Théo Mougnibas on 27/06/2024 17:18
+ *  * Copyright (c) 2024 . All rights reserved.
+ *  * Last modified 27/06/2024 17:18
+ *
+ */
+
 package com.qsync.qsync;
 
 import android.app.AlertDialog;
@@ -110,7 +118,6 @@ public class BackendApi {
                         input = new EditText(context);
                         input.setInputType(InputType.TYPE_CLASS_TEXT |InputType.TYPE_TEXT_FLAG_MULTI_LINE);
 
-                        //input.setLines(10);
                         input.setWidth(100);
                         builder.setView(input);
 
