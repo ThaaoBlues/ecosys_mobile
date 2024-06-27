@@ -29,11 +29,11 @@
         tools:layout="@layout/fragment_synchronisations">
         <action
             android:id="@+id/action_SynchronisationsFragment_to_fragment_magasin"
-            app:destination="@id/fragment_magasin" />
+            app:destination="@id/fragment_magasin_constraint_layout" />
     </fragment>
 
     <fragment
-        android:id="@+id/fragment_magasin"
+        android:id="@+id/fragment_magasin_constraint_layout"
         android:label="fragment magasin"
         tools:layout="@layout/fragment_magasin"
         android:name="com.qsync.qsync.MagasinFragment"

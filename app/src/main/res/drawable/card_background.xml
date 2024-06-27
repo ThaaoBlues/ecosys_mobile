@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ /**
+  ~  * Created by Théo Mougnibas on 27/06/2024 19:44
+  ~  * Copyright (c) 2024 . All rights reserved.
+  ~  * Last modified 27/06/2024 19:44
+  ~  */
+  -->
+
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FFFFFF"/>
+    <corners android:radius="8dp"/>
+    <padding android:left="16dp" android:top="16dp" android:right="16dp" android:bottom="16dp"/>
+</shape>
