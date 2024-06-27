@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(libs.activity)
     //implementation(files("/home/thaao/dev/projects/qsync_mobile_bind/qsync.aar"))
     //implementation(files("libs/commons-io-2.16.1.jar"))
     testImplementation(libs.junit)

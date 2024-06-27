@@ -71,13 +71,6 @@ public class SynchronisationsFragment extends Fragment {
                             Intent data = result.getData();
                             if (result.getResultCode() == Activity.RESULT_OK) {
                                 if (data.getData() != null) {
-                                    /*acces.createSync(getContext().getContentResolver().query(
-                                            data.getData(),
-                                            null,
-                                            null,
-                                            null,
-                                            null
-                                    ).getColumnIndex(OpenableColumns.));*/
 
                                     //Log.d("SynchronisationsFragment","Uri : "+ PathUtils.getPathFromUri(getContext(),data.getData()));
                                     Uri treeUri = data.getData();

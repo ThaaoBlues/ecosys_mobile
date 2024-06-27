@@ -1015,14 +1015,16 @@ public class AccesBdd {
         while (cursor.moveToNext()) {
             Globals.SyncInfos info = new Globals.SyncInfos("","");
             info.setSecureId(cursor.getString(0));
-            secureId = info.getSecureId();
+            this.secureId = info.getSecureId();
 
             info.setApp(isApp());
 
             if(info.isApp()){
                 info.setName("(application) "+getAppName());
             }
+            info.setPath(cursor.getString(1));
             info.setBackup_mode(isSyncInBackupMode());
+            Log.d("Qsync server : Syncinfos",info.toString());
             list.put(info.getSecureId(), info);
         }
 

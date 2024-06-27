@@ -18,15 +18,20 @@
         android:theme="@style/Theme.Qsync"
         tools:targetApi="31">
         <activity
+            android:name=".TextViewActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Qsync" />
+        <activity
             android:name=".AppsIntentActivity"
             android:exported="false"
             android:theme="@style/Theme.Qsync">
-        <intent-filter>
-            <action android:name="android.intent.action.SYNC" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <data android:mimeType="text/plain" />
-        </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SYNC" />
 
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <provider

@@ -1,6 +1,7 @@
 package com.qsync.qsync;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
@@ -192,6 +193,7 @@ public class Networking {
                                         context,
                                         false
                                 );
+                                return;
                             }
                         }else{
                             String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
@@ -546,6 +548,9 @@ public class Networking {
 
     public static void handleLargageAerien(Globals.QEvent data, String ipAddress,String msg,boolean assumeYes,boolean multiple) {
         String fileName = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/"+data.FilePath).getName();
+
+
+
         String userResponse = BackendApi.askInput("[OTDL]", msg,context,false);
         if (userResponse.equalsIgnoreCase("y") || userResponse.equalsIgnoreCase("yes") || userResponse.equalsIgnoreCase("oui") || assumeYes) {
             try {
@@ -576,12 +581,26 @@ public class Networking {
                                         filePath
                                 )
                         );
+
+                        // open textview if we are receiving a text file
+                        if(fileName.endsWith(".txt")){
+                            Intent myIntent = new Intent(context, TextViewActivity.class);
+                            myIntent.putExtra(
+                                    "file_path",
+                                    filePath
+                            );
+                            context.startActivity(myIntent);
+
+                        }
                     }
 
                 }
             } catch (Exception e) {
                 Log.e("HandleAirdrop", "Error while handling Largage Aerien", e);
             }
+
+
+
         }
     }
 

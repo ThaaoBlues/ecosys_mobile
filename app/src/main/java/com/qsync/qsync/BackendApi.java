@@ -220,6 +220,7 @@ public class BackendApi {
 
         for (int i = 0;i<devices.size();i++) {
             Button button = new Button(context);
+            //Log.d(TAG,"adding device to linear layout : "+devices.get(i).get("hostname"));
             button.setText(String.format("%s;%s", devices.get(i).get("hostname"), devices.get(i).get("ip_addr")));
             button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             int finalI = i;

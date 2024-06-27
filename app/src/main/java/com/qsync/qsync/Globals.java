@@ -545,6 +545,11 @@ public class Globals {
         public void setApp(boolean app) {
             isApp = app;
         }
+
+
+        public String toString(){
+            return "{"+this.path+";"+this.secureId+";"+this.isApp+";"+this.name+";"+this.backup_mode+"}";
+        }
     }
 
 

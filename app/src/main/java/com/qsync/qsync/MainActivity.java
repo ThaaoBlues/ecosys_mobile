@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
             @Override
             public void execute() {
-                Networking nt = new Networking(getApplicationContext(),getFilesDir().toString());
+                Networking nt = new Networking(MainActivity.this,getFilesDir().toString());
                 nt.ServerMainLoop();
             }
         };
