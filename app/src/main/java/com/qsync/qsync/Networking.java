@@ -13,6 +13,7 @@ import androidx.documentfile.provider.DocumentFile;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -534,18 +535,6 @@ public class Networking {
     }
 
 
-    private static byte[] readBytesFromFile(DocumentFile file) {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return Files.readAllBytes(Paths.get(file.getUri().getPath()));
-            }
-        } catch (Exception e) {
-            Log.e("ReadBytesFromFile", "Error while reading bytes from file", e);
-            return new byte[0];
-        }
-        return new byte[0];
-    }
-
     public static void handleLargageAerien(Globals.QEvent data, String ipAddress,String msg,boolean assumeYes,boolean multiple) {
         String fileName = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/"+data.FilePath).getName();
 
@@ -617,12 +606,23 @@ public class Networking {
         try {
             String fileName = PathUtils.getFileNameFromUri(context,fileUri);
 
-            InputStream inputStream =
+
+            InputStream inputStream;
+            long fileSize =0;
+            if(PathUtils.needsContentProvider(fileUri)){
+                inputStream =
                     context.getContentResolver().openInputStream(fileUri);
+                ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(fileUri , "r");
+                fileSize = fileDescriptor.getStatSize();
+            }else{
+                inputStream = new FileInputStream(new File(fileUri.getPath()));
+                fileSize = new File(fileUri.getPath()).length();
+
+            }
 
 
-            ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(fileUri , "r");
-            long fileSize = fileDescriptor.getStatSize();
+
+
 
             DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(fileName,fileSize,inputStream,0,new byte[0]);
             Globals.QEvent event = new Globals.QEvent(

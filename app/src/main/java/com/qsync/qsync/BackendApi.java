@@ -6,9 +6,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -55,6 +57,68 @@ public class BackendApi {
                         // Set up the buttons
                         builder.setPositiveButton("OK", (dialog, which) -> {
                             result[0] = textMode ? input.getText().toString() : "y";
+                            dialog.dismiss();
+                        });
+                        builder.setNegativeButton("Cancel", (dialog, which) -> {
+                            result[0] = null;
+                            dialog.cancel();
+                        });
+                        Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
+                        builder.show();
+                    }
+                });
+
+
+            }
+
+        };
+
+        ProcessExecutor.executeOnUIThread(userInput);
+
+
+
+        // Wait for user input
+        while (result[0] == null) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return result[0];
+    }
+
+
+    public static String askMultilineInput(String flag, String inputContext,Context context) {
+        final String[] result = new String[1];
+
+        ProcessExecutor.Function userInput = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                final Handler handler = new Handler(Looper.getMainLooper());
+
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                        builder.setTitle(flag);
+                        builder.setMessage(inputContext);
+
+                        // Set up the input
+                        EditText input;
+                        input = new EditText(context);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT |InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+
+                        //input.setLines(10);
+                        input.setWidth(100);
+                        builder.setView(input);
+
+
+
+                        // Set up the buttons
+                        builder.setPositiveButton("OK", (dialog, which) -> {
+                            result[0] =  input.getText().toString();
                             dialog.dismiss();
                         });
                         builder.setNegativeButton("Cancel", (dialog, which) -> {

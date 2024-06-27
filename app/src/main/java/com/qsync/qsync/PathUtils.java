@@ -102,16 +102,19 @@ public class PathUtils {
 
     public static String getFileNameFromUri(Context context,Uri uri) {
         String result = null;
-        if (uri.getScheme().equals("content")) {
-            Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
-            try {
-                if (cursor != null && cursor.moveToFirst()) {
-                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+        if(uri.getScheme() != null){
+            if (uri.getScheme().equals("content")) {
+                Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
+                try {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                } finally {
+                    cursor.close();
                 }
-            } finally {
-                cursor.close();
             }
         }
+
         if (result == null) {
             result = uri.getPath();
             int cut = result.lastIndexOf('/');
@@ -122,28 +125,12 @@ public class PathUtils {
         return result;
     }
 
-    private static String getFileName(Context context, Uri uri) {
-        String result = null;
-        if ("content".equals(uri.getScheme())) {
-            String[] projection = { android.provider.MediaStore.Images.Media.DISPLAY_NAME };
-            try (Cursor cursor = context.getContentResolver().query(uri, projection, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    int index = cursor.getColumnIndexOrThrow(android.provider.MediaStore.Images.Media.DISPLAY_NAME);
-                    result = cursor.getString(index);
-                }
-            } catch (Exception e) {
-                Log.e("Qsync Server", "Error getting file name", e);
-            }
-        }
-        if (result == null) {
-            result = uri.getPath();
-            int cut = result != null ? result.lastIndexOf('/') : -1;
-            if (cut != -1 && result != null) {
-                result = result.substring(cut + 1);
-            }
-        }
-        return result;
+    public static boolean needsContentProvider(Uri uri){
+        return uri.getScheme() != null;
     }
+
+
+
 
     public static String getPathFromUri(Context context, Uri uri) {
         if (DocumentsContract.isDocumentUri(context, uri)) {
