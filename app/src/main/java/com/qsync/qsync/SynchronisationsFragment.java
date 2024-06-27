@@ -108,7 +108,7 @@ public class SynchronisationsFragment extends Fragment {
         Map<String, Globals.SyncInfos> synchros = acces.ListSyncAllTasks();
         acces.closedb();
 
-        addButtonsFromSynchroGenArray(
+        BackendApi.addButtonsFromSynchroGenArray(
                 getContext(),
                 syncMapToGenArray(synchros),
                 binding.listeSynchronisationsLinearLayout,
@@ -228,35 +228,7 @@ public class SynchronisationsFragment extends Fragment {
     }
 
 
-    public static void addButtonsFromSynchroGenArray(Context context, Globals.GenArray<Globals.SyncInfos> synchros, LinearLayout linearLayout, SynchronisationButtonCallback callback) {
 
-        // will produce erros when user is not on the linear layout parent's fragment
-        try{
-            linearLayout.removeAllViews();
-        }catch (java.lang.NullPointerException e){
-
-            return;
-        }
-
-
-        for (int i = 0;i<synchros.size();i++) {
-            Button button = new Button(context);
-            button.setText(synchros.get(i).getPath());
-            button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            int finalI = i;
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    callback.callback(synchros.get(finalI));
-                }
-            });
-            linearLayout.addView(button);
-            //Log.d("BACKEND API","Adding button for device : "+devices.get(i).toString());
-        }
-
-
-    }
 
 
     public static Globals.GenArray syncMapToGenArray(Map<String, Globals.SyncInfos> map){

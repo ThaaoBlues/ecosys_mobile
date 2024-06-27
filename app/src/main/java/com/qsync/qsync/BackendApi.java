@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -23,7 +24,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.cardview.widget.CardView;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -278,34 +282,60 @@ public class BackendApi {
 
 
 
-    public static void addButtonsFromDevicesGenArray(Context context, Globals.GenArray<Map<String,String>> devices, LinearLayout linearLayout,DeviceButtonCallback callback) {
-
-        // will produce erros when user is not on the linear layout parent's fragment
-        try{
+    public static void addButtonsFromDevicesGenArray(Context context, Globals.GenArray<Map<String, String>> devices, LinearLayout linearLayout, DeviceButtonCallback callback) {
+        // Will produce errors when user is not on the linear layout parent's fragment
+        try {
             linearLayout.removeAllViews();
-        }catch (java.lang.NullPointerException e){
-
+        } catch (NullPointerException e) {
             return;
         }
 
+        LayoutInflater inflater = LayoutInflater.from(context);
 
-        for (int i = 0;i<devices.size();i++) {
-            Button button = new Button(context);
-            //Log.d(TAG,"adding device to linear layout : "+devices.get(i).get("hostname"));
-            button.setText(String.format("%s;%s", devices.get(i).get("hostname"), devices.get(i).get("ip_addr")));
-            button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        for (int i = 0; i < devices.size(); i++) {
+            View cardView = inflater.inflate(R.layout.button_card_layout, linearLayout, false);
+            TextView buttonText = cardView.findViewById(R.id.button_text);
+
+            buttonText.setText(String.format("%s; %s", devices.get(i).get("hostname"), devices.get(i).get("ip_addr")));
+
             int finalI = i;
-            button.setOnClickListener(new View.OnClickListener() {
+            cardView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     callback.callback(devices.get(finalI));
                 }
             });
-            linearLayout.addView(button);
-            //Log.d("BACKEND API","Adding button for device : "+devices.get(i).toString());
+
+            linearLayout.addView(cardView);
+        }
+    }
+
+    public static void addButtonsFromSynchroGenArray(Context context, Globals.GenArray<Globals.SyncInfos> synchros, LinearLayout linearLayout, SynchronisationsFragment.SynchronisationButtonCallback callback) {
+        // Will produce errors when user is not on the linear layout parent's fragment
+        try {
+            linearLayout.removeAllViews();
+        } catch (NullPointerException e) {
+            return;
         }
 
+        LayoutInflater inflater = LayoutInflater.from(context);
 
+        for (int i = 0; i < synchros.size(); i++) {
+            View cardView = inflater.inflate(R.layout.button_card_layout, linearLayout, false);
+            TextView buttonText = cardView.findViewById(R.id.button_text);
+
+            buttonText.setText(synchros.get(i).getPath());
+
+            int finalI = i;
+            cardView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    callback.callback(synchros.get(finalI));
+                }
+            });
+
+            linearLayout.addView(cardView);
+        }
     }
 
     public static void showLargageAerienEmissionNotification(Context context,String msg){
