@@ -39,6 +39,8 @@ import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
 import java.util.HashMap;
 import java.nio.file.SimpleFileVisitor;
+
+import android.provider.MediaStore;
 import android.util.Log;
 
 public class AccesBdd {
@@ -275,14 +277,7 @@ public class AccesBdd {
                     contentBytes
             };
 
-            /*ContentValues ctv = new ContentValues();
-            ctv.put("path",relativePath);
-            ctv.put("version_id",0);
-            ctv.put("type","file");
-            ctv.put("size",file.length());
-            ctv.put("secure_id",secureId);
-            ctv.put("content",contentBytes);
-            long res = db.insert("filesystem",null,ctv);*/
+
 
             db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?,?,?, ?, ?, ?)",args);
             Log.d("Qsync Server : Database","Added file to filesystem map. return value : ");

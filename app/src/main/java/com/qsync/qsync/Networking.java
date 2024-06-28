@@ -8,11 +8,14 @@
 
 package com.qsync.qsync;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
 import android.util.Log;
 
 import androidx.documentfile.provider.DocumentFile;
@@ -27,6 +30,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -260,6 +264,7 @@ public class Networking {
     public static void handleEvent(String deviceId, Globals.QEvent event) {
 
         AccesBdd acces = new AccesBdd(context);
+        acces.SetSecureId(event.getSecureId());
         // First, we lock the filesystem watcher to prevent a ping-pong effect
         acces.SetFileSystemPatchLockState(deviceId, true);
 
@@ -292,8 +297,16 @@ public class Networking {
                 break;
             case "[CREATE]":
                 if ("file".equals(fileType)) {
-                    acces.createFile(relativePath,
-                            DocumentFile.fromSingleUri(context,Uri.parse(absoluteFilePath)),
+
+
+                    //DocumentFile file = DocumentFile.fromSingleUri(context,Uri.parse(absoluteFilePath));
+
+                    DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
+                    DocumentFile newFile = createFileWithContentResolver(root,relativePath);
+
+                    acces.createFile(
+                            relativePath,
+                            newFile,
                             "[SENT_FROM_OTHER_DEVICE]");
                 } else {
                     acces.createFolder(absoluteFilePath);
@@ -456,6 +469,47 @@ public class Networking {
         } catch (IOException e) {
             Log.e("MoveInFilesystem", "Error while moving entity in filesystem", e);
         }
+    }
+
+
+    public static DocumentFile createFileWithContentResolver(DocumentFile root,String relativePath) {
+
+        DocumentFile newFile = null;
+        try {
+            String[] parts = relativePath.split("/");
+            StringBuilder parentBuilder = new StringBuilder();
+            // building parent relative path
+            for(int i=0;i<parts.length-1;i++){
+                if(!parts[i].equals("")){
+                    parentBuilder.append(parts[i]).append("/");
+                }
+            }
+
+            DocumentFile fullParentPath = DocumentFile.fromTreeUri(
+              context,
+              Uri.withAppendedPath(root.getUri(),parentBuilder.toString())
+            );
+
+            if(fullParentPath != null){
+
+                newFile = fullParentPath.createFile("text/plain", parts[parts.length-1]);
+
+                if (newFile != null) {
+                    // File created successfully
+
+                    Log.d("FileCreation", "File created successfully: " + newFile.getUri());
+                } else {
+                    // File creation failed
+                    Log.e("FileCreation", "Failed to create file.");
+                }
+            }else{
+                Log.e("FileCreation", "Error creating file: fullParentPath is null ");
+            }
+        } catch (Exception e) {
+            Log.e("FileCreation", "Error creating file: ", e);
+        }
+
+        return newFile;
     }
 
 

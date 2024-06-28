@@ -135,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
                     DocumentFile df = DocumentFile.fromTreeUri(MainActivity.this,Uri.parse(v.getPath()));
                     Log.d("Qsync Server ","Starting to monitor : "+ v.getPath()+"\n Readable = "+df.canRead());
 
-
                     FileSystem.startDirectoryMonitoring(
                             MainActivity.this,
                             df
