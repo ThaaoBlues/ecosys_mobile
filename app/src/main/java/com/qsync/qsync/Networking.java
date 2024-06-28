@@ -298,9 +298,6 @@ public class Networking {
             case "[CREATE]":
                 if ("file".equals(fileType)) {
 
-
-                    //DocumentFile file = DocumentFile.fromSingleUri(context,Uri.parse(absoluteFilePath));
-
                     DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
                     DocumentFile newFile = createFileWithContentResolver(root,relativePath);
 
@@ -314,6 +311,7 @@ public class Networking {
                 break;
             case "[UPDATE]":
                 acces.incrementFileVersion(relativePath);
+                DeltaBinaire.patchFile(event,true,context);
                 break;
             default:
                 Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
@@ -479,9 +477,9 @@ public class Networking {
             String[] parts = relativePath.split("/");
             StringBuilder parentBuilder = new StringBuilder();
             // building parent relative path
-            for(int i=0;i<parts.length-1;i++){
-                if(!parts[i].equals("")){
-                    parentBuilder.append(parts[i]).append("/");
+            for (String part : parts) {
+                if (!part.isEmpty()) {
+                    parentBuilder.append(part).append("/");
                 }
             }
 
@@ -623,7 +621,7 @@ public class Networking {
                 data.Delta.setFilePath(filePath);
 
 
-                DeltaBinaire.patchFile(data.Delta);
+                DeltaBinaire.patchFile(data,false,context);
                 //Log.d("LARGAGE AERIEN","CONTENU DU FICHIER APRES PATCH : "+ Arrays.toString(readBytesFromFile(filePath)));
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 

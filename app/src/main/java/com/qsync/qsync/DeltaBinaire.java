@@ -8,8 +8,16 @@
 
 package com.qsync.qsync;
 
+import android.content.ContentResolver;
+import android.content.Context;
+import android.net.Uri;
 import android.util.Log;
+
+import androidx.documentfile.provider.DocumentFile;
+
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.*;
 
 public class DeltaBinaire {
@@ -295,30 +303,86 @@ public class DeltaBinaire {
     }
 
 
-    public static void patchFile(Delta delta) {
-        try {
-            File file = new File(delta.getFilePath());
-            RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
+    public static void patchFile(Globals.QEvent event, boolean needsSAF, Context context) {
 
-            for (DeltaInstruction instruction : delta.Instructions) {
-                switch (instruction.InstructionType) {
-                    case "ab":
-                        fileHandler.seek(instruction.ByteIndex);
-                        for(int i = 0;i<instruction.Data.length;i++){
-                            fileHandler.write(instruction.Data[i]);
+        Delta delta = event.Delta;
+
+
+        if(needsSAF){
+            AccesBdd acces = new AccesBdd(context);
+            acces.SetSecureId(event.SecureId);
+            DocumentFile root = DocumentFile.fromTreeUri(
+                    context,
+                    Uri.parse(acces.GetRootSyncPath())
+            );
+
+            DocumentFile file = DocumentFile.fromSingleUri(
+                    context,
+                    Uri.withAppendedPath(
+                            root.getUri(),
+                            event.FilePath
+                    )
+            );
+
+            if(file != null){
+                if(file.exists()){
+                    ContentResolver ctt = context.getContentResolver();
+                    try {
+
+                        FileOutputStream os =new FileOutputStream(ctt.openFileDescriptor(file.getUri(),"w").getFileDescriptor());
+                        FileChannel fc = os.getChannel();
+
+                        for (DeltaInstruction instruction : delta.Instructions) {
+                            switch (instruction.InstructionType) {
+                                case "ab":
+                                    fc.position(instruction.ByteIndex);
+                                    ByteBuffer bbf = ByteBuffer.allocateDirect(instruction.Data.length);
+                                    bbf.put(instruction.Data);
+                                    fc.write(bbf);
+                                    break;
+                                case "t":
+                                    fc.truncate(instruction.ByteIndex);
+                                    break;
+                            }
                         }
-                        //fileHandler.write(instruction.Data);
-                        break;
-                    case "t":
-                        fileHandler.setLength(instruction.ByteIndex);
-                        break;
+
+                        fc.close();
+                        os.close();
+                    } catch (FileNotFoundException e) {
+                        Log.e(TAG,"Error while patching a file needing SAF : ",e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }else{
+                    Log.e(TAG,"Error while patching a file needing SAF : File does not exists");
                 }
+            }else{
+                Log.e(TAG,"Error while patching a file needing SAF : DocumentFIle is null");
             }
 
-            fileHandler.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Error patching file: " + e.getMessage());
+        }else{
+            try {
+                File file = new File(delta.getFilePath());
+                RandomAccessFile fileHandler = new RandomAccessFile(file, "rw");
+
+                for (DeltaInstruction instruction : delta.Instructions) {
+                    switch (instruction.InstructionType) {
+                        case "ab":
+                            fileHandler.seek(instruction.ByteIndex);
+                            fileHandler.write(instruction.Data);
+                            break;
+                        case "t":
+                            fileHandler.setLength(instruction.ByteIndex);
+                            break;
+                    }
+                }
+
+                fileHandler.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Error patching file: " + e.getMessage());
+            }
         }
+
     }
 
 
