@@ -27,6 +27,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -281,24 +282,58 @@ public class Networking {
         }
         String eventType = event.Flag;
         String fileType = event.FileType;
+        DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
 
         switch (eventType) {
             case "[MOVE]":
                 acces.move(relativePath, newRelativePath, fileType);
-                moveInFilesystem(absoluteFilePath, newAbsoluteFilePath);
+
+
+                StringBuilder newParentRelativePath = new StringBuilder();
+
+                for(String part : newRelativePath.split("/")){
+                    if(!part.isEmpty()){
+                        newParentRelativePath.append(part).append("/");
+                    }
+                }
+
+                DocumentFile newParentFile = DocumentFile.fromTreeUri(
+                        context,
+                        Uri.withAppendedPath(
+                                root.getUri(),
+                                newParentRelativePath.toString()
+                        )
+                );
+
+                DocumentFile currentFile;
+                if(fileType.equals("file")){
+                    currentFile = DocumentFile.fromSingleUri(
+                      context,
+                      Uri.withAppendedPath(root.getUri(),relativePath)
+                    );
+                }else{
+                    currentFile = DocumentFile.fromTreeUri(
+                            context,
+                            Uri.withAppendedPath(root.getUri(),relativePath)
+                    );
+                }
+
+                moveInFilesystem(currentFile,newParentFile,fileType.equals("file"));
+
+
                 break;
             case "[REMOVE]":
                 if ("file".equals(fileType)) {
                     acces.rmFile(absoluteFilePath);
+                    removeFromFilesystem(root,relativePath,true,false);
                 } else {
                     acces.rmFolder(absoluteFilePath);
+                    removeFromFilesystem(root,relativePath,true,true);
                 }
-                removeFromFilesystem(absoluteFilePath);
                 break;
             case "[CREATE]":
                 if ("file".equals(fileType)) {
 
-                    DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
                     DocumentFile newFile = createFileWithContentResolver(root,relativePath);
 
                     acces.createFile(
@@ -392,7 +427,7 @@ public class Networking {
                 // Create a network lock file
                 File lockFile = new File(QSYNC_WRITABLE_DIRECTORY,deviceId + ".nlock");
                 if(lockFile.exists()){
-                    removeFromFilesystem(lockFile.getPath());
+                    removeFromFilesystem(null,lockFile.getPath(),false,false);
                 }
                 if (!lockFile.createNewFile()) {
                     Log.e("SetEventNetworkLock", "Failed to create network lock file in directory : "+QSYNC_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
@@ -424,49 +459,110 @@ public class Networking {
 
 
 
-    public static void removeFromFilesystem(String path) {
-        try {
-            File fileOrDir = new File(path);
-            if (fileOrDir.isDirectory()) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Files.walk(fileOrDir.toPath())
-                            .sorted(Comparator.reverseOrder())
-                            .map(Path::toFile)
-                            .forEach(File::delete);
-                }
-            } else {
-                fileOrDir.delete();
+    public static void removeFromFilesystem(DocumentFile root,String relativePath,boolean needSAF,boolean isDir) {
+
+        if(needSAF){
+
+
+            Uri fileUri = Uri.withAppendedPath(root.getUri(),relativePath);
+
+            DocumentFile f;
+            if(isDir){
+                f = DocumentFile.fromSingleUri(context,fileUri);
+            }else{
+                f = DocumentFile.fromTreeUri(context,fileUri);
             }
-        } catch (IOException e) {
-            Log.e("RemoveFromFilesystem", "Error while removing file/folder from filesystem", e);
+
+            f.delete();
+
+        }else{
+
+            try {
+                File fileOrDir = new File(relativePath);
+
+
+                if (fileOrDir.isDirectory()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        Files.walk(fileOrDir.toPath())
+                                .sorted(Comparator.reverseOrder())
+                                .map(Path::toFile)
+                                .forEach(File::delete);
+                    }
+                } else {
+                    fileOrDir.delete();
+                }
+            } catch (IOException e) {
+                Log.e("RemoveFromFilesystem", "Error while removing file/folder from filesystem", e);
+            }
         }
+
+
     }
 
-    public static void moveInFilesystem(String oldPath, String newPath) {
-        try {
-            File oldFileOrDir = new File(oldPath);
-            File newFileOrDir = new File(newPath);
+    public static boolean moveInFilesystem(DocumentFile source,DocumentFile newParentFile,boolean isDir) {
 
-            if (oldFileOrDir.isDirectory()) {
-                if (!newFileOrDir.exists()) {
-                    newFileOrDir.mkdirs();
-                }
-                File[] contents = oldFileOrDir.listFiles();
-                if (contents != null) {
-                    for (File content : contents) {
-                        String newFilePath = newPath + File.separator + content.getName();
-                        moveInFilesystem(content.getPath(), newFilePath);
-                    }
-                }
-                oldFileOrDir.delete();
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    Files.move(Path.of(oldPath), Path.of(newPath), StandardCopyOption.REPLACE_EXISTING);
+        if (!source.exists() || !newParentFile.exists() || !newParentFile.isDirectory()) {
+            Log.e(TAG,"Error while moving a DocumentFile, one of the intermadiary one does not exists");
+            return false;
+        }
+
+        if (source.isDirectory()) {
+            // Create target directory
+            DocumentFile newDir = newParentFile.createDirectory(source.getName());
+            if (newDir == null) {
+                Log.e(TAG,"Error while moving a DocumentFile, oDirectory creation failed");
+                return false;
+            }
+
+            // Recursively move contents
+            for (DocumentFile file : source.listFiles()) {
+                if (!moveInFilesystem(file, newDir,file.isDirectory())) {
+                    return false;
                 }
             }
-        } catch (IOException e) {
-            Log.e("MoveInFilesystem", "Error while moving entity in filesystem", e);
+
+            // Delete the original directory after moving all contents
+            return source.delete();
+        } else {
+            // Moving a single file
+            DocumentFile newFile = newParentFile.createFile(source.getType(), source.getName());
+            if (newFile == null) {
+                return false;
+            }
+
+            try {
+                copyFile(context, source.getUri(), newFile.getUri());
+                return source.delete();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
         }
+
+    }
+
+
+    private static void copyFile(Context context, Uri srcUri, Uri dstUri) throws IOException {
+        ParcelFileDescriptor srcPfd = context.getContentResolver().openFileDescriptor(srcUri, "r");
+        ParcelFileDescriptor dstPfd = context.getContentResolver().openFileDescriptor(dstUri, "w");
+
+        if (srcPfd == null || dstPfd == null) {
+            throw new IOException("Unable to open file descriptors");
+        }
+
+        FileInputStream inputStream = new FileInputStream(srcPfd.getFileDescriptor());
+        FileOutputStream outputStream = new FileOutputStream(dstPfd.getFileDescriptor());
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = inputStream.read(buffer)) > 0) {
+            outputStream.write(buffer, 0, length);
+        }
+
+        inputStream.close();
+        outputStream.close();
+        srcPfd.close();
+        dstPfd.close();
     }
 
 
