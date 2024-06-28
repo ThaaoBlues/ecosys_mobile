@@ -147,12 +147,12 @@ public class DeltaBinaire {
     }*/
 
     private static int calculateBufferSize(long fileSize){
-        // do not make chunk of more than 100Mb
+        // do not make chunk of more than 10Mb
         // we stop when we have a chunk size
         // that is the maximum one
         // that can still fit 2 times in the file
-        int c = 100;
-        if(fileSize > 100<<10){
+        int c = 10;
+        if(fileSize > 10<<10){
             c = c<<10;
         }else{
             while((c<(fileSize>>2)) ){
@@ -169,8 +169,10 @@ public class DeltaBinaire {
 
         boolean needsTruncature = oldFileSize > newFileSize;
 
+
         int BUFF_SIZE = calculateBufferSize(newFileSize);
         Log.d(TAG,"BUFFER SIZE :"+BUFF_SIZE);
+
 
         byte[] newFileBuff = new byte[BUFF_SIZE];
         long byteIndex = 0;
@@ -240,7 +242,7 @@ public class DeltaBinaire {
                         if(byteIndex == newFileSize){
                             // this operation removes the need to clone a byte array to extend it at each new byte in a block
                             if(dataStream.size() > 0){
-                                Log.d(TAG,"On flush tout");
+                                //Log.d(TAG,"On flush tout");
 
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
 
@@ -254,7 +256,7 @@ public class DeltaBinaire {
                         // this operation removes the need to clone a byte array to extend it at each new byte in a block
 
                         if(dataStream.size() > 0){
-                            Log.d(TAG,"On flush tout");
+                            //Log.d(TAG,"On flush tout");
 
                             delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
 

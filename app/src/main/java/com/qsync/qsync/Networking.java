@@ -18,6 +18,7 @@ import android.util.Log;
 import androidx.documentfile.provider.DocumentFile;
 
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -335,11 +336,19 @@ public class Networking {
                     Socket socket = new Socket(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId), 8274);
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
+                    String ser_event = eventQueue.get(j).serialize();
+
+                    Log.d(TAG,"serialized Event");
+
+                    BufferedOutputStream bos = new BufferedOutputStream(outputStream);
                     // Send the message
-                    outputStream.writeBytes(acces.getMyDeviceId() + ";" + secureId + eventQueue.get(j).serialize());
-                    outputStream.flush();
+                    StringBuilder reqBuilder = new StringBuilder();
+                    reqBuilder.append(acces.getMyDeviceId()).append(";").append(secureId).append(ser_event);
+                    bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                    bos.flush();
 
                     // Close the connection
+                    bos.close();
                     outputStream.close();
                     socket.close();
 
