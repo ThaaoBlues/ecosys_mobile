@@ -28,6 +28,8 @@ import java.nio.channels.FileChannel;
 
 public class PathUtils {
 
+
+    private static String TAG = "Qsync Server : PathUtils";
     public static String joinPaths(String path1, String path2) {
         File file1 = new File(path1);
         File file2 = new File(file1, path2);
@@ -221,12 +223,11 @@ public class PathUtils {
     }
 
 
-    public static String getRelativePath(Uri rootUri, Uri fileUri) {
-        String rootPath = rootUri.getPath();
-        String filePath = fileUri.getPath();
+    public static String getRelativePath(String rootPath, String filePath) {
+
         if (rootPath != null && filePath != null && filePath.startsWith(rootPath)) {
             return filePath.substring(rootPath.length() + 1); // +1 to remove the leading '/'
         }
-        return fileUri.toString();
+        return filePath;
     }
 }

@@ -58,12 +58,11 @@ public class FileSystem {
 
             if (!previousState.containsKey(filePath)) {
                 Log.d("FileMonitor", "New file detected: " + filePath);
-                if(fileInfo.isDirectory){
-                    handleCreateEvent(acces, DocumentFile.fromTreeUri(context,fileInfo.uri));
-                }else{
-                    handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
 
-                }
+                // no need to know if it is a directory as .fromTreeUri().Uri() would only represent
+                // the whole directory from the root and be useless to calculate a relative path
+                handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+
 
             } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified)) {
                 Log.d("FileMonitor", "Modified file detected: " + filePath);
@@ -131,13 +130,15 @@ public class FileSystem {
 
     private static void handleCreateEvent(AccesBdd acces, DocumentFile file) {
 
-        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+        Log.d(TAG,file.getUri().toString());
+        Log.d(TAG,file.getUri().getPath());
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
         // check if file isn't already mapped as this method may be called at each startup
         if(!acces.checkFileExists(relativePath)){
             if (file.isDirectory()) {
                 Log.d(TAG, "Adding " + relativePath + " to the directories to watch.");
 
-                acces.createFolder(relativePath);
+                acces.createFolder(relativePath,"[ADD_TO_RETARD]");
             } else {
                 Log.d(TAG, "Adding " + relativePath + " to the files to watch.");
 
@@ -152,7 +153,7 @@ public class FileSystem {
     private static void handleWriteEvent(Context context,AccesBdd acces, DocumentFile file) {
 
         try{
-            String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+            String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
 
             InputStream in = context.getContentResolver().openInputStream(file.getUri());
             DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,
@@ -170,7 +171,7 @@ public class FileSystem {
     }
 
     private static void handleRemoveEvent(AccesBdd acces, DocumentFile file) {
-        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()),file.getUri());
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
         if (file.isFile()) {
             acces.rmFile(relativePath);
         } else {

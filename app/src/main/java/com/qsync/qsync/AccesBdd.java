@@ -576,7 +576,7 @@ public class AccesBdd {
 
 
     // CreateFolder adds a folder to the database.
-    public void createFolder(String path) {
+    public void createFolder(String path,String flag) {
         db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id) VALUES (?, 0, 'folder', 0, ?)",
                 new String[]{
                         path,
@@ -584,6 +584,32 @@ public class AccesBdd {
                     }
                 );
 
+
+        if(flag.equals("[ADD_TO_RETARD]")){
+
+            Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
+
+            // Insert into retard table
+            if(!offlineDevices.isEmpty()){
+                HashMap<String, String> modtypes = Globals.modTypes();
+
+                StringBuilder strIds = new StringBuilder();
+                for (int i = 0; i < offlineDevices.size(); i++) {
+                    strIds.append(offlineDevices.get(i)).append(";");
+                }
+                strIds.deleteCharAt(strIds.length() - 1);
+
+                String retardInsertQuery = "INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'folder', ?)";
+                db.execSQL(retardInsertQuery,new String[]{
+                        String.valueOf(getFileLastVersionId(path) + 1),
+                        path,
+                        modtypes.get("creation"),
+                        strIds.toString(),
+                        secureId
+                });
+            }
+
+        }
     }
 
     // RmFolder deletes a folder from the database and adds it in delete mode to the retard table.
@@ -705,7 +731,7 @@ public class AccesBdd {
                 relativePath = rootPath + File.separator + dir.getFileName().toString();
             }
             // Add folder to the database or perform other actions as needed
-            createFolder(relativePath);
+            createFolder(relativePath,"");
             System.out.println("Registering: " + relativePath);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 return FileVisitResult.CONTINUE;

@@ -276,10 +276,7 @@ public class Networking {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             absoluteFilePath = Paths.get(acces.GetRootSyncPath(), relativePath).toString();
         }
-        String newAbsoluteFilePath = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            newAbsoluteFilePath = Paths.get(acces.GetRootSyncPath(), newRelativePath).toString();
-        }
+
         String eventType = event.Flag;
         String fileType = event.FileType;
         DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
@@ -318,7 +315,7 @@ public class Networking {
                     );
                 }
 
-                moveInFilesystem(currentFile,newParentFile,fileType.equals("file"));
+                moveInFilesystem(currentFile,newParentFile,!fileType.equals("file"));
 
 
                 break;
@@ -332,10 +329,10 @@ public class Networking {
                 }
                 break;
             case "[CREATE]":
+
+                DocumentFile newFile = createFileWithContentResolver(root,relativePath,!fileType.equals("file"));
+
                 if ("file".equals(fileType)) {
-
-                    DocumentFile newFile = createFileWithContentResolver(root,relativePath);
-
                     acces.createFile(
                             relativePath,
                             newFile,
@@ -343,6 +340,9 @@ public class Networking {
                 } else {
                     acces.createFolder(absoluteFilePath);
                 }
+
+
+
                 break;
             case "[UPDATE]":
                 acces.incrementFileVersion(relativePath);
@@ -566,7 +566,7 @@ public class Networking {
     }
 
 
-    public static DocumentFile createFileWithContentResolver(DocumentFile root,String relativePath) {
+    public static DocumentFile createFileWithContentResolver(DocumentFile root,String relativePath,boolean isDir) {
 
         DocumentFile newFile = null;
         try {
@@ -585,8 +585,11 @@ public class Networking {
             );
 
             if(fullParentPath != null){
-
-                newFile = fullParentPath.createFile("text/plain", parts[parts.length-1]);
+                if(isDir){
+                    newFile = fullParentPath.createDirectory(parts[parts.length-1]);
+                }else{
+                    newFile = fullParentPath.createFile("*", parts[parts.length-1]);
+                }
 
                 if (newFile != null) {
                     // File created successfully
@@ -637,7 +640,7 @@ public class Networking {
         Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
         for (DocumentFile file : directory.listFiles()) {
-            String relativePath = PathUtils.getRelativePath(rootUri, file.getUri());
+            String relativePath = PathUtils.getRelativePath(rootUri.getPath(), file.getUri().getPath());
             Globals.GenArray<String> devices = new Globals.GenArray<>();
             devices.add(deviceId);
 
