@@ -338,7 +338,7 @@ public class Networking {
                             newFile,
                             "[SENT_FROM_OTHER_DEVICE]");
                 } else {
-                    acces.createFolder(absoluteFilePath);
+                    acces.createFolder(relativePath,"");
                 }
 
 

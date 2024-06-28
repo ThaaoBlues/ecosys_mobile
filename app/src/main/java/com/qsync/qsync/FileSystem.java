@@ -80,22 +80,16 @@ public class FileSystem {
         for (String filePath : previousState.keySet()) {
             if (!currentState.containsKey(filePath)) {
                 FileInfo fileInfo = previousState.get(filePath);
-                if (fileInfo.isDirectory) {
-                    Log.d("FileMonitor", "Deleted subdirectory detected: " + filePath);
-                    if(!acces.isSyncInBackupMode()){
-                        handleRemoveEvent(acces,DocumentFile.fromTreeUri(context,fileInfo.uri) );
-                    }else{
-                        Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
-                    }
-                } else {
-                    Log.d("FileMonitor", "Deleted file detected: " + filePath);
-                    if(!acces.isSyncInBackupMode()){
-                        handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
-                    }else{
-                        Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
-                    }
 
+                // same reason as for creation, Uri is not usefull in Tree mode for directories
+                if(!acces.isSyncInBackupMode()){
+                    handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
+                }else{
+                    Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
                 }
+
+
+
             }
         }
 

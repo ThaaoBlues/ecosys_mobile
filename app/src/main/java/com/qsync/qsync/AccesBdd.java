@@ -50,6 +50,7 @@ public class AccesBdd {
     private SQLiteDatabase db;
     private Context context;
 
+    private String TAG = "Qsync Server : AccesBdd";
 
 
     public AccesBdd(Context context){
@@ -586,7 +587,6 @@ public class AccesBdd {
 
 
         if(flag.equals("[ADD_TO_RETARD]")){
-
             Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
 
             // Insert into retard table
@@ -596,6 +596,7 @@ public class AccesBdd {
                 StringBuilder strIds = new StringBuilder();
                 for (int i = 0; i < offlineDevices.size(); i++) {
                     strIds.append(offlineDevices.get(i)).append(";");
+                    Log.d(TAG,"Adding folder to retard table for device : "+offlineDevices.get(i));
                 }
                 strIds.deleteCharAt(strIds.length() - 1);
 
