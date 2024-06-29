@@ -1325,6 +1325,33 @@ public class AccesBdd {
     }
 
 
+    public Globals.GenArray<String> getLinkedDevices() {
+        Globals.GenArray<String> devicesList = new Globals.GenArray<>();
+
+        // Define the SQL query to retrieve linked devices
+        Cursor cursor = db.rawQuery("SELECT device_id FROM linked_devices",null);
+
+        if (cursor != null) {
+            try {
+                // Move the cursor to the first row
+                if (cursor.moveToFirst()) {
+                    do {
+                        // Get the linked_devices_id from the cursor
+                        String device_id = cursor.getString(0);
+                        devicesList.add(device_id);
+
+                    } while (cursor.moveToNext());
+                }
+            } finally {
+                cursor.close(); // Close the cursor when done
+            }
+        } else {
+            Log.e("AccesBdd", "Cursor is null");
+        }
+
+        return devicesList;
+    }
+
     // GetFileLastVersionId retrieves the last version ID of a file.
     public long GetFileLastVersionId(String path) {
         Cursor cursor = db.rawQuery("SELECT version_id FROM filesystem WHERE path=? AND secure_id=?",
@@ -1462,5 +1489,7 @@ public class AccesBdd {
 
 
     }
+
+
 
 }

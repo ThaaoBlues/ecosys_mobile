@@ -47,13 +47,6 @@ public class ZeroConfService {
 
 
 
-    public Globals.GenArray<Map<String, String>> getConnectedDevices(){
-
-        return connected_devices;
-    }
-
-
-
 
 
     private String getAndroidId() {
@@ -76,6 +69,19 @@ public class ZeroConfService {
 
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
         Log.d(TAG,"Device Qsync service registered."+serviceInfo.toString());
+
+
+        // put all the devices as disconnected to start fresh
+        Globals.GenArray<String> linkedDevices = acces.getLinkedDevices();
+        for(int i =0;i<linkedDevices.size();i++){
+
+                acces.setDevicedbState(
+                        linkedDevices.get(i),
+                        false,
+                        ""
+                );
+
+        }
     }
 
     public void shutdown() {

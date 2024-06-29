@@ -178,6 +178,21 @@ public class Networking {
                     case "[MODIFICATION_DONE]":
                         setEventNetworkLockForDevice(device_id, false);
                         break;
+
+                    case "[BEGIN_UPDATE]":
+
+                        if(acces.IsDeviceLinked(device_id)) {
+                            acces.SetFileSystemPatchLockState(device_id, true);
+                        }
+
+                        break;
+
+                    case "[END_OF_UPDATE]":
+                        if(acces.IsDeviceLinked(device_id)) {
+                            acces.SetFileSystemPatchLockState(device_id, false);
+                        }
+
+                        break;
                     case "[SETUP_DL]":
 
                         if(acces.IsDeviceLinked(device_id)){
@@ -360,13 +375,87 @@ public class Networking {
     }
 
 
+    public static void sendStartOfUpdateEvent(String ipAddress,AccesBdd acces) throws IOException {
+        // Initialize the connection
+        Socket socket = new Socket(ipAddress, 8274);
+        DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+        String ser_event = new Globals.QEvent(
+                "[BEGIN_UPDATE]",
+                "",
+                null,
+                "",
+                "",
+                acces.GetSecureId()
+        ).serialize();
+
+        Log.d(TAG,"serialized Event");
+
+        BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+        // Send the message
+        StringBuilder reqBuilder = new StringBuilder();
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        bos.flush();
+
+        // Close the connection
+        bos.close();
+        outputStream.close();
+        socket.close();
+    }
+
+
+    public static void sendEndOfUpdateEvent(String ipAddress,AccesBdd acces) throws IOException {
+        // Initialize the connection
+        Socket socket = new Socket(ipAddress, 8274);
+        DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+        String ser_event = new Globals.QEvent(
+                "[END_OF_UPDATE]",
+                "",
+                null,
+                "",
+                "",
+                acces.GetSecureId()
+        ).serialize();
+
+        Log.d(TAG,"serialized Event");
+
+        BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+        // Send the message
+        StringBuilder reqBuilder = new StringBuilder();
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        bos.flush();
+
+        // Close the connection
+        bos.close();
+        outputStream.close();
+        socket.close();
+    }
+
+
     public static void sendDeviceEventQueueOverNetwork(Globals.GenArray<String> connectedDevices, String secureId, Globals.GenArray<Globals.QEvent> eventQueue, String... ipAddress) {
         AccesBdd acces = new AccesBdd(context);
-
+        acces.SetSecureId(secureId);
 
 
         for (int i=0;i<connectedDevices.size();i++) {
             String deviceId = connectedDevices.get(i);
+
+
+            /*try{
+                Log.d(TAG,"Sending start of update event");
+                sendStartOfUpdateEvent(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId),acces);
+
+            } catch (IOException e ) {
+
+                try{
+                    Thread.sleep(1000);
+                }catch (InterruptedException ignore){
+
+                }
+            }*/
 
             for (int j=0;j<eventQueue.size();j++) {
 
@@ -413,7 +502,16 @@ public class Networking {
                 }
             }
 
+            /*try{
+                Log.d(TAG,"Sending end of update event");
+                sendEndOfUpdateEvent(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId),acces);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }*/
+
         }
+
+
 
         acces.closedb();
 
@@ -640,11 +738,21 @@ public class Networking {
         Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
         for (DocumentFile file : directory.listFiles()) {
-            String relativePath = PathUtils.getRelativePath(rootUri.getPath(), file.getUri().getPath());
+
+            // always the same problem with non usefull directory uris
+            String relativePath = PathUtils.getRelativePath(
+                    rootUri.getPath(),
+                    file.isDirectory() ? DocumentFile.fromSingleUri(context,file.getUri()).getUri().getPath() : file.getUri().getPath()
+            );
+
+
+
             Globals.GenArray<String> devices = new Globals.GenArray<>();
             devices.add(deviceId);
 
             if (file.isDirectory()) {
+
+
                 // Create event for directory
                 Globals.QEvent event = new Globals.QEvent(
                         "[CREATE]",
@@ -658,7 +766,7 @@ public class Networking {
 
 
                 queue.add(event);
-
+                Log.d(TAG,"Notifying to create folder : "+event.FilePath);
                 // send before recursive call so we don't take to many ram
                 sendDeviceEventQueueOverNetwork(devices, secureId, queue);
                 queue.popLast();
@@ -686,6 +794,7 @@ public class Networking {
                             acces.GetSecureId()
                     );
                     inputStream.close();
+                    Log.d(TAG,"Notifying to create file : "+event.FilePath);
 
                     queue.add(event);
                     sendDeviceEventQueueOverNetwork(devices, secureId, queue);

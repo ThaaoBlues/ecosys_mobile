@@ -39,7 +39,12 @@ public class FileSystem {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                checkForChanges(context,directory);
+                final AccesBdd acces = new AccesBdd(context);
+                acces.getSecureIdFromRootPath(directory.getUri().toString());
+
+                if(!acces.IsThisFileSystemBeingPatched()){
+                    checkForChanges(context,directory);
+                }
                 handler.postDelayed(this, POLLING_INTERVAL);
             }
         }, POLLING_INTERVAL);
@@ -96,6 +101,8 @@ public class FileSystem {
         // Update the previous state to the current state
         previousState.clear();
         previousState.putAll(currentState);
+
+        acces.closedb();
     }
 
     private static void populateState(DocumentFile directory, Map<String, FileInfo> state, String basePath) {

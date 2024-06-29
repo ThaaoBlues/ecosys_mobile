@@ -175,6 +175,17 @@ public class DeltaBinaire {
                                                              long oldFileSize, byte[] oldFileContent){
         Delta delta = new Delta();
 
+        delta.setFilePath(filename);
+
+        // empty file creation
+        if(newFileSize == 0 && oldFileSize == 0){
+            delta.Instructions.add(new DeltaInstruction("ab",
+                    new byte[]{0},
+                    0
+            ));
+            return delta;
+        }
+
         boolean needsTruncature = oldFileSize > newFileSize;
 
 
@@ -295,7 +306,6 @@ public class DeltaBinaire {
             delta.Instructions.add(instruction);
         }
 
-        delta.setFilePath(filename);
 
         Log.d("FILEDELTA","build this delta : "+delta);
 

@@ -122,96 +122,102 @@ public class LargageAerienFragment extends Fragment {
                             @Override
                             public void execute() {
 
-                                BackendApi.addButtonsFromDevicesGenArray(
-                                        getContext(),
-                                        acces.getNetworkMap(),
-                                        (LinearLayout) binding.appareilsLargageLinearlayout,
-                                        new BackendApi.DeviceButtonCallback() {
-                                            @Override
-                                            public void callback(Map<String, String> device) {
+
+                                try{
+                                    BackendApi.addButtonsFromDevicesGenArray(
+                                            getContext(),
+                                            acces.getNetworkMap(),
+                                            (LinearLayout) binding.appareilsLargageLinearlayout,
+                                            new BackendApi.DeviceButtonCallback() {
+                                                @Override
+                                                public void callback(Map<String, String> device) {
 
 
-                                                String[] choices = {"Send files","Send some text"};
-                                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                                    String[] choices = {"Send files","Send some text"};
+                                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
 
-                                                builder.setTitle("Select an action");
+                                                    builder.setTitle("Select an action");
 
-                                                builder.setItems(choices, new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        target_device = device;
+                                                    builder.setItems(choices, new DialogInterface.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(DialogInterface dialog, int which) {
+                                                            target_device = device;
 
-                                                        switch (which){
-                                                            case 0:
-                                                                dialog.dismiss();
-                                                                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                                                                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                                                                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                                                intent.setType("*/*");
-
-
-                                                                // Optionally, specify a URI for the file that should appear in the
-                                                                // system file picker when it loads.
-                                                                //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, );
-
-                                                                selectFileLauncher.launch(intent);
-
-                                                                break;
-                                                            case 1:
-                                                                dialog.dismiss();
+                                                            switch (which){
+                                                                case 0:
+                                                                    dialog.dismiss();
+                                                                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                                                                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                                                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                                                    intent.setType("*/*");
 
 
-                                                                ProcessExecutor.Function aski = new ProcessExecutor.Function() {
-                                                                    @Override
-                                                                    public void execute() {
-                                                                        String text = BackendApi.askMultilineInput(
-                                                                                "TYPE YOUR TEXT HERE",
-                                                                                "Type/paste the text you want to send here",
-                                                                                getContext()
-                                                                        );
+                                                                    // Optionally, specify a URI for the file that should appear in the
+                                                                    // system file picker when it loads.
+                                                                    //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, );
 
-                                                                        try {
-                                                                            File outputFile = File.createTempFile(
-                                                                                    "text",
-                                                                                    ".txt",
-                                                                                    getContext().getCacheDir()
+                                                                    selectFileLauncher.launch(intent);
+
+                                                                    break;
+                                                                case 1:
+                                                                    dialog.dismiss();
+
+
+                                                                    ProcessExecutor.Function aski = new ProcessExecutor.Function() {
+                                                                        @Override
+                                                                        public void execute() {
+                                                                            String text = BackendApi.askMultilineInput(
+                                                                                    "TYPE YOUR TEXT HERE",
+                                                                                    "Type/paste the text you want to send here",
+                                                                                    getContext()
                                                                             );
 
-                                                                            FileOutputStream fos = new FileOutputStream(outputFile);
+                                                                            try {
+                                                                                File outputFile = File.createTempFile(
+                                                                                        "text",
+                                                                                        ".txt",
+                                                                                        getContext().getCacheDir()
+                                                                                );
 
-                                                                            fos.write(text.getBytes());
+                                                                                FileOutputStream fos = new FileOutputStream(outputFile);
 
-                                                                            fos.close();
-                                                                            Log.d("Qsync Server : Largage Aerien Fragment",Uri.parse(outputFile.getPath()).toString());
-                                                                            SendLA(Uri.parse(outputFile.getPath()));
+                                                                                fos.write(text.getBytes());
 
-                                                                        } catch (IOException e) {
-                                                                            throw new RuntimeException(e);
+                                                                                fos.close();
+                                                                                Log.d("Qsync Server : Largage Aerien Fragment",Uri.parse(outputFile.getPath()).toString());
+                                                                                SendLA(Uri.parse(outputFile.getPath()));
+
+                                                                            } catch (IOException e) {
+                                                                                throw new RuntimeException(e);
+                                                                            }
                                                                         }
-                                                                    }
-                                                                };
+                                                                    };
 
-                                                                ProcessExecutor.startProcess(aski);
+                                                                    ProcessExecutor.startProcess(aski);
 
-                                                                break;
-
+                                                                    break;
 
 
 
-                                                            default:
-                                                                break;
 
+                                                                default:
+                                                                    break;
+
+                                                            }
                                                         }
-                                                    }
-                                                });
+                                                    });
 
-                                                builder.show();
-
+                                                    builder.show();
 
 
+
+                                                }
                                             }
-                                        }
-                                );
+                                    );
+                                }catch (java.lang.NullPointerException ignored){
+
+                                }
+
 
 
                             }
