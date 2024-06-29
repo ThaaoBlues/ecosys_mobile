@@ -19,6 +19,7 @@ import androidx.documentfile.provider.DocumentFile;
 
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,9 +34,12 @@ public class FileSystem {
     private static final Map<String, FileInfo> previousState = new HashMap<>();
     private static final long POLLING_INTERVAL = 5000; // 5 seconds
 
+    private static Context context;
 
 
-    public static void startDirectoryMonitoring(Context context, DocumentFile directory) {
+    public static void startDirectoryMonitoring(Context mContext, DocumentFile directory) {
+
+        context = mContext;
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -69,7 +73,7 @@ public class FileSystem {
                 handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
 
 
-            } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified)) {
+            } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
                 Log.d("FileMonitor", "Modified file detected: " + filePath);
                 handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
             }
@@ -88,6 +92,7 @@ public class FileSystem {
 
                 // same reason as for creation, Uri is not usefull in Tree mode for directories
                 if(!acces.isSyncInBackupMode()){
+                    Log.d(TAG,"File suppression detected "+filePath);
                     handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
                 }else{
                     Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
@@ -149,6 +154,33 @@ public class FileSystem {
             Log.d("Qsync Server : FileSystem",relativePath+" File already mapped.");
         }
 
+        try{
+            Globals.QEvent event = new Globals.QEvent(
+                    "[CREATE]",
+                    file.isDirectory() ? "folder" : "file",
+                    DeltaBinaire.buildDeltaFromInputStream(
+                            file.getName(),
+                            file.length(),
+                            context.getContentResolver().openInputStream(file.getUri()),
+                            0,
+                            new byte[]{0}
+                            ),
+                    relativePath,
+                    "",
+                    acces.GetSecureId()
+            );
+
+            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+            queue.add(event);
+
+            Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+        }catch (IOException e){
+            Log.e(TAG,"Unable to open file to build binary delta",e);
+        }
+
+
+
     }
 
     private static void handleWriteEvent(Context context,AccesBdd acces, DocumentFile file) {
@@ -163,11 +195,30 @@ public class FileSystem {
                     acces.GetFileSizeFromBdd(relativePath),
                     acces.getFileContent(relativePath)
             );
-            acces.updateFile(relativePath, delta); // Assuming updateFile is adapted for Java
+            acces.updateFile(relativePath, delta);
+
+
+            Globals.QEvent event = new Globals.QEvent(
+                    "[WRITE]",
+                    "file",
+                    delta,
+                    relativePath,
+                    "",
+                    acces.GetSecureId()
+            );
+
+            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+            queue.add(event);
+
+            Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
 
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+
+
+
 
     }
 
@@ -178,6 +229,21 @@ public class FileSystem {
         } else {
             acces.rmFolder(relativePath);
         }
+
+        Globals.QEvent event = new Globals.QEvent(
+                "[REMOVE]",
+                file.isDirectory() ? "folder" : "file",
+                null,
+                relativePath,
+                "",
+                acces.GetSecureId()
+        );
+
+        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+        queue.add(event);
+
+        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
     }
 }
 

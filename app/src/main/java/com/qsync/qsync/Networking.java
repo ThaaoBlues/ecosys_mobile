@@ -664,41 +664,40 @@ public class Networking {
     }
 
 
-    public static DocumentFile createFileWithContentResolver(DocumentFile root,String relativePath,boolean isDir) {
-
+    public static DocumentFile createFileWithContentResolver(DocumentFile root, String relativePath, boolean isDir) {
         DocumentFile newFile = null;
         try {
             String[] parts = relativePath.split("/");
-            StringBuilder parentBuilder = new StringBuilder();
-            // building parent relative path
-            for (String part : parts) {
-                if (!part.isEmpty()) {
-                    parentBuilder.append(part).append("/");
+            DocumentFile currentDir = root;
+
+            // Traverse the path and create directories if necessary
+
+            // as Uri creation is a bit funky with appended path
+            // we have to crawl to the desired end of the tree x')
+            for (int i = 0; i < parts.length - 1; i++) {
+                if (!parts[i].isEmpty()) {
+                    DocumentFile nextDir = currentDir.findFile(parts[i]);
+                    if (nextDir == null || !nextDir.isDirectory()) {
+                        nextDir = currentDir.createDirectory(parts[i]);
+                    }
+                    currentDir = nextDir;
                 }
             }
 
-            DocumentFile fullParentPath = DocumentFile.fromTreeUri(
-              context,
-              Uri.withAppendedPath(root.getUri(),parentBuilder.toString())
-            );
+            // Create the final file or directory
+            String finalPart = parts[parts.length - 1];
+            if (isDir) {
+                newFile = currentDir.createDirectory(finalPart);
+            } else {
+                newFile = currentDir.createFile("*/*", finalPart);
+            }
 
-            if(fullParentPath != null){
-                if(isDir){
-                    newFile = fullParentPath.createDirectory(parts[parts.length-1]);
-                }else{
-                    newFile = fullParentPath.createFile("*", parts[parts.length-1]);
-                }
-
-                if (newFile != null) {
-                    // File created successfully
-
-                    Log.d("FileCreation", "File created successfully: " + newFile.getUri());
-                } else {
-                    // File creation failed
-                    Log.e("FileCreation", "Failed to create file.");
-                }
-            }else{
-                Log.e("FileCreation", "Error creating file: fullParentPath is null ");
+            if (newFile != null) {
+                // File created successfully
+                Log.d("FileCreation", "File created successfully: " + newFile.getUri());
+            } else {
+                // File creation failed
+                Log.e("FileCreation", "Failed to create file.");
             }
         } catch (Exception e) {
             Log.e("FileCreation", "Error creating file: ", e);

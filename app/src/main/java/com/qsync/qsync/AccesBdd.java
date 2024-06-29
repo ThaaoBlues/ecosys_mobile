@@ -424,11 +424,41 @@ public class AccesBdd {
         Globals.GenArray<String> offlineDevices = new Globals.GenArray<>();
         Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
 
+        if (linkedDevices.isEmpty()) {
+            return offlineDevices; // Return empty if there are no linked devices
+        }
 
-        Cursor cursor = db.rawQuery(
-        "SELECT device_id, is_connected FROM linked_devices WHERE device_id IN ("+linkedDevices.join(",")+")",
-            null
+        // Convert linkedDevices to a String array for selection arguments
+        String[] selectionArgs = new String[linkedDevices.size()];
+        for (int i = 0; i < linkedDevices.size(); i++) {
+            selectionArgs[i] = linkedDevices.get(i);
+        }
+
+        // Construct the selection string with placeholders
+        StringBuilder selectionBuilder = new StringBuilder();
+        selectionBuilder.append("device_id IN (");
+        for (int i = 0; i < selectionArgs.length; i++) {
+            selectionBuilder.append("?");
+            if (i < selectionArgs.length - 1) {
+                selectionBuilder.append(",");
+            }
+        }
+        selectionBuilder.append(")");
+
+        // Construct the final selection string
+        String selection = selectionBuilder.toString();
+
+        // Execute the query using parameterized selection
+        Cursor cursor = db.query(
+                "linked_devices",                 // Table name
+                new String[]{"device_id", "is_connected"}, // Columns to return
+                selection,                       // Selection
+                selectionArgs,                   // Selection arguments
+                null,                            // Group by
+                null,                            // Having
+                null                             // Order by
         );
+
         while (cursor.moveToNext()) {
             String deviceId = cursor.getString(0);
             boolean isConnected = cursor.getInt(1) == 1;
@@ -438,6 +468,56 @@ public class AccesBdd {
         }
         cursor.close();
         return offlineDevices;
+    }
+
+    public Globals.GenArray<String> getSyncOnlineDevices() {
+        Globals.GenArray<String> onlineDevices = new Globals.GenArray<>();
+        Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
+
+        if (linkedDevices.isEmpty()) {
+            return onlineDevices; // Return empty if there are no linked devices
+        }
+
+        // Convert linkedDevices to a String array for selection arguments
+        String[] selectionArgs = new String[linkedDevices.size()];
+        for (int i = 0; i < linkedDevices.size(); i++) {
+            selectionArgs[i] = linkedDevices.get(i);
+        }
+
+        // Construct the selection string with placeholders
+        StringBuilder selectionBuilder = new StringBuilder();
+        selectionBuilder.append("device_id IN (");
+        for (int i = 0; i < selectionArgs.length; i++) {
+            selectionBuilder.append("?");
+            if (i < selectionArgs.length - 1) {
+                selectionBuilder.append(",");
+            }
+        }
+        selectionBuilder.append(")");
+
+        // Construct the final selection string
+        String selection = selectionBuilder.toString();
+
+        // Execute the query using parameterized selection
+        Cursor cursor = db.query(
+                "linked_devices",                 // Table name
+                new String[]{"device_id", "is_connected"}, // Columns to return
+                selection,                       // Selection
+                selectionArgs,                   // Selection arguments
+                null,                            // Group by
+                null,                            // Having
+                null                             // Order by
+        );
+
+        while (cursor.moveToNext()) {
+            String deviceId = cursor.getString(0);
+            boolean isConnected = cursor.getInt(1) == 1;
+            if (isConnected) {
+                onlineDevices.add(deviceId);
+            }
+        }
+        cursor.close();
+        return onlineDevices;
     }
 
     public void updateFile(String path, DeltaBinaire.Delta delta) {
