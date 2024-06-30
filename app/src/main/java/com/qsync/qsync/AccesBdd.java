@@ -29,6 +29,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayInputStream;
@@ -269,18 +273,21 @@ public class AccesBdd {
                 copyFileToGZipOutputStream( inputStream,gzipOutputStream);
             }
             byte[] contentBytes = outputStream.toByteArray();
-            Object[] args = {
-                    relativePath,
-                    0,
-                    "file",
-                    file.length(),
-                    secureId,
-                    contentBytes
-            };
+
+
+            ContentValues fileValues = new ContentValues();
+            fileValues.put("path", relativePath);
+            fileValues.put("version_id", 0);
+            fileValues.put("type", "file");
+            fileValues.put("size", file.length());
+            fileValues.put("secure_id", secureId);
+            fileValues.put("content", contentBytes);
+
+            db.insert("filesystem", null, fileValues);
 
 
 
-            db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?,?,?, ?, ?, ?)",args);
+            //db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?,?,?, ?, ?, ?)",args);
             Log.d("Qsync Server : Database","Added file to filesystem map. return value : ");
 
 
@@ -295,13 +302,18 @@ public class AccesBdd {
                 // Insert delta into delta table
 
                 byte[] serializedData = serialize(delta);
-                String deltaInsertQuery = "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)";
-                db.execSQL(deltaInsertQuery, new Object[]{
-                        relativePath,
-                        String.valueOf(getFileLastVersionId(relativePath) + 1),
-                        serializedData,
-                        secureId
-                });
+                //String deltaInsertQuery = "INSERT INTO delta (path, version_id, delta, secure_id) VALUES (?, ?, ?, ?)";
+
+                ContentValues deltaValues = new ContentValues();
+                deltaValues.put("path", relativePath);
+                deltaValues.put("version_id", getFileLastVersionId(relativePath) + 1);
+                deltaValues.put("delta", serializedData);
+                deltaValues.put("secure_id", secureId);
+
+                db.insert("delta",null,deltaValues);
+
+
+
 
 
                 // Insert into retard table
@@ -318,7 +330,7 @@ public class AccesBdd {
                     db.execSQL(retardInsertQuery,new String[]{
                             String.valueOf(getFileLastVersionId(relativePath) + 1),
                             relativePath,
-                            modtypes.get("creation"),
+                            modtypes.get("[CREATE]"),
                             strIds.toString(),
                             secureId
                     });
@@ -831,7 +843,7 @@ public class AccesBdd {
             String relativePath = dcf.getUri().getPath().replace(GetRootSyncPath(),"");
 
             // Add file to the database or perform other actions as needed
-            createFile(relativePath,dcf, "[ADD_TO_RETARD]");
+            createFile(relativePath,dcf, "");
             System.out.println("Registering: " + relativePath);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 return FileVisitResult.CONTINUE;

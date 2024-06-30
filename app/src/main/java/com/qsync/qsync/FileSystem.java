@@ -27,8 +27,6 @@ import java.util.Map;
 public class FileSystem {
 
     private static final String TAG = "FileSystem";
-    private static final String QSYNC_WRITEABLE_DIRECTORY = "path_to_your_directory"; // Specify your directory path here
-
 
     private static final Handler handler = new Handler(Looper.getMainLooper());
     private static final Map<String, FileInfo> previousState = new HashMap<>();
@@ -43,26 +41,25 @@ public class FileSystem {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                final AccesBdd acces = new AccesBdd(context);
-                acces.getSecureIdFromRootPath(directory.getUri().toString());
+                final AccesBdd acces_nonclosing = new AccesBdd(context);
+                acces_nonclosing.getSecureIdFromRootPath(directory.getUri().toString());
 
                 // as we use polling to watch the filesystem,
                 // even if a new directory is sent by another end
                 // it will be taken as part of the usual map
                 // and nothing has to be done differently
-                if(!acces.IsThisFileSystemBeingPatched()){
-                    checkForChanges(context,directory);
+                if(!acces_nonclosing.IsThisFileSystemBeingPatched()){
+                    checkForChanges(context,directory,acces_nonclosing);
                 }
                 handler.postDelayed(this, POLLING_INTERVAL);
             }
         }, POLLING_INTERVAL);
     }
 
-    private static void checkForChanges(Context context, DocumentFile directory) {
+    private static void checkForChanges(Context context, DocumentFile directory,AccesBdd acces) {
         Map<String, FileInfo> currentState = new HashMap<>();
         populateState(directory, currentState, directory.getUri().toString());
-        final AccesBdd acces = new AccesBdd(context);
-        acces.getSecureIdFromRootPath(directory.getUri().toString());
+
 
         // Check for new, modified, or renamed files
         for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
@@ -184,7 +181,6 @@ public class FileSystem {
                     @Override
                     public void execute() {
                         Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
-                        acces.closedb();
 
                     }
                 };
@@ -237,7 +233,6 @@ public class FileSystem {
                         queue.add(event);
 
                         Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
-                        acces.closedb();
 
                     } catch (FileNotFoundException e) {
                         throw new RuntimeException(e);
@@ -276,7 +271,6 @@ public class FileSystem {
 
                 Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
 
-                acces.closedb();
 
             }
         };

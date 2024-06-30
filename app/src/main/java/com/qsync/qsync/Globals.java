@@ -476,10 +476,10 @@ public class Globals {
 
     public static HashMap<String, String> modTypes(){
         HashMap<String, String> mt = new HashMap<>();
-        mt.put("creation", "c");
-        mt.put("delete", "d");
-        mt.put("patch", "p");
-        mt.put("move", "m");
+        mt.put("[CREATE]", "c");
+        mt.put("[DELETE]", "d");
+        mt.put("[PATCH]", "p");
+        mt.put("[MOVE]", "m");
 
         return mt;
 
@@ -488,10 +488,10 @@ public class Globals {
 
     public static HashMap<String, String> modTypesReverse(){
         HashMap<String, String> mt = new HashMap<>();
-        mt.put("c","creation");
-        mt.put("d","delete");
-        mt.put("p","patch");
-        mt.put("m","move");
+        mt.put("c","[CREATE]");
+        mt.put("d","[DELETE]");
+        mt.put("p","[PATCH]");
+        mt.put("m","[MOVE]");
 
         return mt;
 

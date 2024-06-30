@@ -247,43 +247,55 @@ public class DeltaBinaire {
 
                     byteIndex++;
                 } else {
-                    if (newFileBuff[buff_index] != oldFileBuff) {
-                        //Log.d(TAG,String.valueOf(newFileBuff[buff_index]));
-
-                        dataStream.write(newFileBuff[buff_index]);
-                        //Log.d(TAG, String.valueOf(dataStream.toString()));
 
 
-                        byteIndex++;
+                    try{
+
+                        if (newFileBuff[buff_index] != oldFileBuff) {
+                            //Log.d(TAG,String.valueOf(newFileBuff[buff_index]));
+
+                            dataStream.write(newFileBuff[buff_index]);
+                            //Log.d(TAG, String.valueOf(dataStream.toString()));
 
 
-                        // check if we are at EOF and flush the buffer
-                        if(byteIndex == newFileSize){
+
+                            byteIndex++;
+
+                            // check if we are at EOF and flush the buffer
                             // this operation removes the need to clone a byte array to extend it at each new byte in a block
-                            if(dataStream.size() > 0){
+                            if((dataStream.size() > 0) && byteIndex == newFileSize){
                                 //Log.d(TAG,"On flush tout");
-
+                                dataStream.flush();
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
 
                                 dataStream.reset();
                             }
+
+
+
+
+
+                            // end of block with changes as this byte is the same as in the old file version
+                        } else {
+                            // check if we are at the end of a block change ( i.e the data stream has bytes in it )
+                            // as if this is just a random byte in a chunk of unchanged bytes the buffer would be empty
+                            // this operation removes the need to clone a byte array to extend it at each new byte in a block
+
+                            if(dataStream.size() > 0){
+                                //Log.d(TAG,"On flush tout");
+                                dataStream.flush();
+                                delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
+
+                                dataStream.reset();
+                            }
+
+
+                            byteIndex++;
+                            // we prepare to start a new block
+                            blockStartIndex = byteIndex;
                         }
-
-                        // end of block with changes or just not any changes for this byte
-                    } else {
-                        // check if we are at the end of a block change ( i.e the data stream has bytes in it )
-                        // this operation removes the need to clone a byte array to extend it at each new byte in a block
-
-                        if(dataStream.size() > 0){
-                            //Log.d(TAG,"On flush tout");
-
-                            delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
-
-                            dataStream.reset();
-                        }
-                        byteIndex++;
-                        // we prepare to start a new block
-                        blockStartIndex = byteIndex;
+                    }catch (IOException e){
+                        Log.e(TAG,"Error while flushing datastream");
                     }
                 }
 
