@@ -374,7 +374,7 @@ public class AccesBdd {
         Cursor cursor = db.rawQuery("SELECT device_id, is_connected FROM linked_devices",null);
         while (cursor.moveToNext()) {
             String deviceId = cursor.getString(0);
-            boolean isConnected = cursor.getInt(0) == 1;
+            boolean isConnected = cursor.getInt(1) == 1;
             if (isConnected) {
                 onlineDevices.add(deviceId);
             }
@@ -422,7 +422,7 @@ public class AccesBdd {
 
     public Globals.GenArray<String> getSyncOfflineDevices() {
         Globals.GenArray<String> offlineDevices = new Globals.GenArray<>();
-        Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
+        /*Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
 
         if (linkedDevices.isEmpty()) {
             return offlineDevices; // Return empty if there are no linked devices
@@ -466,48 +466,47 @@ public class AccesBdd {
                 offlineDevices.add(deviceId);
             }
         }
-        cursor.close();
+        cursor.close();*/
+
+        offlineDevices = getOfflineDevices();
+
+        Globals.GenArray<String> syncOnlineDevices = new Globals.GenArray<>();
+        for(int i=0;i<offlineDevices.size();i++){
+            if(IsDeviceLinked(offlineDevices.get(i))){
+                syncOnlineDevices.add(offlineDevices.get(i));
+            }
+        }
+
+
         return offlineDevices;
     }
 
     public Globals.GenArray<String> getSyncOnlineDevices() {
         Globals.GenArray<String> onlineDevices = new Globals.GenArray<>();
-        Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
+        /*Globals.GenArray<String> linkedDevices = getSyncLinkedDevices();
 
         if (linkedDevices.isEmpty()) {
             return onlineDevices; // Return empty if there are no linked devices
         }
 
-        // Convert linkedDevices to a String array for selection arguments
-        String[] selectionArgs = new String[linkedDevices.size()];
-        for (int i = 0; i < linkedDevices.size(); i++) {
-            selectionArgs[i] = linkedDevices.get(i);
-        }
+
 
         // Construct the selection string with placeholders
         StringBuilder selectionBuilder = new StringBuilder();
-        selectionBuilder.append("device_id IN (");
-        for (int i = 0; i < selectionArgs.length; i++) {
-            selectionBuilder.append("?");
-            if (i < selectionArgs.length - 1) {
+        selectionBuilder.append("(");
+
+        for (int i = 0; i < linkedDevices.size(); i++) {
+
+            selectionBuilder.append("'").append(linkedDevices.get(i)).append("'");
+            if (i < linkedDevices.size() - 1) {
                 selectionBuilder.append(",");
             }
         }
         selectionBuilder.append(")");
 
-        // Construct the final selection string
-        String selection = selectionBuilder.toString();
 
         // Execute the query using parameterized selection
-        Cursor cursor = db.query(
-                "linked_devices",                 // Table name
-                new String[]{"device_id", "is_connected"}, // Columns to return
-                selection,                       // Selection
-                selectionArgs,                   // Selection arguments
-                null,                            // Group by
-                null,                            // Having
-                null                             // Order by
-        );
+        Cursor cursor = db.rawQuery("SELECT device_id,is_connected FROM linked_devices WHERE device_id IN "+selectionBuilder.toString(), new String[]{});
 
         while (cursor.moveToNext()) {
             String deviceId = cursor.getString(0);
@@ -516,8 +515,42 @@ public class AccesBdd {
                 onlineDevices.add(deviceId);
             }
         }
-        cursor.close();
-        return onlineDevices;
+        cursor.close();*/
+
+
+
+        /*Log.d(TAG,"Linked devices : "+linkedDevices.size());
+        for(int i=0;i<linkedDevices.size();i++){
+            if(isDeviceConnected(linkedDevices.get(i))){
+                onlineDevices.add(linkedDevices.get(i));
+            }
+        }*/
+
+        onlineDevices = getOnlineDevices();
+
+        Globals.GenArray<String> syncOnlineDevices = new Globals.GenArray<>();
+        for(int i=0;i<onlineDevices.size();i++){
+            if(IsDeviceLinked(onlineDevices.get(i))){
+                syncOnlineDevices.add(onlineDevices.get(i));
+            }
+        }
+
+        return syncOnlineDevices;
+    }
+
+
+    public boolean isDeviceConnected(String device_id){
+        Cursor cursor = db.rawQuery("SELECT is_connected FROM linked_devices WHERE device_id=?",
+                new String[]{
+                        device_id
+                }
+        );
+
+        if(cursor.moveToFirst()){
+            return cursor.getInt(0) == 1;
+        }
+
+        return false;
     }
 
     public void updateFile(String path, DeltaBinaire.Delta delta) {

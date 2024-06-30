@@ -46,6 +46,10 @@ public class FileSystem {
                 final AccesBdd acces = new AccesBdd(context);
                 acces.getSecureIdFromRootPath(directory.getUri().toString());
 
+                // as we use polling to watch the filesystem,
+                // even if a new directory is sent by another end
+                // it will be taken as part of the usual map
+                // and nothing has to be done differently
                 if(!acces.IsThisFileSystemBeingPatched()){
                     checkForChanges(context,directory);
                 }
@@ -107,7 +111,6 @@ public class FileSystem {
         previousState.clear();
         previousState.putAll(currentState);
 
-        acces.closedb();
     }
 
     private static void populateState(DocumentFile directory, Map<String, FileInfo> state, String basePath) {
@@ -150,34 +153,52 @@ public class FileSystem {
 
                 acces.createFile(relativePath,file, "[ADD_TO_RETARD]");
             }
-        }else{
-            Log.d("Qsync Server : FileSystem",relativePath+" File already mapped.");
-        }
 
-        try{
-            Globals.QEvent event = new Globals.QEvent(
-                    "[CREATE]",
-                    file.isDirectory() ? "folder" : "file",
-                    DeltaBinaire.buildDeltaFromInputStream(
+
+            try{
+                DeltaBinaire.Delta delta = null;
+                if(file.isFile()){
+                    delta = DeltaBinaire.buildDeltaFromInputStream(
                             file.getName(),
                             file.length(),
                             context.getContentResolver().openInputStream(file.getUri()),
                             0,
                             new byte[]{0}
-                            ),
-                    relativePath,
-                    "",
-                    acces.GetSecureId()
-            );
+                    );
+                }
 
-            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+                Globals.QEvent event = new Globals.QEvent(
+                        "[CREATE]",
+                        file.isDirectory() ? "folder" : "file",
+                        delta,
+                        relativePath,
+                        "",
+                        acces.GetSecureId()
+                );
 
-            queue.add(event);
+                Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
-            Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
-        }catch (IOException e){
-            Log.e(TAG,"Unable to open file to build binary delta",e);
+                queue.add(event);
+                Log.d(TAG,"Number of online devices for this task : "+String.valueOf(acces.getSyncOnlineDevices().size()));
+                ProcessExecutor.Function func = new ProcessExecutor.Function() {
+                    @Override
+                    public void execute() {
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+                        acces.closedb();
+
+                    }
+                };
+
+                ProcessExecutor.startProcess(func);
+
+            }catch (IOException e){
+                Log.e(TAG,"Unable to open file to build binary delta",e);
+            }
+        }else{
+            Log.d("Qsync Server : FileSystem",relativePath+" File already mapped.");
         }
+
+
 
 
 
@@ -185,39 +206,46 @@ public class FileSystem {
 
     private static void handleWriteEvent(Context context,AccesBdd acces, DocumentFile file) {
 
-        try{
-            String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
+            ProcessExecutor.Function f = new ProcessExecutor.Function() {
+                @Override
+                public void execute() {
 
-            InputStream in = context.getContentResolver().openInputStream(file.getUri());
-            DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,
-                    file.length(),
-                    in,
-                    acces.GetFileSizeFromBdd(relativePath),
-                    acces.getFileContent(relativePath)
-            );
-            acces.updateFile(relativePath, delta);
+                    try {
+                        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(), file.getUri().getPath());
 
-
-            Globals.QEvent event = new Globals.QEvent(
-                    "[WRITE]",
-                    "file",
-                    delta,
-                    relativePath,
-                    "",
-                    acces.GetSecureId()
-            );
-
-            Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-
-            queue.add(event);
-
-            Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
-
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+                        InputStream in = context.getContentResolver().openInputStream(file.getUri());
+                        DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,
+                                file.length(),
+                                in,
+                                acces.GetFileSizeFromBdd(relativePath),
+                                acces.getFileContent(relativePath)
+                        );
+                        acces.updateFile(relativePath, delta);
 
 
+                        Globals.QEvent event = new Globals.QEvent(
+                                "[WRITE]",
+                                "file",
+                                delta,
+                                relativePath,
+                                "",
+                                acces.GetSecureId()
+                        );
+
+                        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+                        queue.add(event);
+
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
+                        acces.closedb();
+
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+
+            ProcessExecutor.startProcess(f);
 
 
     }
@@ -239,11 +267,23 @@ public class FileSystem {
                 acces.GetSecureId()
         );
 
-        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+        ProcessExecutor.Function f = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
-        queue.add(event);
+                queue.add(event);
 
-        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+                Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+
+                acces.closedb();
+
+            }
+        };
+
+        ProcessExecutor.startProcess(f);
+
+
     }
 }
 
