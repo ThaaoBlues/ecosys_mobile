@@ -223,6 +223,8 @@ public class DeltaBinaire {
             // we read a block and loop in the buffer that we just filled
             // it is quicker than reading byte by byte
             ByteArrayOutputStream dataStream = new ByteArrayOutputStream(bytesRead);
+
+
             for(int buff_index = 0; buff_index < bytesRead; buff_index++){
                 byte oldFileBuff = (globalIndex < oldFileSize) ? oldFileContent[globalIndex] : 0;
 
@@ -230,12 +232,16 @@ public class DeltaBinaire {
 
                 // when we hit the end of a block, blockStartIndex will be changed, so the condition will be true
                 // and we will start to build a new instruction
+                if(!delta.Instructions.isEmpty()){
+                    //Log.d(TAG,"delta.ByteIndex="+delta.Instructions.get(deltaIndex).ByteIndex+" | blockStartIndex="+blockStartIndex);
+
+                }
                 boolean byteIndexCond = delta.Instructions.isEmpty() || delta.Instructions.get(deltaIndex).ByteIndex != blockStartIndex;
 
-                if ((newFileBuff[buff_index] != oldFileBuff) && byteIndexCond) {
+                if ( ( (newFileBuff[buff_index] != oldFileBuff) || globalIndex >= oldFileSize)&& byteIndexCond) {
                     //Log.d(TAG,String.valueOf(newFileBuff[buff_index]));
                     DeltaInstruction instruction = new DeltaInstruction("ab",
-                            new byte[]{0},
+                            new byte[]{newFileBuff[buff_index]},
                             byteIndex
                     );
 
@@ -244,6 +250,7 @@ public class DeltaBinaire {
                     // To avoid implicit pointer usage, we create a new byte array in the argument
 
                     delta.Instructions.add(instruction);
+                    //Log.d(TAG,"Added instruction");
 
                     byteIndex++;
                 } else {
@@ -251,29 +258,34 @@ public class DeltaBinaire {
 
                     try{
 
-                        if (newFileBuff[buff_index] != oldFileBuff) {
+                        if ( (newFileBuff[buff_index] != oldFileBuff) || globalIndex >= oldFileSize) {
                             //Log.d(TAG,String.valueOf(newFileBuff[buff_index]));
 
                             dataStream.write(newFileBuff[buff_index]);
                             //Log.d(TAG, String.valueOf(dataStream.toString()));
 
-
+                            //Log.d(TAG,"DataStream size = "+dataStream.size());
 
                             byteIndex++;
 
-                            // check if we are at EOF and flush the buffer
+
+                            // check if we are at end of read buffer block and flush the write buffer
                             // this operation removes the need to clone a byte array to extend it at each new byte in a block
-                            if((dataStream.size() > 0) && byteIndex == newFileSize){
-                                //Log.d(TAG,"On flush tout");
+                            // This block is necessary as if we weren't using this, the last differences chunk being
+                            // processed ad each read buffer block would not be written to its delta Instruction
+                            if((dataStream.size() > 0) && (buff_index == bytesRead-1)){
+                                //Log.d(TAG,"On flush tout comme des toilettes publiques s/o caca");
                                 dataStream.flush();
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
 
                                 dataStream.reset();
+
+                                // prepare a new block for the next buffer, with the good index
+                                blockStartIndex = byteIndex;
+
+                                //Log.d(TAG,"EOF : byteIndex : "+byteIndex);
+
                             }
-
-
-
-
 
                             // end of block with changes as this byte is the same as in the old file version
                         } else {
@@ -285,14 +297,20 @@ public class DeltaBinaire {
                                 //Log.d(TAG,"On flush tout");
                                 dataStream.flush();
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
-
+                                Log.d(TAG,"Resetting buffer");
                                 dataStream.reset();
+                            }else{
+                                Log.d(TAG,"skipping");
+
                             }
 
-
-                            byteIndex++;
                             // we prepare to start a new block
                             blockStartIndex = byteIndex;
+
+                            byteIndex++;
+
+
+
                         }
                     }catch (IOException e){
                         Log.e(TAG,"Error while flushing datastream");
@@ -304,6 +322,8 @@ public class DeltaBinaire {
                 //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
 
             }
+
+
         }
 
 
@@ -319,6 +339,13 @@ public class DeltaBinaire {
         }
 
 
+
+        //calculating brut detla size
+        long total = 0;
+        for(DeltaInstruction i : delta.Instructions){
+            total += i.Data.length;
+        }
+        Log.d(TAG,"Data size contained in delta : "+total);
         Log.d("FILEDELTA","build this delta : "+delta);
 
         return delta;

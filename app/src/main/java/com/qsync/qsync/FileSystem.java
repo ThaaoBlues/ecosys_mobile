@@ -92,12 +92,9 @@ public class FileSystem {
                 FileInfo fileInfo = previousState.get(filePath);
 
                 // same reason as for creation, Uri is not usefull in Tree mode for directories
-                if(!acces.isSyncInBackupMode()){
                     Log.d(TAG,"File suppression detected "+filePath);
                     handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
-                }else{
-                    Log.d("FileMonitor","skipped file remove as sync is in backup mode.");
-                }
+
 
 
 
@@ -253,30 +250,35 @@ public class FileSystem {
             acces.rmFolder(relativePath);
         }
 
-        Globals.QEvent event = new Globals.QEvent(
-                "[REMOVE]",
-                file.isDirectory() ? "folder" : "file",
-                null,
-                relativePath,
-                "",
-                acces.GetSecureId()
-        );
-
-        ProcessExecutor.Function f = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-
-                queue.add(event);
-
-                Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+        // don't send suppression event if sync is in backup mode
 
 
-            }
-        };
+        if(!acces.isSyncInBackupMode()) {
 
-        ProcessExecutor.startProcess(f);
+            Globals.QEvent event = new Globals.QEvent(
+                    "[REMOVE]",
+                    file.isDirectory() ? "folder" : "file",
+                    null,
+                    relativePath,
+                    "",
+                    acces.GetSecureId()
+            );
 
+            ProcessExecutor.Function f = new ProcessExecutor.Function() {
+                @Override
+                public void execute() {
+                    Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+                    queue.add(event);
+
+                    Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
+
+
+                }
+            };
+
+            ProcessExecutor.startProcess(f);
+        }
 
     }
 }

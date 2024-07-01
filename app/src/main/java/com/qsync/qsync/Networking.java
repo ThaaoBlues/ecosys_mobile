@@ -286,6 +286,8 @@ public class Networking {
 
         // Get the necessary data from the JSON event
         String relativePath = event.FilePath;
+
+
         String newRelativePath = event.NewFilePath;
         String absoluteFilePath = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -296,77 +298,83 @@ public class Networking {
         String fileType = event.FileType;
         DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
 
-        switch (eventType) {
-            case "[MOVE]":
-                acces.move(relativePath, newRelativePath, fileType);
+        // as in backup mode, files can be supressed freely
+        // the remote device can still have a file that no longer exists
+        // in this filesystem
+        if(!(acces.isSyncInBackupMode() && !acces.checkFileExists(relativePath))){
+            switch (eventType) {
+                case "[MOVE]":
+                    acces.move(relativePath, newRelativePath, fileType);
 
 
-                StringBuilder newParentRelativePath = new StringBuilder();
+                    StringBuilder newParentRelativePath = new StringBuilder();
 
-                for(String part : newRelativePath.split("/")){
-                    if(!part.isEmpty()){
-                        newParentRelativePath.append(part).append("/");
+                    for(String part : newRelativePath.split("/")){
+                        if(!part.isEmpty()){
+                            newParentRelativePath.append(part).append("/");
+                        }
                     }
-                }
 
-                DocumentFile newParentFile = DocumentFile.fromTreeUri(
-                        context,
-                        Uri.withAppendedPath(
-                                root.getUri(),
-                                newParentRelativePath.toString()
-                        )
-                );
-
-                DocumentFile currentFile;
-                if(fileType.equals("file")){
-                    currentFile = DocumentFile.fromSingleUri(
-                      context,
-                      Uri.withAppendedPath(root.getUri(),relativePath)
-                    );
-                }else{
-                    currentFile = DocumentFile.fromTreeUri(
+                    DocumentFile newParentFile = DocumentFile.fromTreeUri(
                             context,
-                            Uri.withAppendedPath(root.getUri(),relativePath)
+                            Uri.withAppendedPath(
+                                    root.getUri(),
+                                    newParentRelativePath.toString()
+                            )
                     );
-                }
 
-                moveInFilesystem(currentFile,newParentFile,!fileType.equals("file"));
+                    DocumentFile currentFile;
+                    if(fileType.equals("file")){
+                        currentFile = DocumentFile.fromSingleUri(
+                                context,
+                                Uri.withAppendedPath(root.getUri(),relativePath)
+                        );
+                    }else{
+                        currentFile = DocumentFile.fromTreeUri(
+                                context,
+                                Uri.withAppendedPath(root.getUri(),relativePath)
+                        );
+                    }
 
-
-                break;
-            case "[REMOVE]":
-                if ("file".equals(fileType)) {
-                    acces.rmFile(absoluteFilePath);
-                    removeFromFilesystem(root,relativePath,true,false);
-                } else {
-                    acces.rmFolder(absoluteFilePath);
-                    removeFromFilesystem(root,relativePath,true,true);
-                }
-                break;
-            case "[CREATE]":
-
-                DocumentFile newFile = createFileWithContentResolver(root,relativePath,!fileType.equals("file"));
-
-                if ("file".equals(fileType)) {
-                    acces.createFile(
-                            relativePath,
-                            newFile,
-                            "[SENT_FROM_OTHER_DEVICE]");
-                } else {
-                    acces.createFolder(relativePath,"");
-                }
+                    moveInFilesystem(currentFile,newParentFile,!fileType.equals("file"));
 
 
+                    break;
+                case "[REMOVE]":
+                    if ("file".equals(fileType)) {
+                        acces.rmFile(absoluteFilePath);
+                        removeFromFilesystem(root,relativePath,true,false);
+                    } else {
+                        acces.rmFolder(absoluteFilePath);
+                        removeFromFilesystem(root,relativePath,true,true);
+                    }
+                    break;
+                case "[CREATE]":
 
-                break;
-            case "[UPDATE]":
-                acces.incrementFileVersion(relativePath);
-                DeltaBinaire.patchFile(event,true,context);
-                break;
-            default:
-                Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
-                break;
+                    DocumentFile newFile = createFileWithContentResolver(root,relativePath,!fileType.equals("file"));
+
+                    if ("file".equals(fileType)) {
+                        acces.createFile(
+                                relativePath,
+                                newFile,
+                                "[SENT_FROM_OTHER_DEVICE]");
+                    } else {
+                        acces.createFolder(relativePath,"");
+                    }
+
+
+
+                    break;
+                case "[UPDATE]":
+                    acces.incrementFileVersion(relativePath);
+                    DeltaBinaire.patchFile(event,true,context);
+                    break;
+                default:
+                    Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
+                    break;
+            }
         }
+
 
         // Release the filesystem lock
         acces.SetFileSystemPatchLockState(deviceId, false);
