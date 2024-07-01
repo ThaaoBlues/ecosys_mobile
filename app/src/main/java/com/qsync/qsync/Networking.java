@@ -886,7 +886,6 @@ public class Networking {
     public static void sendLargageAerien(Uri fileUri, String deviceIp,boolean multiple) {
 
 
-        BackendApi.showLargageAerienEmissionNotification(context,"Sending Largage Aerien...");
         try {
             String fileName = PathUtils.getFileNameFromUri(context,fileUri);
 
@@ -928,7 +927,6 @@ public class Networking {
         }
 
 
-        BackendApi.discardLargageAerienEmissionNotification(context);
     }
 
     public static boolean CheckIfDeviceOnline(String ipAddress, int port) {

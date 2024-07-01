@@ -299,11 +299,7 @@ public class DeltaBinaire {
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
                                 Log.d(TAG,"Resetting buffer");
                                 dataStream.reset();
-                            }else{
-                                Log.d(TAG,"skipping");
-
                             }
-
                             // we prepare to start a new block
                             blockStartIndex = byteIndex;
 

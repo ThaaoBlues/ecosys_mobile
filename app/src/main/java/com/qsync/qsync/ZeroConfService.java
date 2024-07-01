@@ -221,6 +221,9 @@ public class ZeroConfService {
 
 
                         if (acces.needsUpdate(device.get("device_id"))) {
+
+                            BackendApi.showLoadingNotification(context,"Detected a linked device, sending him updates...");
+
                             // Get the event queues for the device
                             Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(device.get("device_id"));
 
@@ -243,6 +246,8 @@ public class ZeroConfService {
 
                             // Remove device from the update queue
                             acces.removeDeviceFromRetard(device.get("device_id"));
+
+                            BackendApi.discardLoadingNotification(context);
                         }
                     }
                 }

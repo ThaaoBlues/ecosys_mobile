@@ -177,8 +177,10 @@ public class FileSystem {
                 ProcessExecutor.Function func = new ProcessExecutor.Function() {
                     @Override
                     public void execute() {
-                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+                        BackendApi.showLoadingNotification(context,"Sending update to other devices");
 
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+                        BackendApi.discardLoadingNotification(context);
                     }
                 };
 
@@ -225,12 +227,15 @@ public class FileSystem {
                                 acces.GetSecureId()
                         );
 
+                        BackendApi.showLoadingNotification(context,"Sending update to other devices");
+
                         Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
                         queue.add(event);
 
                         Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
 
+                        BackendApi.discardLoadingNotification(context);
                     } catch (FileNotFoundException e) {
                         throw new RuntimeException(e);
                     }
@@ -267,12 +272,16 @@ public class FileSystem {
             ProcessExecutor.Function f = new ProcessExecutor.Function() {
                 @Override
                 public void execute() {
+
+                    BackendApi.showLoadingNotification(context,"Sending update to other devices");
+
                     Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
                     queue.add(event);
 
                     Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
 
+                    BackendApi.discardLoadingNotification(context);
 
                 }
             };

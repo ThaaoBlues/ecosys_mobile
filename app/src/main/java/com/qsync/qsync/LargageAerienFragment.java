@@ -253,8 +253,11 @@ public class LargageAerienFragment extends Fragment {
         ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
             @Override
             public void execute() {
+
+                BackendApi.showLoadingNotification(getContext(),"Sending Largage Aerien...");
                 Networking nt = new Networking(getContext(), getContext().getFilesDir().toString());
                 nt.sendLargageAerien(uri, target_device.get("ip_addr"),false);
+                BackendApi.discardLoadingNotification(getContext());
             }
         };
         ProcessExecutor.startProcess(SendLA);
@@ -264,6 +267,9 @@ public class LargageAerienFragment extends Fragment {
         ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
             @Override
             public void execute() {
+
+                BackendApi.showLoadingNotification(getContext(),"Sending Largage Aerien...");
+
                 Networking nt = new Networking(getContext(), getContext().getFilesDir().toString());
                 File tarFile = new File(
                         getContext().getFilesDir(),
@@ -275,6 +281,8 @@ public class LargageAerienFragment extends Fragment {
 
                 nt.sendLargageAerien(Uri.fromFile(tarFile), target_device.get("ip_addr"),true);
                 Log.d("Qsync Server","Sending multiple largage aerien :"+tarFile.getName());
+
+                BackendApi.discardLoadingNotification(getContext());
             }
         };
         ProcessExecutor.startProcess(SendLA);

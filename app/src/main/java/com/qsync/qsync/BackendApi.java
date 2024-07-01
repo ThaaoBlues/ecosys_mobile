@@ -338,7 +338,7 @@ public class BackendApi {
         }
     }
 
-    public static void showLargageAerienEmissionNotification(Context context,String msg){
+    public static void showLoadingNotification(Context context,String msg){
 
         ProcessExecutor.Function nt = new ProcessExecutor.Function() {
             @Override
@@ -351,7 +351,7 @@ public class BackendApi {
 
     }
 
-    public static void discardLargageAerienEmissionNotification(Context context){
+    public static void discardLoadingNotification(Context context){
 
         ProcessExecutor.Function nt = new ProcessExecutor.Function() {
             @Override
