@@ -9,6 +9,7 @@
 package com.qsync.qsync;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -40,7 +41,6 @@ import com.qsync.qsync.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.Manifest;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
@@ -49,26 +49,35 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.security.Permission;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
+    private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
+
     public void requestPermission(final Activity activity, final String permission, final int requestCode) {
         if (ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+                // Show an explanation to the user why you need the permission
+                // After the user sees the explanation, try again to request the permission
+                new AlertDialog.Builder(this)
+                        .setTitle("Notification Permission Needed")
+                        .setMessage("This app needs the Notification permission to show you when it is talking to your others devices.")
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            ActivityCompat.requestPermissions(this,
+                                    new String[]{permission},
+                                    requestCode);
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                        .create()
+                        .show();
             } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(activity, new String[]{permission}, requestCode);
-
-                // MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
+                // No explanation needed, request the permission
+                ActivityCompat.requestPermissions(this,
+                        new String[]{permission},
+                        requestCode);
             }
         } else {
             // Permission has already been granted
@@ -78,13 +87,18 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        switch(requestCode){
 
 
-            } else {
-                // Permission denied
-            }
+            case MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS:
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+
+                } else {
+                    // Permission denied
+                }
+                break;
         }
     }
 
@@ -103,6 +117,9 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
+
+        requestPermission(MainActivity.this,"android.permission.POST_NOTIFICATIONS",MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS);
 
         //deleteDatabase("qsync");
 

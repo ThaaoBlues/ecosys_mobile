@@ -151,7 +151,6 @@ public class SynchronisationsFragment extends Fragment {
                                     case 2:
                                         // link another device to the designated sync task
 
-                                        // TODO : Select target device from a popup, return device_id and ip addr
                                         Globals.GenArray<Map<String,String>> devices = acces.getNetworkMap();
 
                                         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -166,7 +165,6 @@ public class SynchronisationsFragment extends Fragment {
 
 
 
-                                        Log.d("Qsync Server","devices connected : "+ Arrays.toString(choices));
                                         builder.setItems(choices, new DialogInterface.OnClickListener() {
                                             @Override
                                             public void onClick(DialogInterface dialog, int i) {
@@ -175,10 +173,13 @@ public class SynchronisationsFragment extends Fragment {
                                                 ProcessExecutor.Function sendreqs = new ProcessExecutor.Function() {
                                                     @Override
                                                     public void execute() {
+                                                        BackendApi.showLoadingNotification(getContext(),"Negociating link between devices...");
                                                         String ip_addr = devices.get(i).get("ip_addr");
                                                         String device_id = devices.get(i).get("device_id");
                                                         Networking.sendLinkDeviceRequest(ip_addr,acces);
                                                         acces.LinkDevice(device_id,ip_addr);
+
+                                                        BackendApi.discardLoadingNotification(getContext());
                                                     }
                                                 };
 
