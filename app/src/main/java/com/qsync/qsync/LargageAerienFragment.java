@@ -19,6 +19,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.LinearLayout;
 
 import androidx.activity.result.ActivityResult;
@@ -54,6 +55,8 @@ public class LargageAerienFragment extends Fragment {
     ) {
 
         binding = FragmentLargageAerienBinding.inflate(inflater, container, false);
+
+
         return binding.getRoot();
 
     }
@@ -68,7 +71,6 @@ public class LargageAerienFragment extends Fragment {
                 NavHostFragment.findNavController(LargageAerienFragment.this)
                         .navigate(R.id.action_FirstFragment_to_SecondFragment)
         );
-
 
 
 
@@ -287,6 +289,8 @@ public class LargageAerienFragment extends Fragment {
         };
         ProcessExecutor.startProcess(SendLA);
     }
+
+
 
     @Override
     public void onDestroyView() {

@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -68,7 +69,6 @@ public class SynchronisationsFragment extends Fragment {
         );
 
 
-
         selectFolderLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -94,6 +94,7 @@ public class SynchronisationsFragment extends Fragment {
                                         FileSystem.startDirectoryMonitoring(getContext(),directory);
 
                                         acces.closedb();
+
                                     }
                                 }
                             }
