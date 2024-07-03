@@ -565,7 +565,7 @@ public class AccesBdd {
         return false;
     }
 
-    public void updateFile(String path, DeltaBinaire.Delta delta) {
+    public void updateFile(String path, DeltaBinaire.Delta delta,DocumentFile file,boolean needSAF) {
         Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
         if (!offlineDevices.isEmpty()) {
             long newVersionId = getFileLastVersionId(path) + 1;
@@ -584,8 +584,8 @@ public class AccesBdd {
 
                 }
 
-                String modType = "p"; // Assuming 'patch' for demonstration
-                String strIds = offlineDevices.join(";"); // Implement 'join' method in GenArray class
+                String modType = "p";
+                String strIds = offlineDevices.join(";");
                 db.execSQL("INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES (?, ?, ?, ?, 'file', ?)",
                         new String[]{
                                 String.valueOf(newVersionId),
@@ -596,13 +596,13 @@ public class AccesBdd {
                         }
                         );
         }
-        updateCachedFile(path);
+        updateCachedFile(path,file,needSAF);
     }
 
-    private void updateCachedFile(String path) {
+    public void updateCachedFile(String path,DocumentFile file,boolean needSAF) {
         byte[] fileContent = new byte[0];
         try {
-            fileContent = readFromFile(path);
+            fileContent = readFromFile(path,file,needSAF);
             byte[] compressedContent = compressData(fileContent);
             db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
                     new Object[]{
@@ -617,16 +617,29 @@ public class AccesBdd {
 
     }
 
-    private byte[] readFromFile(String path) throws IOException {
-        try (FileInputStream inputStream = new FileInputStream(path)) {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, length);
+    private byte[] readFromFile(String path,DocumentFile file,boolean needSAF) throws IOException {
+
+        if(!needSAF){
+            try (FileInputStream inputStream = new FileInputStream(path)) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, length);
+                }
+                return outputStream.toByteArray();
             }
-            return outputStream.toByteArray();
+        }else{
+            InputStream inputStream =
+                    context.getContentResolver().openInputStream(file.getUri());
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return inputStream.readAllBytes();
+            }
         }
+
+        return null;
+
     }
 
     private byte[] compressData(byte[] data) throws IOException {
@@ -1241,6 +1254,7 @@ public class AccesBdd {
                 event.setFilePath(cursor.getString(3));
                 event.setSecureId(secureId);
             }catch (IOException | ClassNotFoundException e){
+                Log.d(TAG,"Error while adding delta to event");
                 e.printStackTrace();
             }
 

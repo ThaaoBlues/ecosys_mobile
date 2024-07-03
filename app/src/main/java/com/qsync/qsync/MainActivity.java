@@ -10,25 +10,19 @@ package com.qsync.qsync;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 
-import com.google.android.material.snackbar.Snackbar;
-
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Environment;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.view.View;
 
 import androidx.core.app.ActivityCompat;
 import androidx.documentfile.provider.DocumentFile;
@@ -41,22 +35,14 @@ import com.qsync.qsync.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.Toast;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Path;
-import java.security.Permission;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
-
+    private ActivityResultLauncher<Intent> selectFolderLauncher;
+    private static Networking nt;
     public void requestPermission(final Activity activity, final String permission, final int requestCode) {
         if (ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
@@ -132,10 +118,48 @@ public class MainActivity extends AppCompatActivity {
         ZeroConfService zc = new ZeroConfService(MainActivity.this);
 
 
+        selectFolderLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        if (result.getResultCode() == Activity.RESULT_OK) {
+                            // There are no request codes
+                            Intent data = result.getData();
+                            if (result.getResultCode() == Activity.RESULT_OK) {
+                                if (data.getData() != null) {
+
+                                    //Log.d("SynchronisationsFragment","Uri : "+ PathUtils.getPathFromUri(getContext(),data.getData()));
+                                    Uri treeUri = data.getData();
+
+                                    MainActivity.this.getContentResolver().takePersistableUriPermission(treeUri,
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                                    DocumentFile directory = DocumentFile.fromTreeUri( MainActivity.this, treeUri);
+                                    if (directory != null && directory.isDirectory()) {
+                                        AccesBdd acces = new AccesBdd( MainActivity.this);
+
+                                        acces.SetSecureId(nt.getTmpSecureIdForCreation());
+                                        acces.CreateSyncFromOtherEnd(directory.getUri().toString(),nt.getTmpSecureIdForCreation());
+                                        acces.closedb();
+                                        FileSystem.startDirectoryMonitoring( MainActivity.this,directory);
+
+                                        nt.setSetupDlLock(false);
+
+
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                });
+
         ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
             @Override
             public void execute() {
-                Networking nt = new Networking(MainActivity.this,getFilesDir().toString());
+                nt = new Networking(MainActivity.this,getFilesDir().toString());
+                nt.setSelectFolderLauncher(selectFolderLauncher);
                 nt.ServerMainLoop();
             }
         };

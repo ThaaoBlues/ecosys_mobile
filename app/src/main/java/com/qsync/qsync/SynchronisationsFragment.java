@@ -219,6 +219,14 @@ public class SynchronisationsFragment extends Fragment {
             }
         });
 
+        binding.buttonSynchroVersLargageAerien.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getParentFragmentManager().popBackStack();
+            }
+        });
+
+
 
 
 

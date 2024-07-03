@@ -360,21 +360,36 @@ public class DeltaBinaire {
                     context,
                     Uri.parse(acces.GetRootSyncPath())
             );
+            //Log.d(TAG,"La racine contient (nb de fichiers ) : "+String.valueOf(root.listFiles().length));
 
-            DocumentFile file = DocumentFile.fromSingleUri(
-                    context,
-                    Uri.withAppendedPath(
-                            root.getUri(),
-                            event.FilePath
-                    )
-            );
+            /*for(DocumentFile file : root.listFiles() ){
+                Log.d(TAG,file.getUri().toString());
+            }*/
+
+            String[] parts = event.FilePath.split("/");
+            DocumentFile currentFile = root;
+
+            // Traverse the path and create directories if necessary
+            // go to the last element of the reltative path
+            for (int i = 0; i < parts.length; i++) {
+                if (!parts[i].isEmpty()) {
+                    DocumentFile nextFile = currentFile.findFile(parts[i]);
+                    //Log.d(TAG,nextFile.getUri().toString());
+                    currentFile = nextFile;
+                }
+            }
+
+
+            DocumentFile file = currentFile;
 
             if(file != null){
                 if(file.exists()){
+
+                    Log.d(TAG,"Delta length : "+event.Delta.Instructions.size());
                     ContentResolver ctt = context.getContentResolver();
                     try {
 
-                        FileOutputStream os =new FileOutputStream(ctt.openFileDescriptor(file.getUri(),"w").getFileDescriptor());
+                        FileOutputStream os =new FileOutputStream(ctt.openFileDescriptor(file.getUri(),"rw").getFileDescriptor());
                         FileChannel fc = os.getChannel();
 
                         for (DeltaInstruction instruction : delta.Instructions) {
@@ -383,14 +398,19 @@ public class DeltaBinaire {
                                     fc.position(instruction.ByteIndex);
                                     ByteBuffer bbf = ByteBuffer.allocateDirect(instruction.Data.length);
                                     bbf.put(instruction.Data);
+                                    // as put is setting the position to the end of the buffer
+                                    // but we need it a position 0 so the filechannel
+                                    // has things to read
+                                    bbf.rewind();
                                     fc.write(bbf);
+                                    Log.d(TAG,"wrote : "+bbf);
                                     break;
                                 case "t":
                                     fc.truncate(instruction.ByteIndex);
                                     break;
                             }
                         }
-
+                        fc.force(true);
                         fc.close();
                         os.close();
                     } catch (FileNotFoundException e) {

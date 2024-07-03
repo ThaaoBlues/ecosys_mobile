@@ -56,6 +56,16 @@ public class FileSystem {
         }, POLLING_INTERVAL);
     }
 
+    private static void avoidGhostDevices(AccesBdd acces){
+        Globals.GenArray<String> devices = new Globals.GenArray<>();
+
+        devices = acces.getSyncOnlineDevices();
+
+        for(int i=0;i<devices.size();i++){
+            Networking.checkDeviceAvailability(acces.getDeviceIP(devices.get(i)),devices.get(i));
+        }
+    }
+
     private static void checkForChanges(Context context, DocumentFile directory,AccesBdd acces) {
         Map<String, FileInfo> currentState = new HashMap<>();
         populateState(directory, currentState, directory.getUri().toString());
@@ -69,6 +79,9 @@ public class FileSystem {
             if (!previousState.containsKey(filePath)) {
                 Log.d("FileMonitor", "New file detected: " + filePath);
 
+                avoidGhostDevices(acces);
+
+
                 // no need to know if it is a directory as .fromTreeUri().Uri() would only represent
                 // the whole directory from the root and be useless to calculate a relative path
                 handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
@@ -76,12 +89,14 @@ public class FileSystem {
 
             } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
                 Log.d("FileMonitor", "Modified file detected: " + filePath);
+                avoidGhostDevices(acces);
                 handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
             }
 
             // Handle renamed files
             FileInfo previousFileInfo = previousState.get(filePath);
             if (previousFileInfo != null && !previousFileInfo.uri.equals(fileInfo.uri)) {
+                avoidGhostDevices(acces);
                 Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
             }
         }
@@ -90,7 +105,7 @@ public class FileSystem {
         for (String filePath : previousState.keySet()) {
             if (!currentState.containsKey(filePath)) {
                 FileInfo fileInfo = previousState.get(filePath);
-
+                avoidGhostDevices(acces);
                 // same reason as for creation, Uri is not usefull in Tree mode for directories
                     Log.d(TAG,"File suppression detected "+filePath);
                     handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
@@ -215,11 +230,11 @@ public class FileSystem {
                                 acces.GetFileSizeFromBdd(relativePath),
                                 acces.getFileContent(relativePath)
                         );
-                        acces.updateFile(relativePath, delta);
+                        acces.updateFile(relativePath, delta,file,true);
 
 
                         Globals.QEvent event = new Globals.QEvent(
-                                "[WRITE]",
+                                "[UPDATE]",
                                 "file",
                                 delta,
                                 relativePath,
@@ -228,10 +243,12 @@ public class FileSystem {
                         );
 
                         BackendApi.showLoadingNotification(context,"Sending update to other devices");
+                        Log.d(TAG,"Sending update to other devices");
 
                         Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
 
                         queue.add(event);
+
 
                         Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
 

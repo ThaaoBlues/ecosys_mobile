@@ -18,6 +18,7 @@ import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.util.Log;
 
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.documentfile.provider.DocumentFile;
 
 
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -56,12 +58,19 @@ public class Networking {
     private static Context context;
     private static String QSYNC_WRITABLE_DIRECTORY;
 
+    private static ActivityResultLauncher<Intent> selectFolderLauncher;
+
+    private static String tmpSecureIdForCreation;
+
+    private static boolean setupDlLock;
 
     public Networking(Context mcontext, String mFilesDir) {
         context = mcontext;
         QSYNC_WRITABLE_DIRECTORY = mFilesDir;
 
     }
+
+
 
     public static String getDeviceHostname(String ip_addr) {
 
@@ -85,6 +94,22 @@ public class Networking {
 
     }
 
+    public static String getTmpSecureIdForCreation() {
+        return tmpSecureIdForCreation;
+    }
+
+    public static void setTmpSecureIdForCreation(String tmpSecureIdForCreation) {
+        Networking.tmpSecureIdForCreation = tmpSecureIdForCreation;
+    }
+
+    public static boolean isSetupDlLock() {
+        return setupDlLock;
+    }
+
+    public static void setSetupDlLock(boolean setupDlLock) {
+        Networking.setupDlLock = setupDlLock;
+    }
+
 
     public void ServerMainLoop(){
         try {
@@ -101,6 +126,14 @@ public class Networking {
             Log.d(TAG, "Client connected");
             new Thread(new ClientHandler(clientSocket)).start();
         }
+    }
+
+    public ActivityResultLauncher<Intent> getSelectFolderLauncher() {
+        return selectFolderLauncher;
+    }
+
+    public void setSelectFolderLauncher(ActivityResultLauncher<Intent> selectFolderLauncher) {
+        this.selectFolderLauncher = selectFolderLauncher;
     }
 
     public static class ClientHandler implements Runnable {
@@ -210,7 +243,7 @@ public class Networking {
                         // and same secure_id
                         Log.d(TAG, "Initializing env to welcome the other end folder content");
                         acces.SetSecureId(secure_id);
-
+                        setSetupDlLock(false);
                         if(Objects.equals(data.FileType, "[APPLICATION]")){
 
                             String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
@@ -226,14 +259,33 @@ public class Networking {
                                 return;
                             }
                         }else{
-                            String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
-                            Log.d(TAG, "Future sync will be stored at : " + path);
-                            acces.CreateSyncFromOtherEnd(path, secure_id);
+                           //String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
+
+                            setTmpSecureIdForCreation(secure_id);
+                            setSetupDlLock(true);
+
+                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+                            selectFolderLauncher.launch(intent);
+
+
                         }
 
+                        // wait for the file picker callback to unlocke
+                        while (setupDlLock){
+
+                        }
 
                         Log.d(TAG, "Linking device : " + device_id);
-                        acces.LinkDevice(device_id, clientSocket.getInetAddress().getHostAddress());
+                        String ipAddr = clientSocket.getInetAddress().getHostAddress();
+                        outputStream.flush();
+                        outputStream.close();
+                        acces.LinkDevice(device_id, ipAddr);
+                        acces.setDevicedbState(device_id,true);
+
+                        askSetupDownloadToOtherEnd(ipAddr,acces);
+
+
                         break;
                     case "[UNLINK_DEVICE]":
                         acces.UnlinkDevice(device_id);
@@ -296,6 +348,7 @@ public class Networking {
 
         String eventType = event.Flag;
         String fileType = event.FileType;
+        Log.d(TAG,absoluteFilePath);
         DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
 
         // as in backup mode, files can be supressed freely
@@ -358,16 +411,48 @@ public class Networking {
                                 relativePath,
                                 newFile,
                                 "[SENT_FROM_OTHER_DEVICE]");
+
+                        if(event.Delta != null){
+                            Log.d(TAG,"File create came with a delta, using patchFile().");
+                            event.setFilePath(relativePath);
+                            DeltaBinaire.patchFile(event,true,context);
+                        }
+
                     } else {
                         acces.createFolder(relativePath,"");
                     }
 
 
-
                     break;
                 case "[UPDATE]":
+
+                    if(relativePath.startsWith("/")) {
+                        relativePath = relativePath.substring(1);
+
+
+                    }
+                    event.setFilePath(relativePath);
                     acces.incrementFileVersion(relativePath);
+
+
+                    // build path and get actual reference to the file we want
+                    String[] parts = event.FilePath.split("/");
+                    DocumentFile file = root;
+
+                    // Traverse the path and create directories if necessary
+                    // go to the last element of the relative path
+                    for (int i = 0; i < parts.length; i++) {
+                        if (!parts[i].isEmpty()) {
+                            DocumentFile nextFile = file.findFile(parts[i]);
+                            //Log.d(TAG,nextFile.getUri().toString());
+                            file = nextFile;
+                        }
+                    }
+
+                    acces.updateCachedFile(relativePath,file,true);
+
                     DeltaBinaire.patchFile(event,true,context);
+
                     break;
                 default:
                     Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
@@ -380,6 +465,36 @@ public class Networking {
         acces.SetFileSystemPatchLockState(deviceId, false);
 
         acces.closedb();
+    }
+
+    public static void askSetupDownloadToOtherEnd(String ipAddress,AccesBdd acces) throws IOException{
+        Socket socket = new Socket(ipAddress, 8274);
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+        String ser_event = new Globals.QEvent(
+                "[SETUP_DL]",
+                "",
+                null,
+                "",
+                "",
+                acces.GetSecureId()
+        ).serialize();
+
+        Log.d(TAG,"serialized Event");
+
+        BufferedOutputStream bos = new BufferedOutputStream(out);
+        // Send the message
+        StringBuilder reqBuilder = new StringBuilder();
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        bos.flush();
+
+        Log.d(TAG,"Event Sent");
+
+
+        bos.close();
+        out.close();
+        socket.close();
     }
 
 
@@ -502,11 +617,14 @@ public class Networking {
                     while (getEventNetworkLockForDevice(deviceId)) {
                         Thread.sleep(1000);
                     }
-                } catch (IOException | InterruptedException e) {
+                } catch (IOException e) {
                     if(acces.IsDeviceLinked(deviceId)){
                         acces.setDevicedbState(deviceId,false);
                     }
                     Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
+
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
@@ -522,6 +640,28 @@ public class Networking {
 
 
         acces.closedb();
+
+    }
+
+    public static void checkDeviceAvailability(String IpAddr,String deviceId){
+
+        ProcessExecutor.Function cda = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                try {
+                    Socket socket = new Socket(IpAddr, 8274);
+                    socket.close();
+                } catch (IOException e) {
+                    AccesBdd acces = new AccesBdd(context);
+                    acces.setDevicedbState(deviceId,false);
+                    acces.cleanNetworkMap();
+                    acces.closedb();
+                }
+            }
+        };
+
+        ProcessExecutor.startProcess(cda);
+
 
     }
 
