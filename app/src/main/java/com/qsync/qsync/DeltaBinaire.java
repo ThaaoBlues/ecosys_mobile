@@ -232,10 +232,7 @@ public class DeltaBinaire {
 
                 // when we hit the end of a block, blockStartIndex will be changed, so the condition will be true
                 // and we will start to build a new instruction
-                if(!delta.Instructions.isEmpty()){
-                    //Log.d(TAG,"delta.ByteIndex="+delta.Instructions.get(deltaIndex).ByteIndex+" | blockStartIndex="+blockStartIndex);
 
-                }
                 boolean byteIndexCond = delta.Instructions.isEmpty() || delta.Instructions.get(deltaIndex).ByteIndex != blockStartIndex;
 
                 if ( ( (newFileBuff[buff_index] != oldFileBuff) || globalIndex >= oldFileSize)&& byteIndexCond) {
@@ -385,7 +382,6 @@ public class DeltaBinaire {
             if(file != null){
                 if(file.exists()){
 
-                    Log.d(TAG,"Delta length : "+event.Delta.Instructions.size());
                     ContentResolver ctt = context.getContentResolver();
                     try {
 
@@ -403,7 +399,7 @@ public class DeltaBinaire {
                                     // has things to read
                                     bbf.rewind();
                                     fc.write(bbf);
-                                    Log.d(TAG,"wrote : "+bbf);
+                                    Log.d(TAG,"wrote : "+Arrays.toString(instruction.Data));
                                     break;
                                 case "t":
                                     fc.truncate(instruction.ByteIndex);

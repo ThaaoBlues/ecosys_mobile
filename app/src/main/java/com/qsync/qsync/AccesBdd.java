@@ -177,7 +177,8 @@ public class AccesBdd {
                     "secure_id TEXT," +
                     "linked_devices_id TEXT DEFAULT ''," +
                     "root TEXT," +
-                    "backup_mode BOOLEAN DEFAULT 0)"
+                    "backup_mode BOOLEAN DEFAULT 0,"+
+                    "is_being_patch BOOLEAN DEFAULT 0)"
         );
 
             // CREATE TABLE linked_devices
@@ -185,7 +186,6 @@ public class AccesBdd {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "device_id TEXT," +
                     "is_connected BOOLEAN," +
-                    "receiving_update TEXT DEFAULT ''," +
                     "ip_addr TEXT)");
             // CREATE TABLE mesid
         db.execSQL("CREATE TABLE IF NOT EXISTS mesid(" +
@@ -604,9 +604,10 @@ public class AccesBdd {
         try {
             fileContent = readFromFile(path,file,needSAF);
             byte[] compressedContent = compressData(fileContent);
-            db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
+            db.execSQL("UPDATE filesystem SET content=?,size=? WHERE path=? AND secure_id=?",
                     new Object[]{
                             compressedContent,
+                            file.length(),
                             path,
                             secureId
                     }
@@ -1028,57 +1029,25 @@ public class AccesBdd {
     }
 
     public boolean IsThisFileSystemBeingPatched() {
-        boolean isPatched = false;
-        String idsStr;
-        Cursor cursor = db.rawQuery("SELECT IFNULL(receiving_update, '')FROM linked_devices",
-                null
+
+        Cursor cursor = db.rawQuery("SELECT is_being_patch FROM sync WHERE secure_id=? AND is_being_patch=1",
+                new String[]{
+                        secureId
+                }
                 );
 
-        if (cursor.moveToNext()) {
-            idsStr = cursor.getString(0);
-            String[] idsArr = idsStr.split(";");
-            for (String id : idsArr) {
-                if (id.equals(secureId)) {
-                    isPatched = true;
-                    break;
-                }
-            }
-
-        }
-
-        cursor.close();
-        return isPatched;
+        return cursor.moveToFirst();
     }
 
     public void SetFileSystemPatchLockState(String deviceId, boolean value) {
-        if (value) {
-            db.execSQL("UPDATE linked_devices SET receiving_update=IFNULL(receiving_update, '') || ?",
-                    new String[]{
-                            secureId+";"
-                    }
-                    );
-        } else {
-            String idsStr;
-            Cursor cursor = db.rawQuery("SELECT receiving_update FROM linked_devices",
-                null
-                );
-            if (cursor.moveToNext()) {
-                idsStr = cursor.getString(0);
-                String[] idsArr = idsStr.split(";");
-                StringBuilder newIdsStr = new StringBuilder();
-                for (String id : idsArr) {
-                    if (!id.equals(secureId)) {
-                        newIdsStr.append(id).append(";");
-                    }
+
+        db.execSQL("UPDATE sync SET is_being_patch=? WHERE secure_id=?",
+                new Object[]{
+                        value ? 1: 0,
+                        secureId
                 }
-                db.execSQL("UPDATE linked_devices SET receiving_update= ?",
-                        new String[]{
-                                newIdsStr.toString()
-                        }
-                        );
-            }
-            cursor.close();
-        }
+        );
+
 
     }
 

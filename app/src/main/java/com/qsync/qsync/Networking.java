@@ -354,6 +354,16 @@ public class Networking {
         // as in backup mode, files can be supressed freely
         // the remote device can still have a file that no longer exists
         // in this filesystem
+
+
+        // to be sure no bugs are being propagated if somehow a relative path
+        // build as failed and kept a leading "/"
+        if(relativePath.startsWith("/")) {
+            relativePath = relativePath.substring(1);
+        }
+        event.setFilePath(relativePath);
+
+
         if(!(acces.isSyncInBackupMode() && !acces.checkFileExists(relativePath))){
             switch (eventType) {
                 case "[MOVE]":
@@ -426,12 +436,7 @@ public class Networking {
                     break;
                 case "[UPDATE]":
 
-                    if(relativePath.startsWith("/")) {
-                        relativePath = relativePath.substring(1);
 
-
-                    }
-                    event.setFilePath(relativePath);
                     acces.incrementFileVersion(relativePath);
 
 
@@ -449,9 +454,9 @@ public class Networking {
                         }
                     }
 
-                    acces.updateCachedFile(relativePath,file,true);
 
                     DeltaBinaire.patchFile(event,true,context);
+                    acces.updateCachedFile(relativePath,file,true);
 
                     break;
                 default:
@@ -462,6 +467,14 @@ public class Networking {
 
 
         // Release the filesystem lock
+
+        // make sure the polling interval tick at least one time to update filesystem map
+        // so when we release the lock no event is triggered
+        try {
+            Thread.sleep(FileSystem.POLLING_INTERVAL);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         acces.SetFileSystemPatchLockState(deviceId, false);
 
         acces.closedb();

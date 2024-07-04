@@ -30,7 +30,7 @@ public class FileSystem {
 
     private static final Handler handler = new Handler(Looper.getMainLooper());
     private static final Map<String, FileInfo> previousState = new HashMap<>();
-    private static final long POLLING_INTERVAL = 5000; // 5 seconds
+    public static final long POLLING_INTERVAL = 5000; // 5 seconds
 
     private static Context context;
 
@@ -48,9 +48,12 @@ public class FileSystem {
                 // even if a new directory is sent by another end
                 // it will be taken as part of the usual map
                 // and nothing has to be done differently
-                if(!acces_nonclosing.IsThisFileSystemBeingPatched()){
-                    checkForChanges(context,directory,acces_nonclosing);
-                }
+
+                // we are checking if the filesystem is being patch later
+                // as we still need to make some processing to update
+                // the filesystem map
+                checkForChanges(context,directory,acces_nonclosing);
+
                 handler.postDelayed(this, POLLING_INTERVAL);
             }
         }, POLLING_INTERVAL);
@@ -70,52 +73,57 @@ public class FileSystem {
         Map<String, FileInfo> currentState = new HashMap<>();
         populateState(directory, currentState, directory.getUri().toString());
 
+        Log.d(TAG,"IsThisFileSystemBeingPatched()="+acces.IsThisFileSystemBeingPatched());
+        if(!acces.IsThisFileSystemBeingPatched()){
+            // Check for new, modified, or renamed files
+            for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
+                String filePath = entry.getKey();
+                FileInfo fileInfo = entry.getValue();
 
-        // Check for new, modified, or renamed files
-        for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
-            String filePath = entry.getKey();
-            FileInfo fileInfo = entry.getValue();
+                if (!previousState.containsKey(filePath)) {
+                    Log.d("FileMonitor", "New file detected: " + filePath);
 
-            if (!previousState.containsKey(filePath)) {
-                Log.d("FileMonitor", "New file detected: " + filePath);
-
-                avoidGhostDevices(acces);
-
-
-                // no need to know if it is a directory as .fromTreeUri().Uri() would only represent
-                // the whole directory from the root and be useless to calculate a relative path
-                handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+                    avoidGhostDevices(acces);
 
 
-            } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
-                Log.d("FileMonitor", "Modified file detected: " + filePath);
-                avoidGhostDevices(acces);
-                handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
+                    // no need to know if it is a directory as .fromTreeUri().Uri() would only represent
+                    // the whole directory from the root and be useless to calculate a relative path
+                    handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+
+
+                } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
+                    Log.d("FileMonitor", "Modified file detected: " + filePath);
+                    avoidGhostDevices(acces);
+                    handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
+                }
+
+                // Handle renamed files
+                FileInfo previousFileInfo = previousState.get(filePath);
+                if (previousFileInfo != null && !previousFileInfo.uri.equals(fileInfo.uri)) {
+                    avoidGhostDevices(acces);
+                    Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
+                }
             }
 
-            // Handle renamed files
-            FileInfo previousFileInfo = previousState.get(filePath);
-            if (previousFileInfo != null && !previousFileInfo.uri.equals(fileInfo.uri)) {
-                avoidGhostDevices(acces);
-                Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
-            }
-        }
-
-        // Check for deleted files and subdirectories
-        for (String filePath : previousState.keySet()) {
-            if (!currentState.containsKey(filePath)) {
-                FileInfo fileInfo = previousState.get(filePath);
-                avoidGhostDevices(acces);
-                // same reason as for creation, Uri is not usefull in Tree mode for directories
+            // Check for deleted files and subdirectories
+            for (String filePath : previousState.keySet()) {
+                if (!currentState.containsKey(filePath)) {
+                    FileInfo fileInfo = previousState.get(filePath);
+                    avoidGhostDevices(acces);
+                    // same reason as for creation, Uri is not usefull in Tree mode for directories
                     Log.d(TAG,"File suppression detected "+filePath);
                     handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
 
 
 
 
+                }
             }
         }
 
+
+
+        // independant of the origin of the event (filesystem patch or user interraction )
         // Update the previous state to the current state
         previousState.clear();
         previousState.putAll(currentState);
