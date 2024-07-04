@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">Կարգավորումներ</string>
+    <string name="welcome_msg">QSync-ն օգտագործելու համար տեղադրեք այն ձեր մյուս սարքերում և միացրեք դրանք նույն Wifi ցանցին :D
+\n
+    Այցելեք՝ https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Ֆայլի անունը՝ \"</string>
+    <string name="multi_largage_aerien_msg">«Ընդունե՞լ MULTI Largage Aerien-ը: Գալիս է.</string>
+    <string name="magasin">խանութ</string>
+    <string name="synchronisations">Համաժամեցումներ</string>
+    <string name="select_a_device_to_send_a_largageaerien">Ընտրեք սարք՝ LargageAerien ուղարկելու համար</string>
+    <string name="largage_aerien">օդային կաթիլ</string>
+    <string name="create_a_new_task">ստեղծել նոր առաջադրանք</string>
+
+</resources>

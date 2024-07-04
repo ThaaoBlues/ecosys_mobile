@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">asetukset</string>
+    <string name="welcome_msg">Jos haluat käyttää QSynciä, asenna se muihin laitteisiisi ja yhdistä ne samaan Wifi-verkkoon :D
+\n
+    Käy osoitteessa https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Tiedoston nimi: \"</string>
+    <string name="multi_largage_aerien_msg">\"Hyväksy MULTI Largage Aerien\? Lähtöpaikka: \"</string>
+    <string name="magasin">tallentaa</string>
+    <string name="synchronisations">Synkronoinnit</string>
+    <string name="select_a_device_to_send_a_largageaerien">Valitse laite lähetettäväksi LargageAerien</string>
+    <string name="largage_aerien">pudottaa lentokoneesta</string>
+    <string name="create_a_new_task">luoda uusi tehtävä</string>
+
+</resources>

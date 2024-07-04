@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">समायोजन</string>
+    <string name="welcome_msg">QSync का उपयोग करने के लिए, कृपया इसे अपने अन्य उपकरणों पर इंस्टॉल करें और उन्हें उसी वाईफ़ाई नेटवर्क से कनेक्ट करें:D
+\एन
+    जाएँ: https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"बड़े पैमाने पर एरियन स्वीकार करें\? फ़ाइल का नाम:\"</string>
+    <string name="multi_largage_aerien_msg">\"मल्टी लार्जेज एरियन स्वीकार करें\? से आ रहा है:\"</string>
+    <string name="magasin">इकट्ठा करना</string>
+    <string name="synchronisations">सिंक्रनाइज़ेशन करें</string>
+    <string name="select_a_device_to_send_a_largageaerien">लार्जेजएरियन भेजने के लिए एक उपकरण का चयन करें</string>
+    <string name="largage_aerien">एयरड्रॉप</string>
+    <string name="create_a_new_task">एक नया कार्य बनाएँ</string>
+
+</resources>

@@ -11,6 +11,7 @@ package com.qsync.qsync;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
     private ActivityResultLauncher<Intent> selectFolderLauncher;
     private static Networking nt;
+    private SharedPreferences prefs;
+
+
+
+
     public void requestPermission(final Activity activity, final String permission, final int requestCode) {
         if (ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
@@ -107,6 +113,10 @@ public class MainActivity extends AppCompatActivity {
 
         requestPermission(MainActivity.this,"android.permission.POST_NOTIFICATIONS",MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS);
 
+
+
+        prefs = getSharedPreferences("com.mycompany.myAppName", MODE_PRIVATE);
+        prefs.edit().putBoolean("firstrun", true).commit();
         //deleteDatabase("qsync");
 
         // clean old network map at each app startup
@@ -223,6 +233,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (prefs.getBoolean("firstrun", true)) {
+
+            Intent myIntent = new Intent(MainActivity.this, BienvenueActivity.class);
+            startActivity(myIntent);
+            prefs.edit().putBoolean("firstrun", false).commit();
+        }
+    }
 
 
 

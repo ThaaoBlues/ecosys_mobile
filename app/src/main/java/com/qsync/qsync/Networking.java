@@ -294,7 +294,7 @@ public class Networking {
                         // signle-file largage aerien
                         handleLargageAerien(data,
                                 clientSocket.getInetAddress().getHostAddress(),
-                                "Accept the Largage Aerien ? (coming from " + clientSocket.getInetAddress().getHostAddress() + ")\n File name: " + data.FilePath,
+                                R.string.largage_aerien_msg + data.FilePath,
                                 false,
                                 false
                                 );
@@ -305,7 +305,7 @@ public class Networking {
                         Log.d(TAG,"Handling MOTDL...");
                         handleLargageAerien(data,
                                 clientSocket.getInetAddress().getHostAddress(),
-                                "Accept the Multi Largage Aerien ? (coming from " + clientSocket.getInetAddress().getHostAddress() + ")\n Zip File name: " + data.FilePath,
+                                R.string.multi_largage_aerien_msg + clientSocket.getInetAddress().getHostAddress() ,
                                 false,
                                 true
                         );

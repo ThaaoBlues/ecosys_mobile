@@ -1,0 +1,45 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+  <!-- Mobile Device -->
+  <path
+      android:pathData="M13,20L27,20A3,3 0,0 1,30 23L30,57A3,3 0,0 1,27 60L13,60A3,3 0,0 1,10 57L10,23A3,3 0,0 1,13 20z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#000000"/>
+  <path
+      android:pathData="M20,55m-1.5,0a1.5,1.5 0,1 1,3 0a1.5,1.5 0,1 1,-3 0"
+      android:fillColor="#000000"/>
+
+  <!-- Laptop -->
+  <path
+      android:pathData="M52,30L88,30A2,2 0,0 1,90 32L90,53A2,2 0,0 1,88 55L52,55A2,2 0,0 1,50 53L50,32A2,2 0,0 1,52 30z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#000000"/>
+  <path
+      android:pathData="M47,55L93,55A2,2 0,0 1,95 57L95,58A2,2 0,0 1,93 60L47,60A2,2 0,0 1,45 58L45,57A2,2 0,0 1,47 55z"
+      android:strokeWidth="2"
+      android:fillColor="#00000000"
+      android:strokeColor="#000000"/>
+
+  <!-- Sync Arrows -->
+  <path
+      android:pathData="M30,40l10,0l0,-5z"
+      android:fillColor="#000000"/>
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M40,37.5L65,37.5"
+      android:strokeWidth="2"
+      android:strokeColor="#000000"/>
+  <path
+      android:pathData="M70,45l-10,0l0,5z"
+      android:fillColor="#000000"/>
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M60,47.5L35,47.5"
+      android:strokeWidth="2"
+      android:strokeColor="#000000"/>
+</vector>

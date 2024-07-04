@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">সেটিংস</string>
+    <string name="welcome_msg">QSync ব্যবহার করতে, অনুগ্রহ করে এটি আপনার অন্যান্য ডিভাইসে ইনস্টল করুন এবং একই ওয়াইফাই নেটওয়ার্কের সাথে সংযুক্ত করুন :D
+\n
+    ভিজিট করুন: https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"লার্জেজ এরিয়েন গ্রহণ করুন\? ফাইলের নাম: \"</string>
+    <string name="multi_largage_aerien_msg">\"মাল্টি লার্জেজ এরিয়েন গ্রহণ করুন\? থেকে আসছে : \"</string>
+    <string name="magasin">magasin</string>
+    <string name="synchronisations">Synchronisations</string>
+    <string name="select_a_device_to_send_a_largageaerien">Select a device to send a LargageAerien</string>
+    <string name="largage_aerien">largage aérien</string>
+    <string name="create_a_new_task">create a new task</string>
+
+</resources>

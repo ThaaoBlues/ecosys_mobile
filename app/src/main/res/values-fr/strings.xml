@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">Paramètres</string>
+    <string name="welcome_msg">Pour utiliser QSync, veuillez l\'installer sur vos autres appareils et connectez-les au même réseau Wifi :D
+\n
+    Visite : https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"Accepter le Largage Aerien \? Nom du fichier : \"</string>
+    <string name="multi_largage_aerien_msg">\"Accepter le MULTI Largage Aerien \? Venant de : \"</string>
+    <string name="magasin">magasin</string>
+    <string name="synchronisations">Synchronisations</string>
+    <string name="select_a_device_to_send_a_largageaerien">Sélectionnez un appareil pour envoyer un LargageAerien</string>
+    <string name="largage_aerien">largage aérien</string>
+    <string name="create_a_new_task">créer une nouvelle tâche</string>
+
+</resources>

@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">Instellings</string>
+    <string name="welcome_msg">Om QSync te gebruik, installeer dit asseblief op jou ander toestelle en koppel hulle aan dieselfde Wifi-netwerk :D
+\n
+    Besoek: https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"Aanvaar die Largage Aerien\? Lêernaam: \"</string>
+    <string name="multi_largage_aerien_msg">\"Aanvaar die MULTI Largage Aerien\? Kom van: \"</string>
+    <string name="magasin">winkel</string>
+    <string name="synchronisations">Sinchronisasies</string>
+    <string name="select_a_device_to_send_a_largageaerien">Kies \'n toestel om \'n LargageAerien te stuur</string>
+    <string name="largage_aerien">lugval</string>
+    <string name="create_a_new_task">skep \'n nuwe taak</string>
+
+</resources>

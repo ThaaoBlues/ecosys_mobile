@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">qsync</string>
+    <string name="action_settings">Parametrlər</string>
+    <string name="welcome_msg">QSync-dən istifadə etmək üçün onu başqa cihazlarınıza quraşdırın və onları eyni Wi-Fi şəbəkəsinə qoşun :D
+\n
+    Ziyarət edin: https://thaaoblues.github.io/qsync</string>
+    <string name="largage_aerien_msg">\"Böyük Aerien qəbul edin\? Fayl adı: \"</string>
+    <string name="multi_largage_aerien_msg">\"MULTI Largage Aerien-i qəbul edirsiniz\? Gəlir:\"</string>
+    <string name="magasin">mağaza</string>
+    <string name="synchronisations">Sinxronizasiyalar</string>
+    <string name="select_a_device_to_send_a_largageaerien">LargageAerien göndərmək üçün cihaz seçin</string>
+    <string name="largage_aerien">airdrop</string>
+    <string name="create_a_new_task">yeni tapşırıq yaradın</string>
+
+</resources>
