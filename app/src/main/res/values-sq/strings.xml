@@ -1,14 +1,15 @@
 <resources>
     <string name="app_name">qsync</string>
     <string name="action_settings">Cilësimet</string>
-    <string name="welcome_msg">Për të përdorur QSync, ju lutemi instaloni atë në pajisjet tuaja të tjera dhe lidhini ato në të njëjtin rrjet Wifi :D
-\n
-    Vizitoni: https://thaaoblues.github.io/qsync</string>
-    <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Emri i skedarit: \"</string>
-    <string name="multi_largage_aerien_msg">\"Pranoni MULTI Largage Aerien\? Vjen nga: \"</string>
+    <string name="welcome_msg">To use QSync, please install it on your others devices and connect them to the same Wifi network :D
+\n\n
+    Visit : https://thaaoblues.github.io/qsync
+    </string>
+    <string name="largage_aerien_msg">Accept the Largage Aerien ? File name: </string>
+    <string name="multi_largage_aerien_msg">Accept the MULTI Largage Aerien ? Coming from : </string>
     <string name="magasin">dyqan</string>
     <string name="synchronisations">Sinkronizimet</string>
-    <string name="select_a_device_to_send_a_largageaerien">Zgjidhni një pajisje për të dërguar një LargageAerien</string>
+    <string name="select_a_device_to_send_a_largageaerien">Select a device to send a Largage Aerien</string>
     <string name="largage_aerien">hedhjen e ajrit</string>
     <string name="create_a_new_task">krijoni një detyrë të re</string>
 

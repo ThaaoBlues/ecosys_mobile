@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         prefs = getSharedPreferences("com.mycompany.myAppName", MODE_PRIVATE);
-        prefs.edit().putBoolean("firstrun", true).commit();
+        //prefs.edit().putBoolean("firstrun", true).commit();
         //deleteDatabase("qsync");
 
         // clean old network map at each app startup

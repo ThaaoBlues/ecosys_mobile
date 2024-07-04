@@ -8,7 +8,7 @@
     tools:context=".BienvenueActivity">
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/imageView_bienvenue"
         android:layout_width="383dp"
         android:layout_height="316dp"
         android:layout_marginTop="4dp"
@@ -19,9 +19,9 @@
         app:srcCompat="@drawable/test" />
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/textview_bienvenue"
         android:layout_width="350dp"
-        android:layout_height="284dp"
+        android:layout_height="283dp"
         android:text="@string/welcome_msg"
         android:textAlignment="center"
         android:textSize="30dp"
@@ -29,7 +29,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.495"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
+        app:layout_constraintTop_toBottomOf="@+id/imageView_bienvenue"
         app:layout_constraintVertical_bias="0.0" />
 
     <Button
@@ -40,5 +40,5 @@
         android:text="OKAY !"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView3" />
+        app:layout_constraintTop_toBottomOf="@+id/textview_bienvenue" />
 </androidx.constraintlayout.widget.ConstraintLayout>

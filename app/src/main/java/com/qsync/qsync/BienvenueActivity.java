@@ -11,6 +11,8 @@ package com.qsync.qsync;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,6 +22,8 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class BienvenueActivity extends AppCompatActivity {
 
+
+    private int step =0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,8 +40,48 @@ public class BienvenueActivity extends AppCompatActivity {
         BienvenueActivity.this.findViewById(R.id.button_ok_bienvenue).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent myIntent = new Intent(BienvenueActivity.this, MainActivity.class);
-                startActivity(myIntent);
+
+                step ++;
+                ImageView img = BienvenueActivity.this.findViewById(R.id.imageView_bienvenue);
+                TextView msg = BienvenueActivity.this.findViewById(R.id.textview_bienvenue);
+                switch (step){
+                    case 1:
+
+                        img.setImageDrawable(
+                                getDrawable(R.drawable.largage)
+                        );
+
+
+                        msg.setText(R.string.largage_aerien_explication);
+                        break;
+                    case 2:
+
+                        img.setImageDrawable(
+                                getDrawable(R.drawable.test)
+                        );
+                        msg.setText(R.string.sync_task_explication);
+                        break;
+
+                    case 3:
+
+                        img.setImageDrawable(
+                                getDrawable(R.drawable.magasin)
+                        );
+                        msg.setText(R.string.magasin_explication);
+                        break;
+                    case 4:
+                        img.setImageDrawable(
+                                getDrawable(R.drawable.backup)
+                        );
+                        msg.setText(R.string.backup_mode_explication);
+                        break;
+                    case 5:
+                        Intent myIntent = new Intent(BienvenueActivity.this, MainActivity.class);
+                        startActivity(myIntent);
+                        break;
+
+                }
+
             }
         });
     }

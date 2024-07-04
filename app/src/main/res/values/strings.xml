@@ -20,5 +20,9 @@
     <string name="select_a_device_to_send_a_largageaerien">Select a device to send a Largage Aerien</string>
     <string name="largage_aerien">largage aérien</string>
     <string name="create_a_new_task">create a new task</string>
+    <string name="largage_aerien_explication">First feature of QSync : Largage Aerien, It is just AirDrop but better because it is open-source.</string>
+    <string name="sync_task_explication">Second feature of QSync : You can synchronize any folder between any of your devices (pictures, documents…), it will update whenever they are on the same network !</string>
+    <string name="magasin_explication">Third feature of QSync : Our markeplace let you install apps that will use QSync to synchronise their data between your devices !</string>
+    <string name="backup_mode_explication">Last feature of QSync : You can activate "Backup mode" on any of your synchronisation task so anything you delete on this device will not be deleted on the others ! Usefull for your pictures ;)</string>
 
 </resources>
