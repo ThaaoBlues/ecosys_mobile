@@ -560,35 +560,20 @@ public class Globals {
         }
     }
 
-
-    // LinkDevice.java
-    public class LinkDevice {
-        private String secureId;
-        private boolean isConnected;
-
-        public LinkDevice(String secureId, boolean isConnected) {
-            this.secureId = secureId;
-            this.isConnected = isConnected;
+    /**
+     * Replaces all special characters in the input string with underscores.
+     * Only alphanumeric characters and underscores will remain in the final string.
+     *
+     * @param input the original string
+     * @return the sanitized string
+     */
+    public static String replaceSpecialChars(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
         }
-
-        public String getSecureId() {
-            return secureId;
-        }
-
-        public void setSecureId(String secureId) {
-            this.secureId = secureId;
-        }
-
-        public boolean isConnected() {
-            return isConnected;
-        }
-
-        public void setConnected(boolean connected) {
-            isConnected = connected;
-        }
+        // Replace all non-alphanumeric characters with an underscore
+        return input.replaceAll("[^a-zA-Z0-9]", "_");
     }
-
-
 
 
 }

@@ -201,7 +201,8 @@ public class AccesBdd {
                     "version_id INTEGER," +
                     "type TEXT," +
                     "secure_id TEXT," +
-                    "uninstaller_path TEXT)");
+                    "uninstaller_path TEXT)"
+                );
 
 
         db.execSQL("CREATE TABLE IF NOT EXISTS reseau(" +
@@ -1597,7 +1598,5 @@ public class AccesBdd {
 
 
     }
-
-
 
 }

@@ -115,20 +115,11 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        prefs = getSharedPreferences("com.mycompany.myAppName", MODE_PRIVATE);
+        prefs = getSharedPreferences("com.qsync.qsync", MODE_PRIVATE);
         //prefs.edit().putBoolean("firstrun", true).commit();
         //deleteDatabase("qsync");
 
-        // clean old network map at each app startup
-        AccesBdd acces = new AccesBdd(MainActivity.this);
-        acces.cleanNetworkMap();
-
-
-
-        ZeroConfService zc = new ZeroConfService(MainActivity.this);
-
-
-        selectFolderLauncher = registerForActivityResult(
+        selectFolderLauncher = MainActivity.this.registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override
@@ -176,6 +167,17 @@ public class MainActivity extends AppCompatActivity {
 
         ProcessExecutor.startProcess(StartServer);
 
+
+        // Start the file picker activity
+        // clean old network map at each app startup
+        AccesBdd acces = new AccesBdd(MainActivity.this);
+        acces.cleanNetworkMap();
+
+
+
+        ZeroConfService zc = new ZeroConfService(MainActivity.this);
+
+
         ProcessExecutor.Function StartWatcher = new ProcessExecutor.Function() {
             @Override
             public void execute() {
@@ -198,7 +200,6 @@ public class MainActivity extends AppCompatActivity {
         };
 
         ProcessExecutor.startProcess(StartWatcher);
-
 
 
     }

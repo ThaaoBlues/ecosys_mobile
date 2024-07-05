@@ -10,6 +10,7 @@ package com.qsync.qsync;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -27,6 +28,17 @@ import java.util.Objects;
 public class AppsIntentActivity extends AppCompatActivity {
 
 
+
+    public boolean checkPackageNameExists(String packageName){
+        PackageManager packageManager = AppsIntentActivity.this.getPackageManager();
+        try {
+            packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
+            return true;  // Package is installed
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;  // Package is not installed
+        }
+    }
+
     private static String TAG = "Qsync Server : AppsIntentActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,16 +53,29 @@ public class AppsIntentActivity extends AppCompatActivity {
 
 
         Intent intent = getIntent();
+
         if (intent != null) {
             // Retrieve the flag and app name from the intent
             String actionFlag = intent.getStringExtra("action_flag");
-            String appName = intent.getStringExtra("app_name");
+            String packageName = intent.getStringExtra("package_name");
+            TextView textView = findViewById(R.id.textView);
+
+            // check if the package name is legit
+            // if not, just warn the user and stop
+            if(!checkPackageNameExists(packageName)){
+                BackendApi.displayToast(AppsIntentActivity.this,getString(R.string.malicious_app_install));
+                textView.setText(getString(R.string.malicious_app_install));
+                return;
+            }
+
+
+
+            //packageName = Globals.replaceSpecialChars(packageName);
 
             // Display the received values (you can handle them as needed)
 
 
-            TextView textView = findViewById(R.id.textView);
-            textView.setText("Action Flag: " + actionFlag + "\nApp Name: " + appName);
+            textView.setText("Action Flag: " + actionFlag + "\nApp Name: " + packageName);
 
             AccesBdd acces = new AccesBdd(AppsIntentActivity.this);
 
@@ -58,29 +83,37 @@ public class AppsIntentActivity extends AppCompatActivity {
 
             if(Objects.equals(actionFlag, "[INSTALL_APP]")){
 
-                if(acces.checkAppExistenceFromName(appName)){
-                    textView.setText("An application with this name is already registered");
-                }else{
-                    // create app folder
-                    ContentValues values = new ContentValues();
-                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, appName);
-                    values.put(MediaStore.MediaColumns.MIME_TYPE, "vnd.android.document/directory");
-                    Uri folderUri = Uri.parse("content://" + "com.qsync.fileprovider" + "/" + appName);
 
-                    Uri newFolderUri = getContentResolver().insert(folderUri, values);
+                String rp = BackendApi.askInput("[INSTALL_APP]",getString(R.string.confirm_app_install),AppsIntentActivity.this,false);
 
-                    if (newFolderUri != null) {
-                        Log.d(TAG, "Folder created successfully: " + newFolderUri);
-                    } else {
-                        // app must already exists, don't link the new one
-                        Log.e(TAG, "Failed to create folder: " + appName);
-                        return;
+
+                if(rp.equals("y")){
+                    if(acces.checkAppExistenceFromName(packageName)){
+                        textView.setText("An application with this name is already registered");
+                    }else{
+                        // create app folder
+                        ContentValues values = new ContentValues();
+                        values.put(MediaStore.MediaColumns.DISPLAY_NAME, packageName);
+                        values.put(MediaStore.MediaColumns.MIME_TYPE, "vnd.android.document/directory");
+                        Uri folderUri = Uri.parse("content://" + "com.qsync.fileprovider" + "/" + packageName);
+
+                        Uri newFolderUri = getContentResolver().insert(folderUri, values);
+
+
+                        if (newFolderUri != null) {
+                            Log.d(TAG, "Folder created successfully: " + newFolderUri);
+                        } else {
+                            // app must already exists, don't link the new one
+                            Log.e(TAG, "Failed to create folder: " + packageName);
+                            return;
+                        }
+
+
+                        // create a sync in it
+                        acces.createSync(folderUri.getPath());
                     }
-
-
-                    // create a sync in it
-                    acces.createSync(folderUri.getPath());
                 }
+
 
 
             }

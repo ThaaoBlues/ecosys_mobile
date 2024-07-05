@@ -183,20 +183,6 @@ public class BackendApi {
             }
     }
 
-    public static String readInputContext(String flag) {
-        try {
-            File file = new File(QSYNC_WRITEABLE_DIRECTORY, flag + ".btf");
-            byte[] bytes = new byte[(int) file.length()];
-            FileInputStream fis = new FileInputStream(file);
-            fis.read(bytes);
-            fis.close();
-
-            return new String(bytes);
-        } catch (IOException e) {
-            Log.e(TAG, "Error in readInputContext(): " + e.getMessage());
-            return null;
-        }
-    }
 
     public static void openFile(Context context, Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -210,57 +196,7 @@ public class BackendApi {
         }
     }
 
-    public static void giveInput(String flag, String data) {
-        try {
-            File file = new File(QSYNC_WRITEABLE_DIRECTORY, flag + ".btf");
-            FileWriter writer = new FileWriter(file, true);
-            writer.write(data);
-            writer.close();
-        } catch (IOException e) {
-            Log.e(TAG, "Error in giveInput(): " + e.getMessage());
-        }
-    }
 
-    public static void waitEventLoop(final Map<String, EventCallback> callbacks) {
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-                    try {
-                        File directory = new File(QSYNC_WRITEABLE_DIRECTORY);
-                        File[] files = directory.listFiles();
-
-                        if (files != null) {
-                            for (File file : files) {
-                                if (!file.isDirectory() && file.getName().endsWith(".btf")) {
-                                    String eventFlag = file.getName().substring(0, file.getName().length() - 4);
-
-                                    try {
-                                        FileInputStream fis = new FileInputStream(file);
-                                        byte[] contextBytes = new byte[(int) file.length()];
-                                        fis.read(contextBytes);
-                                        fis.close();
-                                        String context = new String(contextBytes);
-                                        EventCallback callback = callbacks.get(eventFlag);
-                                        if (callback != null) {
-                                            callback.onEvent(context);
-                                        }
-                                    } catch (IOException e) {
-                                        Log.e(TAG, "Error while reading event file in waitEventLoop(): " + e.getMessage());
-                                    }
-                                }
-                            }
-                        }
-                        Thread.sleep(1000); // Sleep for 1 second
-                    } catch (InterruptedException e) {
-                        Log.e(TAG, "Thread interrupted in waitEventLoop(): " + e.getMessage());
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
-        });
-        thread.start();
-    }
 
 
     public static void displayToast(Context context, String text){
@@ -274,11 +210,6 @@ public class BackendApi {
         ProcessExecutor.executeOnUIThread(showToast);
     }
 
-
-
-    public interface EventCallback {
-        void onEvent(String context);
-    }
 
     public interface DeviceButtonCallback{
         void callback(Map<String,String> device);

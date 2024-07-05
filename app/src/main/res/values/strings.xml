@@ -24,5 +24,7 @@
     <string name="sync_task_explication">Second feature of QSync : You can synchronize any folder between any of your devices (pictures, documents…), it will update whenever they are on the same network !</string>
     <string name="magasin_explication">Third feature of QSync : Our markeplace let you install apps that will use QSync to synchronise their data between your devices !</string>
     <string name="backup_mode_explication">Last feature of QSync : You can activate "Backup mode" on any of your synchronisation task so anything you delete on this device will not be deleted on the others ! Usefull for your pictures ;)</string>
+    <string name="confirm_app_install">Confirm that you want to let the app you are installing access QSync.</string>
+    <string name="malicious_app_install">The app you are installing is giving QSync a wrong package name, it could be malicious !</string>
 
 </resources>
