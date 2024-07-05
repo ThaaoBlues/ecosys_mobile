@@ -183,7 +183,7 @@ public class FileProvider extends ContentProvider {
     }
 
     @Nullable
-    public OutputStream openOutputStream(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+    public OutputStream openOutputStream(@NonNull Uri uri) throws FileNotFoundException {
         Context context = getContext();
 
         if (context == null) {
@@ -207,28 +207,13 @@ public class FileProvider extends ContentProvider {
             throw  new IllegalStateException("File does not exists, is not in your dedicated QSync folder or is a directory.");
         }
 
-
-        int modeFlags = ParcelFileDescriptor.MODE_READ_ONLY;
-        if ("r".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_ONLY;
-        } else if ("w".equals(mode) || "wt".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_TRUNCATE;
-        } else if ("wa".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_APPEND;
-        } else if ("rw".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_WRITE;
-        } else if ("rwt".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_TRUNCATE;
-        } else {
-            throw new IllegalArgumentException("Unsupported mode: " + mode);
-        }
 
         return context.getContentResolver().openOutputStream(uri);
     }
 
 
     @Nullable
-    public InputStream openInputStream(@NonNull Uri uri, @NonNull String mode) throws FileNotFoundException {
+    public InputStream openInputStream(@NonNull Uri uri) throws FileNotFoundException {
         Context context = getContext();
 
         if (context == null) {
@@ -252,21 +237,6 @@ public class FileProvider extends ContentProvider {
             throw  new IllegalStateException("File does not exists, is not in your dedicated QSync folder or is a directory.");
         }
 
-
-        int modeFlags = ParcelFileDescriptor.MODE_READ_ONLY;
-        if ("r".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_ONLY;
-        } else if ("w".equals(mode) || "wt".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_TRUNCATE;
-        } else if ("wa".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_WRITE_ONLY | ParcelFileDescriptor.MODE_APPEND;
-        } else if ("rw".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_WRITE;
-        } else if ("rwt".equals(mode)) {
-            modeFlags = ParcelFileDescriptor.MODE_READ_WRITE | ParcelFileDescriptor.MODE_TRUNCATE;
-        } else {
-            throw new IllegalArgumentException("Unsupported mode: " + mode);
-        }
 
         return context.getContentResolver().openInputStream(uri);
     }
