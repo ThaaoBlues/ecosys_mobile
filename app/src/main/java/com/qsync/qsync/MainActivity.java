@@ -42,8 +42,6 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
-    private ActivityResultLauncher<Intent> selectFolderLauncher;
-    private static Networking nt;
     private SharedPreferences prefs;
 
 
@@ -119,87 +117,10 @@ public class MainActivity extends AppCompatActivity {
         //prefs.edit().putBoolean("firstrun", true).commit();
         //deleteDatabase("qsync");
 
-        selectFolderLauncher = MainActivity.this.registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                new ActivityResultCallback<ActivityResult>() {
-                    @Override
-                    public void onActivityResult(ActivityResult result) {
-                        if (result.getResultCode() == Activity.RESULT_OK) {
-                            // There are no request codes
-                            Intent data = result.getData();
-                            if (result.getResultCode() == Activity.RESULT_OK) {
-                                if (data.getData() != null) {
 
-                                    //Log.d("SynchronisationsFragment","Uri : "+ PathUtils.getPathFromUri(getContext(),data.getData()));
-                                    Uri treeUri = data.getData();
-
-                                    MainActivity.this.getContentResolver().takePersistableUriPermission(treeUri,
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-
-                                    DocumentFile directory = DocumentFile.fromTreeUri( MainActivity.this, treeUri);
-                                    if (directory != null && directory.isDirectory()) {
-                                        AccesBdd acces = new AccesBdd( MainActivity.this);
-
-                                        acces.SetSecureId(nt.getTmpSecureIdForCreation());
-                                        acces.CreateSyncFromOtherEnd(directory.getUri().toString(),nt.getTmpSecureIdForCreation());
-                                        acces.closedb();
-                                        FileSystem.startDirectoryMonitoring( MainActivity.this,directory);
-
-                                        nt.setSetupDlLock(false);
-
-
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                });
-
-        ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                nt = new Networking(MainActivity.this,getFilesDir().toString());
-                nt.setSelectFolderLauncher(selectFolderLauncher);
-                nt.ServerMainLoop();
-            }
-        };
-
-        ProcessExecutor.startProcess(StartServer);
-
-
-        // Start the file picker activity
-        // clean old network map at each app startup
-        AccesBdd acces = new AccesBdd(MainActivity.this);
-        acces.cleanNetworkMap();
-
-
-
-        ZeroConfService zc = new ZeroConfService(MainActivity.this);
-
-
-        ProcessExecutor.Function StartWatcher = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                AccesBdd acces = new AccesBdd(MainActivity.this);
-                Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
-                tasks.forEach((k,v)->{
-
-                    DocumentFile df = DocumentFile.fromTreeUri(MainActivity.this,Uri.parse(v.getPath()));
-                    Log.d("Qsync Server ","Starting to monitor : "+ v.getPath()+"\n Readable = "+df.canRead());
-
-                    FileSystem.startDirectoryMonitoring(
-                            MainActivity.this,
-                            df
-                    );
-
-                });
-
-                acces.closedb();
-            }
-        };
-
-        ProcessExecutor.startProcess(StartWatcher);
+        Intent intent = new Intent(MainActivity.this,SelectorActivity.class);
+        intent.putExtra("flag","[MAKE_SURE_SERVERS_ARE_RUNNING]");
+        startActivity(intent);
 
 
     }

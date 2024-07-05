@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -18,7 +18,25 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Qsync"
         tools:targetApi="31">
+        <service
+            android:name=".StartupService"
+            android:enabled="true"
+            android:exported="true"></service>
 
+        <receiver android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".SelectorActivity"
+            android:exported="false" />
+        <activity
+            android:name=".SelectAppToLinkActivity"
+            android:exported="false" />
         <activity
             android:name=".BienvenueActivity"
             android:exported="false" />

@@ -64,7 +64,9 @@ public class Networking {
 
     private static boolean setupDlLock;
 
-    public Networking(Context mcontext, String mFilesDir) {
+    private static ProcessExecutor.Function networkingCallForPicker;
+
+    Networking(Context mcontext, String mFilesDir) {
         context = mcontext;
         QSYNC_WRITABLE_DIRECTORY = mFilesDir;
 
@@ -134,6 +136,14 @@ public class Networking {
 
     public void setSelectFolderLauncher(ActivityResultLauncher<Intent> selectFolderLauncher) {
         this.selectFolderLauncher = selectFolderLauncher;
+    }
+
+    public ProcessExecutor.Function getNetworkingCallForPicker() {
+        return networkingCallForPicker;
+    }
+
+    public void setNetworkingCallForPicker(ProcessExecutor.Function networkingCallForPicker) {
+        this.networkingCallForPicker = networkingCallForPicker;
     }
 
     public static class ClientHandler implements Runnable {
@@ -246,6 +256,10 @@ public class Networking {
                         setSetupDlLock(false);
                         if(Objects.equals(data.FileType, "[APPLICATION]")){
 
+
+
+
+
                             String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
                             if(acces.checkAppExistenceFromName(data.getFilePath())){
                                 acces.updateSyncId(app_path,secure_id);
@@ -264,10 +278,7 @@ public class Networking {
                             setTmpSecureIdForCreation(secure_id);
                             setSetupDlLock(true);
 
-                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-
-                            selectFolderLauncher.launch(intent);
-
+                            ProcessExecutor.startProcess(networkingCallForPicker);
 
                         }
 

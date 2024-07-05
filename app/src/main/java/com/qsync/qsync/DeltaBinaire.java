@@ -294,7 +294,7 @@ public class DeltaBinaire {
                                 //Log.d(TAG,"On flush tout");
                                 dataStream.flush();
                                 delta.Instructions.get(deltaIndex).Data = dataStream.toByteArray();
-                                Log.d(TAG,"Resetting buffer");
+                                //Log.d(TAG,"Resetting buffer");
                                 dataStream.reset();
                             }
                             // we prepare to start a new block
@@ -339,7 +339,7 @@ public class DeltaBinaire {
             total += i.Data.length;
         }
         Log.d(TAG,"Data size contained in delta : "+total);
-        Log.d("FILEDELTA","build this delta : "+delta);
+        //Log.d("FILEDELTA","build this delta : "+delta);
 
         return delta;
     }
@@ -381,6 +381,7 @@ public class DeltaBinaire {
 
             if(file != null){
                 if(file.exists()){
+                    Log.d(TAG,"Patching file : "+file.getUri().getPath());
 
                     ContentResolver ctt = context.getContentResolver();
                     try {
@@ -399,7 +400,7 @@ public class DeltaBinaire {
                                     // has things to read
                                     bbf.rewind();
                                     fc.write(bbf);
-                                    Log.d(TAG,"wrote : "+Arrays.toString(instruction.Data));
+                                    //Log.d(TAG,"wrote : "+Arrays.toString(instruction.Data));
                                     break;
                                 case "t":
                                     fc.truncate(instruction.ByteIndex);
