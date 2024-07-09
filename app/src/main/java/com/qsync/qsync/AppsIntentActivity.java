@@ -8,36 +8,31 @@
 
 package com.qsync.qsync;
 
-import android.content.ContentValues;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.documentfile.provider.DocumentFile;
 
-import java.util.Objects;
+import java.io.File;
 
 public class AppsIntentActivity extends AppCompatActivity {
 
 
 
-    public boolean checkPackageNameExists(String packageName){
-        PackageManager packageManager = AppsIntentActivity.this.getPackageManager();
-        try {
-            packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
-            return true;  // Package is installed
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;  // Package is not installed
-        }
-    }
+
+    private TextView textView;
+    private String PROVIDER_ROOT=  "content://com.qsync.qsync.fileprovider/apps/";
 
     private static String TAG = "Qsync Server : AppsIntentActivity";
     @Override
@@ -58,15 +53,18 @@ public class AppsIntentActivity extends AppCompatActivity {
             // Retrieve the flag and app name from the intent
             String actionFlag = intent.getStringExtra("action_flag");
             String packageName = intent.getStringExtra("package_name");
-            TextView textView = findViewById(R.id.textView);
+            textView = findViewById(R.id.apps_intent_activity_textview);
 
             // check if the package name is legit
             // if not, just warn the user and stop
-            if(!checkPackageNameExists(packageName)){
+
+            Log.d(TAG,"PACKAGE NAME : "+packageName);
+            /*if(!checkPackageNameExists(packageName)){
+
                 BackendApi.displayToast(AppsIntentActivity.this,getString(R.string.malicious_app_install));
                 textView.setText(getString(R.string.malicious_app_install));
                 return;
-            }
+            }*/
 
 
 
@@ -80,43 +78,148 @@ public class AppsIntentActivity extends AppCompatActivity {
             AccesBdd acces = new AccesBdd(AppsIntentActivity.this);
 
 
+            switch (actionFlag){
+                case "[INSTALL_APP]":
+                    installApp(intent,packageName,acces);
+                    break;
 
-            if(Objects.equals(actionFlag, "[INSTALL_APP]")){
+                case "[CREATE_FILE]":
 
 
-                String rp = BackendApi.askInput("[INSTALL_APP]",getString(R.string.confirm_app_install),AppsIntentActivity.this,false);
+                    Log.d(TAG,"AUTHORITY : "+getReferrer().getAuthority());
+                    if(packageName.equals(getReferrer().getAuthority()) && acces.checkAppExistenceFromName(packageName)){
+                       Log.d(TAG,"IN CREATE FILE");
+                        DocumentFile rootFolder = DocumentFile.fromFile(
+                                getExternalFilesDir(null)
+                        );
+
+                        DocumentFile appFolder = rootFolder.findFile("apps").findFile(packageName);
 
 
-                if(rp.equals("y")){
-                    if(acces.checkAppExistenceFromName(packageName)){
-                        textView.setText("An application with this name is already registered");
+                        String fileName = intent.getStringExtra("file_name");
+                        String mimetype = intent.getStringExtra("mime_type");
+                        // sanitize file name
+
+                        // create file
+                        Uri uri = FileProvider.getUriForFile(
+                                this,
+                                "com.qsync.qsync.fileprovider",
+                                new File(appFolder.createFile(mimetype,fileName).getUri().getPath())
+                        );
+                        AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+                        intent = new Intent(Intent.ACTION_SEND);
+
+                        intent.setClassName(packageName,packageName+".QSyncCallbackActivity");
+                        intent.putExtra("action_flag","[CREATE_FILE]");
+                        intent.setDataAndType(uri, mimetype);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                        startActivity(intent);
+                        finish();
                     }else{
-                        // create app folder
-                        ContentValues values = new ContentValues();
-                        values.put(MediaStore.MediaColumns.DISPLAY_NAME, packageName);
-                        values.put(MediaStore.MediaColumns.MIME_TYPE, "vnd.android.document/directory");
-                        Uri folderUri = Uri.parse("content://" + "com.qsync.fileprovider" + "/" + packageName);
-
-                        Uri newFolderUri = getContentResolver().insert(folderUri, values);
-
-
-                        if (newFolderUri != null) {
-                            Log.d(TAG, "Folder created successfully: " + newFolderUri);
-                        } else {
-                            // app must already exists, don't link the new one
-                            Log.e(TAG, "Failed to create folder: " + packageName);
-                            return;
-                        }
-
-
-                        // create a sync in it
-                        acces.createSync(folderUri.getPath());
+                        textView.setText(R.string.app_is_not_registered_in_qsync_or_is_trying_to_access_data_that_is_not_its_own);
+                        return;
                     }
-                }
+
 
 
 
             }
         }
     }
+
+
+
+    private void installApp(Intent intent, String packageName, AccesBdd acces){
+        Log.d(TAG,"IN INSTALL APP");
+
+
+                /*String rp = BackendApi.askInput(
+                        "[INSTALL_APP]",
+                        getString(R.string.confirm_app_install),
+                        AppsIntentActivity.this,
+                        false
+                );*/
+
+        String rp = "y";
+        if(rp.equals("y")) {
+            if (acces.checkAppExistenceFromName(packageName)) {
+                textView.setText("An application with this name is already registered");
+            } else {
+                DocumentFile rootFolder = DocumentFile.fromFile(
+                        getExternalFilesDir(null)
+                );
+
+                // make sure the apps folder is present
+                if (rootFolder.findFile("apps") == null) {
+                    rootFolder = rootFolder.createDirectory("apps");
+                } else {
+                    rootFolder = rootFolder.findFile("apps");
+                }
+
+                DocumentFile appFolder = rootFolder.createDirectory(packageName);
+
+
+                if (appFolder != null) {
+                    Log.d(TAG, "Folder created successfully: " + appFolder.getUri());
+                } else {
+                    // app must already exists, don't link the new one
+                    Log.e(TAG, "Failed to create folder into : " + rootFolder.getUri().getPath());
+                    return;
+                }
+
+                Uri uri = FileProvider.getUriForFile(
+                        this,
+                        "com.qsync.qsync.fileprovider",
+                        new File(appFolder.getUri().getPath())
+                );
+
+
+
+
+
+                // create a sync in it
+                //acces.createSync(getSafUris(new File(appFolder.getUri().getPath()))[1].toString());
+                acces.createSync(appFolder.getUri().getPath());
+                acces.addToutEnUn(new Globals.ToutEnUnConfig(
+                        packageName,
+                        "",
+                        false,
+                        "",
+                        "",
+                        "",
+                        uri.getPath(),
+                        "",
+                        ""
+                ));
+
+
+                Log.d(TAG,"Restarting background processes to take account of new app...");
+                // restart networking and files watching service to take account of new task
+                if(ProcessExecutor.isMyServiceRunning(AppsIntentActivity.this,StartupService.class)){
+                    stopService( new Intent(this, StartupService.class));
+                }
+                startService( new Intent(this, StartupService.class));
+                Log.d(TAG,"Service restarted");
+
+
+                AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+
+                intent = new Intent(Intent.ACTION_SEND);
+
+                intent.setClassName(packageName, packageName + ".QSyncCallbackActivity");
+                intent.putExtra("flag", "[INSTALL_APP]");
+                intent.putExtra(Intent.EXTRA_STREAM, uri);
+                intent.setDataAndType(uri, "*/*");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                startActivity(intent);
+
+
+            }
+        }
+    }
+
+
+
 }

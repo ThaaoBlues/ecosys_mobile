@@ -15,4 +15,13 @@
     android:layout_height="match_parent"
     tools:context=".AppsIntentActivity">
 
+    <TextView
+        android:id="@+id/apps_intent_activity_textview"
+        android:layout_width="341dp"
+        android:layout_height="372dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -29,10 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayInputStream;
@@ -44,7 +40,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.HashMap;
 import java.nio.file.SimpleFileVisitor;
 
-import android.provider.MediaStore;
 import android.util.Log;
 
 public class AccesBdd {
@@ -908,6 +903,8 @@ public class AccesBdd {
                         rootPath
                 }
         );
+
+        this.secureId = secureId;
 
 
         // ICI AJOUTER LA CARTOGRAPHIE DU SYSTEME DE FICHIERS

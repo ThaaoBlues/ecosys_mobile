@@ -9,20 +9,17 @@
 package com.qsync.qsync;
 
 import android.app.Service;
-import android.content.Context;
-import android.content.ContextWrapper;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 
-import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 
+import java.io.File;
 import java.util.Map;
 
 public class StartupService extends Service implements FolderPickerCallback{
@@ -45,9 +42,9 @@ public class StartupService extends Service implements FolderPickerCallback{
 
             acces.SetSecureId(nt.getTmpSecureIdForCreation());
             acces.CreateSyncFromOtherEnd(directory.getUri().toString(),nt.getTmpSecureIdForCreation());
-            acces.closedb();
 
-            FileSystem.startDirectoryMonitoring( StartupService.this,directory);
+            FileSystem.startDirectoryMonitoring( StartupService.this,directory,acces.GetSecureId());
+            acces.closedb();
 
             nt.setSetupDlLock(false);
 
@@ -78,14 +75,20 @@ public class StartupService extends Service implements FolderPickerCallback{
             ProcessExecutor.Function StartServer = new ProcessExecutor.Function() {
                 @Override
                 public void execute() {
-                    nt = new Networking(StartupService.this,getFilesDir().toString());
-                    nt.setNetworkingCallForPicker(new ProcessExecutor.Function() {
-                        @Override
-                        public void execute() {
-                            openFolderSelector();
-                        }
-                    });
-                    nt.ServerMainLoop();
+                    try{
+                        nt = new Networking(StartupService.this,getFilesDir().toString());
+                        nt.setNetworkingCallForPicker(new ProcessExecutor.Function() {
+                            @Override
+                            public void execute() {
+                                openFolderSelector();
+                            }
+                        });
+                        nt.ServerMainLoop();
+                    }catch (RuntimeException e){
+                        // server already started
+                        Log.d(TAG,"Server already started");
+                    }
+
                 }
             };
 
@@ -109,13 +112,30 @@ public class StartupService extends Service implements FolderPickerCallback{
                     AccesBdd acces = new AccesBdd(StartupService.this);
                     Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
                     tasks.forEach((k,v)->{
+                        Uri uri;
 
-                        DocumentFile df = DocumentFile.fromTreeUri(StartupService.this, Uri.parse(v.getPath()));
+                        DocumentFile df;
+                        if(v.isApp()){
+                            /*uri = FileProvider.getUriForFile(
+                                    StartupService.this,
+                                    "com.qsync.qsync.fileprovider",
+                                    new File(v.getPath())
+
+                            );*/
+
+                            df = DocumentFile.fromFile(new File(v.getPath()));
+                        }else{
+                            uri = Uri.parse(v.getPath());
+                            df = DocumentFile.fromTreeUri(StartupService.this, uri);
+                        }
+                        //uri = Uri.parse(v.getPath());
+                        //df = DocumentFile.fromTreeUri(StartupService.this, uri);
                         Log.d("Qsync Server ","Starting to monitor : "+ v.getPath()+"\n Readable = "+df.canRead());
 
                         FileSystem.startDirectoryMonitoring(
                                 StartupService.this,
-                                df
+                                df,
+                                v.getSecureId()
                         );
 
                     });

@@ -13,20 +13,12 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.util.Log;
-
 import androidx.core.app.ActivityCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -36,8 +28,6 @@ import com.qsync.qsync.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
-
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -122,7 +112,6 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("flag","[MAKE_SURE_SERVERS_ARE_RUNNING]");
         startActivity(intent);
 
-
     }
 
     @Override
@@ -155,17 +144,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onResume() {
-        super.onResume();
+        @Override
+        protected void onResume() {
+            super.onResume();
 
-        if (prefs.getBoolean("firstrun", true)) {
+            if (prefs.getBoolean("firstrun", true)) {
 
-            Intent myIntent = new Intent(MainActivity.this, BienvenueActivity.class);
-            startActivity(myIntent);
-            prefs.edit().putBoolean("firstrun", false).commit();
+                Intent myIntent = new Intent(MainActivity.this, BienvenueActivity.class);
+                startActivity(myIntent);
+                prefs.edit().putBoolean("firstrun", false).commit();
+            }
         }
-    }
 
 
 

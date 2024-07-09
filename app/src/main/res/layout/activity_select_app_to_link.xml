@@ -7,4 +7,29 @@
     android:layout_height="match_parent"
     tools:context=".SelectAppToLinkActivity">
 
+    <ScrollView
+        android:id="@+id/select_app_to_link_scrollview"
+        android:layout_width="412dp"
+        android:layout_height="580dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0">
+
+        <LinearLayout
+            android:id="@+id/select_app_to_link_linearlayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/select_app_to_link_textview"
+        android:layout_width="411dp"
+        android:layout_height="151dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toTopOf="@+id/select_app_to_link_scrollview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

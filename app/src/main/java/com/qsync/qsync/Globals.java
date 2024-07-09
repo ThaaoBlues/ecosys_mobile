@@ -230,7 +230,7 @@ public class Globals {
     }
 
 
-    public class ToutEnUnConfig {
+    public static class ToutEnUnConfig {
         public String appName;
         public String appDownloadUrl;
         public boolean needsInstaller;

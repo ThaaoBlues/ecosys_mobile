@@ -35,14 +35,14 @@ public class FileSystem {
     private static Context context;
 
 
-    public static void startDirectoryMonitoring(Context mContext, DocumentFile directory) {
+    public static void startDirectoryMonitoring(Context mContext, DocumentFile directory,String secureId) {
 
         context = mContext;
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 final AccesBdd acces_nonclosing = new AccesBdd(context);
-                acces_nonclosing.getSecureIdFromRootPath(directory.getUri().toString());
+                acces_nonclosing.SetSecureId(secureId);
 
                 // as we use polling to watch the filesystem,
                 // even if a new directory is sent by another end

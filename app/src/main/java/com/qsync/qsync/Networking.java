@@ -8,14 +8,11 @@
 
 package com.qsync.qsync;
 
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.ParcelFileDescriptor;
-import android.provider.DocumentsContract;
 import android.util.Log;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -32,19 +29,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -260,8 +253,8 @@ public class Networking {
 
 
 
-                            String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
-                            if(acces.checkAppExistenceFromName(data.getFilePath())){
+                            //String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
+                            /*if(acces.checkAppExistenceFromName(data.getFilePath())){
                                 acces.updateSyncId(app_path,secure_id);
                             }else{
                                 String ret = BackendApi.askInput(
@@ -271,7 +264,13 @@ public class Networking {
                                         false
                                 );
                                 return;
-                            }
+                            }*/
+
+                            Intent intent = new Intent(context,SelectAppToLinkActivity.class);
+                            context.startActivity(intent);
+
+
+
                         }else{
                            //String path = BackendApi.askInput("[CHOOSELINKPATH]", "Choose a path where new sync files will be stored.",context,true);
 

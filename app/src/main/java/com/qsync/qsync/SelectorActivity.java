@@ -9,13 +9,9 @@
 package com.qsync.qsync;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.util.Log;
 
@@ -25,10 +21,6 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.documentfile.provider.DocumentFile;
 
 public class SelectorActivity extends AppCompatActivity {
     public ActivityResultLauncher<Intent> selectFolderLauncher;
@@ -75,9 +67,14 @@ public class SelectorActivity extends AppCompatActivity {
 
                 //called from MainActivity at startup
             case "[MAKE_SURE_SERVERS_ARE_RUNNING]":
-                intent = new Intent(this, StartupService.class);
-                startService(intent);
-                finish();
+
+                if(!ProcessExecutor.isMyServiceRunning(SelectorActivity.this,StartupService.class)){
+                    Log.d(TAG,"Service was not running at application startup !! Starting it now");
+                    intent = new Intent(this, StartupService.class);
+                    startService(intent);
+                    finish();
+                }
+
                 break;
 
             case "[PICK_FOLDER]":
@@ -100,6 +97,8 @@ public class SelectorActivity extends AppCompatActivity {
         super.onStart();
 
     }
+
+
 
     public void initFolderSelectorToLinkTask(){
         selectFolderLauncher = SelectorActivity.this.registerForActivityResult(
