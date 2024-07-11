@@ -173,7 +173,8 @@ public class AccesBdd {
                     "linked_devices_id TEXT DEFAULT ''," +
                     "root TEXT," +
                     "backup_mode BOOLEAN DEFAULT 0,"+
-                    "is_being_patch BOOLEAN DEFAULT 0)"
+                    "is_being_patch BOOLEAN DEFAULT 0," +
+                "creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
         );
 
             // CREATE TABLE linked_devices
@@ -1419,7 +1420,12 @@ public class AccesBdd {
                 cursor.close(); // Close the cursor when done
             }
         } else {
-            Log.e("AccesBdd", "Cursor is null");
+            // as the secure_id could change while the files watcher is running
+            // in the case of an app link
+            // no rows could match the select at the create event of the setup for example
+            // and the create event is still trigered as the filesystem lock does not
+            // match the old secure_id
+            Log.d("AccesBdd", "Cursor is null, the secure_id must have changed while qsync is running");
         }
 
         // Remove the last slot (empty space) in the array
@@ -1588,12 +1594,49 @@ public class AccesBdd {
 
 
     public void updateSyncId(String root,String secure_id) {
-        db.execSQL("UPDATE sync SET secure_id = ? WHERE root=?", new String[]{
+
+        // we don't need to add a % on mobile as the root path is exactly the one built
+        // before calling this method
+        String[] args = {root};
+        Cursor cursor = db.rawQuery("SELECT secure_id FROM sync WHERE root=?",args);
+        String old_secure_id = null;
+        if (cursor.moveToFirst()) {
+            old_secure_id = cursor.getString(0);
+        } else {
+            throw new IllegalStateException("No secure ID found for the root path: " + root);
+        }
+        cursor.close();
+
+
+
+
+        db.execSQL("UPDATE sync SET secure_id = ? WHERE secure_id=?", new String[]{
                 secure_id,
-                root
+                old_secure_id
         });
 
+        db.execSQL("UPDATE filesystem SET secure_id = ? WHERE secure_id=?", new String[]{
+                secure_id,
+                old_secure_id
+        });
+        db.execSQL("UPDATE apps SET secure_id = ? WHERE secure_id=?", new String[]{
+                secure_id,
+                old_secure_id
+        });
+    }
 
+    public long getSyncCreationDate(){
+        Cursor cursor = db.rawQuery("SELECT creation_date FROM sync WHERE secure_id",new String[]{
+                secureId
+        });
+
+        long timestamp = 0;
+        if(cursor.moveToFirst()){
+            timestamp = cursor.getLong(0);
+        }
+
+        cursor.close();
+        return timestamp;
     }
 
 }

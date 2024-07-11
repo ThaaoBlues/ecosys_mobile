@@ -253,21 +253,34 @@ public class Networking {
 
 
 
-                            //String app_path = "content://" + "com.qsync.fileprovider" + "/" + data.getFilePath();
-                            /*if(acces.checkAppExistenceFromName(data.getFilePath())){
-                                acces.updateSyncId(app_path,secure_id);
-                            }else{
-                                String ret = BackendApi.askInput(
-                                        "[ALERT_USER]",
-                                        "Please install the "+data.getFilePath()+" app before linking it to another device.",
-                                        context,
-                                        false
-                                );
-                                return;
-                            }*/
 
-                            Intent intent = new Intent(context,SelectAppToLinkActivity.class);
-                            context.startActivity(intent);
+                            if(acces.checkAppExistenceFromName(data.getFilePath())){
+                                String app_path = PathUtils.joinPaths(
+                                        context.getExternalFilesDir(null).getPath(),
+                                        data.getFilePath()
+                                );
+                                acces.getSecureIdFromRootPath(app_path);
+
+                                long remote_task_creation_timestamp = Long.parseLong(data.getNewFilePath());
+                                long local_task_creation_timestamp = acces.getSyncCreationDate();
+
+                                if(remote_task_creation_timestamp > local_task_creation_timestamp){
+                                    acces.updateSyncId(app_path,secure_id);
+                                }else{
+                                    // older sync on the other device, ask to link but the opposite way
+                                    // so the dowload is made on this device
+                                    sendLinkDeviceRequest(acces.getDeviceIP(device_id),acces);
+                                    return;
+                                }
+
+
+                            }else{
+
+                                Intent intent = new Intent(context,SelectAppToLinkActivity.class);
+                                context.startActivity(intent);
+                            }
+
+
 
 
 
@@ -886,7 +899,13 @@ public class Networking {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Uri rootUri = Uri.parse(acces.GetRootSyncPath());
-            DocumentFile directory = DocumentFile.fromTreeUri(context, rootUri);
+            DocumentFile directory;
+            if(acces.isApp()){
+                directory = DocumentFile.fromFile(new File(acces.GetRootSyncPath()));
+            }else{
+                directory = DocumentFile.fromTreeUri(context, rootUri);
+            }
+
 
             // At setup, we must send files one by one
             // so the queue is not huge and does not overflow the RAM
@@ -1112,12 +1131,33 @@ public class Networking {
 
     public static void sendLinkDeviceRequest(String deviceIp,AccesBdd acces){
 
+
+        // get root creation date so the other end can compare it
+        // if his end is older, they will send the setup packet queue
+        // if not, they will ask for yours
+        /*String rootpath = acces.GetRootSyncPath();
+        DocumentFile root;
+        if(acces.isApp()){
+            root = DocumentFile.fromFile(
+                    new File(rootpath)
+            );
+
+
+        }else{
+            root = DocumentFile.fromTreeUri(
+                    context,
+                    Uri.parse(rootpath)
+            );
+        }*/
+
+
+
         Globals.QEvent event = new Globals.QEvent(
                 "[LINK_DEVICE]",
                 acces.isApp() ? "[APPLICATION]" :"[CLASSIC]",
                 null,
                 acces.isApp() ? acces.getAppName() : "",
-                "",
+                String.valueOf(acces.getSyncCreationDate()),
                 acces.GetSecureId()
         );
         Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
@@ -1127,9 +1167,6 @@ public class Networking {
         sendDeviceEventQueueOverNetwork(dummyDevice, acces.GetSecureId(), eventQueue, deviceIp);
 
     }
-
-
-
 
 
 }
