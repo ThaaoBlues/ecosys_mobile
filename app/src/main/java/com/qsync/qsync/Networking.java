@@ -214,7 +214,6 @@ public class Networking {
 
                 switch (data.getFlag()) {
                     case "[MODIFICATION_DONE]":
-                        setEventNetworkLockForDevice(device_id, false);
                         acces.removeDeviceFromRetardOneFile(device_id,data.FilePath,Long.parseLong(data.FileType));
                         break;
 

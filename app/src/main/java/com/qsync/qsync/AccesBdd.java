@@ -1341,7 +1341,8 @@ public class AccesBdd {
                 // (not assured but the others are coming very soon if there are any so not really a problem )
                 versionId = cursor.getLong(0);
             }else {
-                throw new RuntimeException("Fucked situation in retard table : no rows to delete.");
+                // no rows to delete, can happen if all devices are online
+                return;
             }
 
             cursor.close();
@@ -1361,7 +1362,8 @@ public class AccesBdd {
             );
 
             if(!cursor.moveToFirst()){
-                throw new RuntimeException("Fucked situation in retard table : no rows to delete.");
+                // no rows to delete, can happen if all devices are online
+                return;
             }
 
         }
@@ -1398,7 +1400,6 @@ public class AccesBdd {
                     new String[]{
                             "%" + deviceId + "%",
                             relativePath,
-                            String.valueOf(versionId),
                             secureId
                     }
             );
