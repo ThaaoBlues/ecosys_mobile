@@ -60,6 +60,11 @@ public class StartupService extends Service implements FolderPickerCallback{
         // Service will continue to run until explicitly stopped
 
 
+        // make sure not crash has stuck a task in a locked state
+        AccesBdd accesBdd = new AccesBdd(StartupService.this);
+        accesBdd.cleanFilesystemLocksFromDb();
+        accesBdd.closedb();
+
         startNetworkingServer();
         return START_STICKY;
     }

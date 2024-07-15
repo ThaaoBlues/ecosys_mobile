@@ -547,21 +547,6 @@ public class AccesBdd {
         return syncOnlineDevices;
     }
 
-
-    public boolean isDeviceConnected(String device_id){
-        Cursor cursor = db.rawQuery("SELECT is_connected FROM linked_devices WHERE device_id=?",
-                new String[]{
-                        device_id
-                }
-        );
-
-        if(cursor.moveToFirst()){
-            return cursor.getInt(0) == 1;
-        }
-
-        return false;
-    }
-
     public void updateFile(String path, DeltaBinaire.Delta delta,DocumentFile file,boolean needSAF) {
         Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
         if (!offlineDevices.isEmpty()) {
@@ -593,19 +578,19 @@ public class AccesBdd {
                         }
                         );
         }
-        updateCachedFile(path,file,needSAF);
+        updateCachedFile(path,file,needSAF,"");
     }
 
-    public void updateCachedFile(String path,DocumentFile file,boolean needSAF) {
+    public void updateCachedFile(String relativePath,DocumentFile file,boolean needSAF,String absoluteFilePath) {
         byte[] fileContent = new byte[0];
         try {
-            fileContent = readFromFile(path,file,needSAF);
+            fileContent = readFromFile(absoluteFilePath,file,needSAF);
             byte[] compressedContent = compressData(fileContent);
             db.execSQL("UPDATE filesystem SET content=?,size=? WHERE path=? AND secure_id=?",
                     new Object[]{
                             compressedContent,
                             file.length(),
-                            path,
+                            relativePath,
                             secureId
                     }
             );
@@ -1331,53 +1316,103 @@ public class AccesBdd {
         );
 
 
-        if (cursor.moveToFirst()) {
-            String idsStr = cursor.getString(0);
-            String[] idsList = idsStr.split(";");
-            StringBuilder newIds = new StringBuilder();
-            for (String id : idsList) {
-                if (!id.equals(deviceId)) {
-                    newIds.append(id).append(";");
-                }
+        // check if a row has been returned
+        // if not
+        // main reason : a problem led to unsychronised files versioning,
+        // retrying with the oldest version present in retard table
+        // associated with the device id
+        if (!cursor.moveToFirst()) {
+            cursor.close();
+            cursor = db.rawQuery(
+                    "SELECT min(version_id) FROM retard " +
+                            "WHERE devices_to_patch LIKE ? " +
+                            "AND path=? " +
+                            "AND secure_id=?",
+                    new String[]{
+                            "%" + deviceId + "%",
+                            relativePath,
+                            secureId
+                    }
+            );
+
+            if(cursor.moveToFirst()){
+                // update version id with the closest one to a true match
+                // as the event that came first has the best chance to be patched first
+                // (not assured but the others are coming very soon if there are any so not really a problem )
+                versionId = cursor.getLong(0);
+            }else {
+                throw new RuntimeException("Fucked situation in retard table : no rows to delete.");
             }
-            if (newIds.length() > 0) {
-                newIds.deleteCharAt(newIds.length() - 1);
-                db.execSQL("UPDATE retard SET devices_to_patch= ?" +
-                                " WHERE devices_to_patch LIKE ?" +
-                                "AND path=? " +
-                                "AND version_id="+versionId+" "+
-                                "AND secure_id=?",
-                        new String[]{
-                                newIds.toString(),
-                                "%" + deviceId + "%",
-                                relativePath,
-                                secureId
-                        }
-                );
-            } else {
-                db.execSQL("DELETE FROM retard " +
-                        "WHERE devices_to_patch LIKE ?"+
-                        "AND path=? " +
-                        "AND version_id="+versionId+" "+
-                        "AND secure_id=?",
-                        new String[]{
-                                "%" + deviceId + "%",
-                                relativePath,
-                                String.valueOf(versionId),
-                                secureId
-                        }
-                );
-                db.execSQL("DELETE FROM delta " +
-                                "WHERE secure_id=?"+
-                                "AND version_id="+versionId+" "+
-                                "AND path=?",
-                        new String[]{
-                                secureId,
-                                relativePath
-                        }
-                );
+
+            cursor.close();
+
+            // now, we can retry :
+            cursor = db.rawQuery(
+                    "SELECT devices_to_patch FROM retard " +
+                            "WHERE devices_to_patch LIKE ? " +
+                            "AND path=? " +
+                            "AND version_id="+versionId+" "+
+                            "AND secure_id=?",
+                    new String[]{
+                            "%" + deviceId + "%",
+                            relativePath,
+                            secureId
+                    }
+            );
+
+            if(!cursor.moveToFirst()){
+                throw new RuntimeException("Fucked situation in retard table : no rows to delete.");
+            }
+
+        }
+
+
+        String idsStr = cursor.getString(0);
+        String[] idsList = idsStr.split(";");
+        StringBuilder newIds = new StringBuilder();
+        for (String id : idsList) {
+            if (!id.equals(deviceId)) {
+                newIds.append(id).append(";");
             }
         }
+        if (newIds.length() > 0) {
+            newIds.deleteCharAt(newIds.length() - 1);
+            db.execSQL("UPDATE retard SET devices_to_patch= ?" +
+                            " WHERE devices_to_patch LIKE ?" +
+                            "AND path=? " +
+                            "AND version_id="+versionId+" "+
+                            "AND secure_id=?",
+                    new String[]{
+                            newIds.toString(),
+                            "%" + deviceId + "%",
+                            relativePath,
+                            secureId
+                    }
+            );
+        } else {
+            db.execSQL("DELETE FROM retard " +
+                    "WHERE devices_to_patch LIKE ?"+
+                    "AND path=? " +
+                    "AND version_id="+versionId+" "+
+                    "AND secure_id=?",
+                    new String[]{
+                            "%" + deviceId + "%",
+                            relativePath,
+                            String.valueOf(versionId),
+                            secureId
+                    }
+            );
+            db.execSQL("DELETE FROM delta " +
+                            "WHERE secure_id=?"+
+                            "AND version_id="+versionId+" "+
+                            "AND path=?",
+                    new String[]{
+                            secureId,
+                            relativePath
+                    }
+            );
+        }
+
         cursor.close();
     }
 
@@ -1715,6 +1750,10 @@ public class AccesBdd {
 
         cursor.close();
         return timestamp;
+    }
+
+    public void cleanFilesystemLocksFromDb(){
+        db.execSQL("UPDATE sync SET is_being_patch=0");
     }
 
 }

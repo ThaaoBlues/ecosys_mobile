@@ -167,22 +167,6 @@ public class BackendApi {
         return result[0];
     }
 
-    public static void ShareFile(Context context, Uri fileUri) {
-            Intent intent = new Intent(Intent.ACTION_SEND);
-            intent.setType("*/*");
-            intent.putExtra(Intent.EXTRA_STREAM, fileUri);
-            intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            Intent chooser = Intent.createChooser(intent, "Share File");
-            if (intent.resolveActivity(context.getPackageManager()) != null) {
-                context.startActivity(chooser);
-            } else {
-                // Handle if no activity can handle the intent
-                Toast.makeText(context, "No app found to handle the share action", Toast.LENGTH_SHORT).show();
-            }
-    }
-
 
     public static void openFile(Context context, Uri fileUri) {
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -301,6 +285,32 @@ public class BackendApi {
 
     }
 
+    public static void discardAppRunningNotification(Context context){
+
+        ProcessExecutor.Function nt = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                NotificationHelper.removeLoadingNotification(context);
+            }
+        };
+
+        ProcessExecutor.executeOnUIThread(nt);
+
+    }
+
+
+    public static void showAppRunningNotification(Context context,String msg){
+
+        ProcessExecutor.Function nt = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+                NotificationHelper.showLoadingNotification(context,msg);
+            }
+        };
+
+        ProcessExecutor.executeOnUIThread(nt);
+
+    }
 
 
 

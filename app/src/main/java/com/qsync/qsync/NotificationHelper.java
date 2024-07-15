@@ -49,4 +49,33 @@ public class NotificationHelper {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancel(NOTIFICATION_ID);
     }
+
+    public static void showAppRunningNotification(Context context, String title) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create the NotificationChannel if necessary
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence channelName = "App running notification";
+            String channelDescription = "Warns user that the app is running through a notification";
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, channelName, importance);
+            channel.setDescription(channelDescription);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_menu_upload) // Use a suitable icon
+                .setContentTitle(title)
+                .setContentText("QSync is running")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true); // Make it persistent
+        // Display the notification
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    public static void removeAppRunningNotification(Context context) {
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(NOTIFICATION_ID);
+    }
 }

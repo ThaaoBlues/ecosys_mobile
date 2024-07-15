@@ -245,7 +245,9 @@ public class ZeroConfService {
                             }
 
                             // Remove device from the update queue
-                            acces.removeDeviceFromRetard(device.get("device_id"));
+                            // NOT USED ANYMORE AS WE NOW WAIT TO HAVE CONFIRMATION EVENT TO REMOVE FROM DB
+                            // SO WE ARE NETWORK ERRORS PROOF :)
+                            //acces.removeDeviceFromRetard(device.get("device_id"));
 
                             BackendApi.discardLoadingNotification(context);
                         }

@@ -19,6 +19,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.documentfile.provider.DocumentFile;
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
@@ -373,7 +375,14 @@ public class Networking {
         String eventType = event.Flag;
         String fileType = event.FileType;
         Log.d(TAG,absoluteFilePath);
-        DocumentFile root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
+
+        DocumentFile root;
+        if(acces.isApp()){
+            root = DocumentFile.fromFile(new File(acces.GetRootSyncPath()));
+        }else{
+            root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
+        }
+
 
         // as in backup mode, files can be supressed freely
         // the remote device can still have a file that no longer exists
@@ -402,38 +411,57 @@ public class Networking {
                         }
                     }
 
-                    DocumentFile newParentFile = DocumentFile.fromTreeUri(
-                            context,
-                            Uri.withAppendedPath(
-                                    root.getUri(),
-                                    newParentRelativePath.toString()
-                            )
-                    );
 
-                    DocumentFile currentFile;
-                    if(fileType.equals("file")){
-                        currentFile = DocumentFile.fromSingleUri(
+                    if(!acces.isApp()){
+                        DocumentFile newParentFile = DocumentFile.fromTreeUri(
                                 context,
-                                Uri.withAppendedPath(root.getUri(),relativePath)
+                                Uri.withAppendedPath(
+                                        root.getUri(),
+                                        newParentRelativePath.toString()
+                                )
                         );
+
+
+
+                        DocumentFile currentFile;
+                        if(fileType.equals("file")){
+                            currentFile = DocumentFile.fromSingleUri(
+                                    context,
+                                    Uri.withAppendedPath(root.getUri(),relativePath)
+                            );
+                        }else{
+                            currentFile = DocumentFile.fromTreeUri(
+                                    context,
+                                    Uri.withAppendedPath(root.getUri(),relativePath)
+                            );
+                        }
+
+                        moveInFilesystem(currentFile,newParentFile,!fileType.equals("file"));
+
                     }else{
-                        currentFile = DocumentFile.fromTreeUri(
-                                context,
-                                Uri.withAppendedPath(root.getUri(),relativePath)
-                        );
-                    }
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                Files.copy(
+                                        Paths.get(absoluteFilePath),
+                                        Paths.get(PathUtils.joinPaths(root.getUri().getPath(),newRelativePath)),
+                                        StandardCopyOption.REPLACE_EXISTING
+                                        );
+                            }
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
 
-                    moveInFilesystem(currentFile,newParentFile,!fileType.equals("file"));
+                    }
 
 
                     break;
                 case "[REMOVE]":
                     if ("file".equals(fileType)) {
                         acces.rmFile(absoluteFilePath);
-                        removeFromFilesystem(root,relativePath,true,false);
+                        removeFromFilesystem(root,relativePath,!acces.isApp(),false);
                     } else {
                         acces.rmFolder(absoluteFilePath);
-                        removeFromFilesystem(root,relativePath,true,true);
+                        removeFromFilesystem(root,relativePath,!acces.isApp(),true);
                     }
                     break;
                 case "[CREATE]":
@@ -449,7 +477,7 @@ public class Networking {
                         if(event.Delta != null){
                             Log.d(TAG,"File create came with a delta, using patchFile().");
                             event.setFilePath(relativePath);
-                            DeltaBinaire.patchFile(event,true,context);
+                            DeltaBinaire.patchFile(event,!acces.isApp(),context);
                         }
 
                     } else {
@@ -478,9 +506,13 @@ public class Networking {
                         }
                     }
 
+                    event.getDelta().setFilePath(absoluteFilePath);
+                    DeltaBinaire.Delta delta = event.getDelta();
+                    delta.setFilePath(absoluteFilePath);
+                    event.setDelta(delta);
 
-                    DeltaBinaire.patchFile(event,true,context);
-                    acces.updateCachedFile(relativePath,file,true);
+                    DeltaBinaire.patchFile(event,!acces.isApp(),context);
+                    acces.updateCachedFile(relativePath,file,!acces.isApp(),absoluteFilePath);
 
                     break;
                 default:
@@ -787,8 +819,8 @@ public class Networking {
 
         if(needSAF){
 
-
             Uri fileUri = Uri.withAppendedPath(root.getUri(),relativePath);
+
 
             DocumentFile f;
             if(isDir){
@@ -802,7 +834,9 @@ public class Networking {
         }else{
 
             try {
-                File fileOrDir = new File(relativePath);
+                File fileOrDir = new File(
+                        root.getUri().getPath(),relativePath
+                );
 
 
                 if (fileOrDir.isDirectory()) {
