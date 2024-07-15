@@ -174,7 +174,7 @@ public class AccesBdd {
                     "root TEXT," +
                     "backup_mode BOOLEAN DEFAULT 0,"+
                     "is_being_patch BOOLEAN DEFAULT 0," +
-                "creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+                "creation_date TIMESTAMP DEFAULT (strftime('%s','now')))"
         );
 
             // CREATE TABLE linked_devices
@@ -1217,15 +1217,21 @@ public class AccesBdd {
             event.setFileType(cursor.getString(4));
 
             try{
-                DeltaBinaire.Delta delta = deserialize(cursor.getBlob(1).toString());
+                ObjectInputStream obj = new ObjectInputStream(new
+                        ByteArrayInputStream(cursor.getBlob(1))
+                        );
+
+                DeltaBinaire.Delta delta = (DeltaBinaire.Delta) obj.readObject();
+                obj.close();
+
                 event.setDelta(delta);
                 event.setFilePath(cursor.getString(3));
-                event.setSecureId(secureId);
             }catch (IOException | ClassNotFoundException e){
                 Log.d(TAG,"Error while adding delta to event");
                 e.printStackTrace();
             }
 
+            event.setSecureId(cursor.getString(0));
 
             if (!queue.containsKey(event.getSecureId())) {
                 queue.put(event.getSecureId(), new Globals.GenArray<>());
@@ -1251,7 +1257,7 @@ public class AccesBdd {
             event.setFlag(Globals.modTypesReverse().get(cursor.getString(1)));
             event.setFileType(cursor.getString(3));
             event.setFilePath(cursor.getString(2));
-            event.setSecureId(secureId);
+            event.setSecureId(cursor.getString(0));
 
             if (!queue.containsKey(event.getSecureId())) {
                 queue.put(event.getSecureId(), new Globals.GenArray<>());
@@ -1298,6 +1304,78 @@ public class AccesBdd {
                             "%" + deviceId + "%"
                         }
                 );
+                db.execSQL("DELETE FROM delta WHERE secure_id=?",
+                        new String[]{
+                                secureId
+                        }
+                );
+            }
+        }
+        cursor.close();
+    }
+
+    public void removeDeviceFromRetardOneFile(String deviceId,String relativePath,long versionId) {
+
+
+        Cursor cursor = db.rawQuery(
+                "SELECT devices_to_patch FROM retard " +
+                        "WHERE devices_to_patch LIKE ? " +
+                        "AND path=? " +
+                        "AND version_id="+versionId+" "+
+                        "AND secure_id=?",
+                new String[]{
+                        "%" + deviceId + "%",
+                        relativePath,
+                        secureId
+                }
+        );
+
+
+        if (cursor.moveToFirst()) {
+            String idsStr = cursor.getString(0);
+            String[] idsList = idsStr.split(";");
+            StringBuilder newIds = new StringBuilder();
+            for (String id : idsList) {
+                if (!id.equals(deviceId)) {
+                    newIds.append(id).append(";");
+                }
+            }
+            if (newIds.length() > 0) {
+                newIds.deleteCharAt(newIds.length() - 1);
+                db.execSQL("UPDATE retard SET devices_to_patch= ?" +
+                                " WHERE devices_to_patch LIKE ?" +
+                                "AND path=? " +
+                                "AND version_id="+versionId+" "+
+                                "AND secure_id=?",
+                        new String[]{
+                                newIds.toString(),
+                                "%" + deviceId + "%",
+                                relativePath,
+                                secureId
+                        }
+                );
+            } else {
+                db.execSQL("DELETE FROM retard " +
+                        "WHERE devices_to_patch LIKE ?"+
+                        "AND path=? " +
+                        "AND version_id="+versionId+" "+
+                        "AND secure_id=?",
+                        new String[]{
+                                "%" + deviceId + "%",
+                                relativePath,
+                                String.valueOf(versionId),
+                                secureId
+                        }
+                );
+                db.execSQL("DELETE FROM delta " +
+                                "WHERE secure_id=?"+
+                                "AND version_id="+versionId+" "+
+                                "AND path=?",
+                        new String[]{
+                                secureId,
+                                relativePath
+                        }
+                );
             }
         }
         cursor.close();
@@ -1327,10 +1405,10 @@ public class AccesBdd {
         );
     }
 
-    public void addGrapin(Globals.GrapinConfig data) {
+    /*public void addGrapin(Globals.GrapinConfig data) {
         db.execSQL("INSERT INTO apps (name,path,version_id,type,uninstaller_path) VALUES(?,?,?,?,?)",
                 new Object[]{data.getAppName(), "[GRAPIN]", 1, "grapin", secureId, "[GRAPIN]"});
-    }
+    }*/
 
     public Globals.GenArray<Globals.MinGenConfig> listInstalledApps() {
         Globals.GenArray<Globals.MinGenConfig> configs = new Globals.GenArray<>();
@@ -1626,7 +1704,7 @@ public class AccesBdd {
     }
 
     public long getSyncCreationDate(){
-        Cursor cursor = db.rawQuery("SELECT creation_date FROM sync WHERE secure_id",new String[]{
+        Cursor cursor = db.rawQuery("SELECT creation_date FROM sync WHERE secure_id=?",new String[]{
                 secureId
         });
 

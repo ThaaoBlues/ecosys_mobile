@@ -490,7 +490,7 @@ public class Globals {
         HashMap<String, String> mt = new HashMap<>();
         mt.put("c","[CREATE]");
         mt.put("d","[DELETE]");
-        mt.put("p","[PATCH]");
+        mt.put("p","[UPDATE]");
         mt.put("m","[MOVE]");
 
         return mt;

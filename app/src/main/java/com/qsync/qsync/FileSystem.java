@@ -18,6 +18,7 @@ import android.util.Log;
 import androidx.documentfile.provider.DocumentFile;
 
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -88,13 +89,23 @@ public class FileSystem {
 
                     // no need to know if it is a directory as .fromTreeUri().Uri() would only represent
                     // the whole directory from the root and be useless to calculate a relative path
-                    handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+                    if(acces.isApp()){
+                        handleCreateEvent(acces, DocumentFile.fromFile(new File(filePath.replace("file://",""))));
+
+                    }else{
+                        handleCreateEvent(acces, DocumentFile.fromSingleUri(context,fileInfo.uri));
+                    }
 
 
                 } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
                     Log.d("FileMonitor", "Modified file detected: " + filePath);
                     avoidGhostDevices(acces);
-                    handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
+                    if(acces.isApp()){
+                        handleWriteEvent(context,acces,DocumentFile.fromFile(new File(filePath.replace("file://",""))));
+                    }else{
+                        handleWriteEvent(context,acces,DocumentFile.fromSingleUri(context,fileInfo.uri));
+
+                    }
                 }
 
                 // Handle renamed files

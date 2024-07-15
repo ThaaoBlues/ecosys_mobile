@@ -213,6 +213,7 @@ public class Networking {
                 switch (data.getFlag()) {
                     case "[MODIFICATION_DONE]":
                         setEventNetworkLockForDevice(device_id, false);
+                        acces.removeDeviceFromRetardOneFile(device_id,data.FilePath,Long.parseLong(data.FileType));
                         break;
 
                     case "[BEGIN_UPDATE]":
@@ -486,6 +487,18 @@ public class Networking {
                     Log.e("HandleEventAdapter", "Received unknown event type: " + eventType);
                     break;
             }
+
+            try {
+                // so the other end can clear its retard table entries
+                sendModificationDoneEvent(
+                        clientSocket.getInetAddress().getHostAddress(),
+                        acces,
+                        relativePath,
+                        acces.getFileLastVersionId(relativePath)
+                );
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
 
@@ -574,6 +587,35 @@ public class Networking {
                 "",
                 null,
                 "",
+                "",
+                acces.GetSecureId()
+        ).serialize();
+
+        Log.d(TAG,"serialized Event");
+
+        BufferedOutputStream bos = new BufferedOutputStream(outputStream);
+        // Send the message
+        StringBuilder reqBuilder = new StringBuilder();
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+        bos.flush();
+
+        // Close the connection
+        bos.close();
+        outputStream.close();
+        socket.close();
+    }
+
+    public static void sendModificationDoneEvent(String ipAddress,AccesBdd acces,String relativePath,long versionId) throws IOException {
+        // Initialize the connection
+        Socket socket = new Socket(ipAddress, 8274);
+        DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+
+        String ser_event = new Globals.QEvent(
+                "[MODIFICATION_DONE]",
+                String.valueOf(versionId),
+                null,
+                relativePath,
                 "",
                 acces.GetSecureId()
         ).serialize();
