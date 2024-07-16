@@ -43,7 +43,7 @@ public class FileSystem {
             @Override
             public void run() {
                 final AccesBdd acces_nonclosing = new AccesBdd(context);
-                acces_nonclosing.SetSecureId(secureId);
+                acces_nonclosing.setSecureId(secureId);
 
                 // as we use polling to watch the filesystem,
                 // even if a new directory is sent by another end
@@ -74,8 +74,8 @@ public class FileSystem {
         Map<String, FileInfo> currentState = new HashMap<>();
         populateState(directory, currentState, directory.getUri().toString());
 
-        Log.d(TAG,"IsThisFileSystemBeingPatched()="+acces.IsThisFileSystemBeingPatched());
-        if(!acces.IsThisFileSystemBeingPatched()){
+        Log.d(TAG,"IsThisFileSystemBeingPatched()="+acces.isThisFileSystemBeingPatched());
+        if(!acces.isThisFileSystemBeingPatched()){
             // Check for new, modified, or renamed files
             for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
                 String filePath = entry.getKey();
@@ -169,7 +169,7 @@ public class FileSystem {
 
         Log.d(TAG,file.getUri().toString());
         Log.d(TAG,file.getUri().getPath());
-        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
         // check if file isn't already mapped as this method may be called at each startup
         if(!acces.checkFileExists(relativePath)){
             if (file.isDirectory()) {
@@ -201,7 +201,7 @@ public class FileSystem {
                         delta,
                         relativePath,
                         "",
-                        acces.GetSecureId()
+                        acces.getSecureId()
                 );
 
                 Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
@@ -213,7 +213,7 @@ public class FileSystem {
                     public void execute() {
                         BackendApi.showLoadingNotification(context,"Sending update to other devices");
 
-                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.GetSecureId(),queue);
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(),acces.getSecureId(),queue);
                         BackendApi.discardLoadingNotification(context);
                     }
                 };
@@ -240,13 +240,13 @@ public class FileSystem {
                 public void execute() {
 
                     try {
-                        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(), file.getUri().getPath());
+                        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(), file.getUri().getPath());
 
                         InputStream in = context.getContentResolver().openInputStream(file.getUri());
                         DeltaBinaire.Delta delta = DeltaBinaire.buildDeltaFromInputStream(relativePath,
                                 file.length(),
                                 in,
-                                acces.GetFileSizeFromBdd(relativePath),
+                                acces.getFileSizeFromBdd(relativePath),
                                 acces.getFileContent(relativePath)
                         );
                         acces.updateFile(relativePath, delta,file,true);
@@ -258,7 +258,7 @@ public class FileSystem {
                                 delta,
                                 relativePath,
                                 "",
-                                acces.GetSecureId()
+                                acces.getSecureId()
                         );
 
                         BackendApi.showLoadingNotification(context,"Sending update to other devices");
@@ -269,7 +269,7 @@ public class FileSystem {
                         queue.add(event);
 
 
-                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.getSecureId(), queue);
 
                         BackendApi.discardLoadingNotification(context);
                     } catch (FileNotFoundException e) {
@@ -284,7 +284,7 @@ public class FileSystem {
     }
 
     private static void handleRemoveEvent(AccesBdd acces, DocumentFile file) {
-        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.GetRootSyncPath()).getPath(),file.getUri().getPath());
+        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
         if (file.isFile()) {
             acces.rmFile(relativePath);
         } else {
@@ -302,7 +302,7 @@ public class FileSystem {
                     null,
                     relativePath,
                     "",
-                    acces.GetSecureId()
+                    acces.getSecureId()
             );
 
             ProcessExecutor.Function f = new ProcessExecutor.Function() {
@@ -315,7 +315,7 @@ public class FileSystem {
 
                     queue.add(event);
 
-                    Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.GetSecureId(), queue);
+                    Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.getSecureId(), queue);
 
                     BackendApi.discardLoadingNotification(context);
 

@@ -54,7 +54,7 @@ public class AccesBdd {
 
     public AccesBdd(Context context){
         this.context = context;
-        InitConnection();
+        initConnection();
     }
 
     public boolean isMyDeviceIdGenerated(SQLiteDatabase db) {
@@ -77,13 +77,13 @@ public class AccesBdd {
         db.execSQL("INSERT INTO mesid(device_id) VALUES(?)",new String[]{secureId});
 
     }
-    public String GetSecureId(){
+    public String getSecureId(){
         return this.secureId;
     }
-    public void SetSecureId(String new_secureId){
+    public void setSecureId(String new_secureId){
         this.secureId = new_secureId;
     }
-    private void InitConnection() {
+    private void initConnection() {
         SQLiteOpenHelper dbHelper = new SQLiteOpenHelper(context,"qsync",null,1) {
             @Override
             public void onCreate(SQLiteDatabase db) {
@@ -215,7 +215,7 @@ public class AccesBdd {
 
     public void incrementFileVersion(String path) {
         // Get the latest version of the file and increment it
-        long newVersionId = GetFileLastVersionId(path) + 1;
+        long newVersionId = getFileLastVersionId(path) + 1;
 
         // Update version number in the database
         db.execSQL("UPDATE filesystem SET version_id=? WHERE path=? AND secure_id=?",
@@ -343,7 +343,7 @@ public class AccesBdd {
 
 
 
-        UpdateCachedFile(file,relativePath);
+        updateCachedFile(file,relativePath);
     }
 
 
@@ -481,7 +481,7 @@ public class AccesBdd {
 
         Globals.GenArray<String> syncOnlineDevices = new Globals.GenArray<>();
         for(int i=0;i<offlineDevices.size();i++){
-            if(IsDeviceLinked(offlineDevices.get(i))){
+            if(isDeviceLinked(offlineDevices.get(i))){
                 syncOnlineDevices.add(offlineDevices.get(i));
             }
         }
@@ -539,7 +539,7 @@ public class AccesBdd {
 
         Globals.GenArray<String> syncOnlineDevices = new Globals.GenArray<>();
         for(int i=0;i<onlineDevices.size();i++){
-            if(IsDeviceLinked(onlineDevices.get(i))){
+            if(isDeviceLinked(onlineDevices.get(i))){
                 syncOnlineDevices.add(onlineDevices.get(i));
             }
         }
@@ -836,7 +836,7 @@ public class AccesBdd {
 
             }
 
-            String relativePath = dcf.getUri().getPath().replace(GetRootSyncPath(),"");
+            String relativePath = dcf.getUri().getPath().replace(getRootSyncPath(),"");
 
             // Add file to the database or perform other actions as needed
             createFile(relativePath,dcf, "");
@@ -900,7 +900,7 @@ public class AccesBdd {
     // CreateSyncFromOtherEnd creates a synchronization entry in the database with the given info.
     // Used to connect from an existing task from another device
     // Filesystem is not mapped by the function as a remote setup procedure is made around this call
-    public void CreateSyncFromOtherEnd(String rootPath, String secureId) {
+    public void createSyncFromOtherEnd(String rootPath, String secureId) {
         this.secureId = secureId;
         // Add synchronization entry to the database
         db.execSQL("INSERT INTO sync (secure_id, root) VALUES (?, ?)",
@@ -911,7 +911,7 @@ public class AccesBdd {
                 );
     }
 
-    public void RmSync() {
+    public void rmSync() {
             // Remove synchronization entry from the database
         db.execSQL("DELETE FROM sync WHERE secure_id=?",
                 new String[]{
@@ -920,7 +920,7 @@ public class AccesBdd {
                 );
     }
 
-    public void LinkDevice(String deviceId, String ipAddress) {
+    public void linkDevice(String deviceId, String ipAddress) {
         // Link a device to the synchronization entry
         db.execSQL("UPDATE sync SET linked_devices_id=IFNULL(linked_devices_id, '') || ? WHERE secure_id=?",
                 new String[]{
@@ -930,7 +930,7 @@ public class AccesBdd {
                 );
 
 
-        if (!IsDeviceLinked(deviceId)) {
+        if (!isDeviceLinked(deviceId)) {
             // If the device is not registered as a target, register it
             db.execSQL("INSERT INTO linked_devices (device_id,is_connected,ip_addr) VALUES(?,TRUE,?)",
                     new String[]{
@@ -943,7 +943,7 @@ public class AccesBdd {
 
     }
 
-    public void UnlinkDevice(String deviceId) {
+    public void unlinkDevice(String deviceId) {
         // Unlink a device from the synchronization entry
         db.execSQL("DELETE FROM linked_devices WHERE device_id=?",
                 new String[]{
@@ -957,7 +957,7 @@ public class AccesBdd {
 
     }
 
-    public String GetRootSyncPath() {
+    public String getRootSyncPath() {
         String rootPath = null;
         // Retrieve the root path associated with the synchronization entry
         Cursor cursor = db.rawQuery("SELECT root FROM sync WHERE secure_id=?",
@@ -996,7 +996,7 @@ public class AccesBdd {
                 }
         );
     }
-    public boolean GetDevicedbState(String deviceId) {
+    public boolean getDevicedbState(String deviceId) {
         boolean dbState = false;
         Cursor cursor = db.rawQuery("SELECT is_connected FROM linked_devices WHERE device_id=?",
                 new String[]{
@@ -1012,7 +1012,7 @@ public class AccesBdd {
         return dbState;
     }
 
-    public boolean IsThisFileSystemBeingPatched() {
+    public boolean isThisFileSystemBeingPatched() {
 
         Cursor cursor = db.rawQuery("SELECT is_being_patch FROM sync WHERE secure_id=? AND is_being_patch=1",
                 new String[]{
@@ -1023,7 +1023,7 @@ public class AccesBdd {
         return cursor.moveToFirst();
     }
 
-    public void SetFileSystemPatchLockState(String deviceId, boolean value) {
+    public void setFileSystemPatchLockState(String deviceId, boolean value) {
 
         db.execSQL("UPDATE sync SET is_being_patch=? WHERE secure_id=?",
                 new Object[]{
@@ -1035,7 +1035,7 @@ public class AccesBdd {
 
     }
 
-    public long GetFileSizeFromBdd(String path) {
+    public long getFileSizeFromBdd(String path) {
         long size = 0;
         Cursor cursor = db.rawQuery("SELECT size FROM filesystem WHERE path=? AND secure_id=?",
                 new String[]{
@@ -1051,7 +1051,7 @@ public class AccesBdd {
         return size;
     }
 
-    public DeltaBinaire.Delta GetFileDelta(long version, String path) {
+    public DeltaBinaire.Delta getFileDelta(long version, String path) {
         byte[] SerializedData = null;
         Cursor cursor = db.rawQuery("SELECT delta FROM delta WHERE path=? AND version_id=?",
                     new String[]{
@@ -1076,7 +1076,7 @@ public class AccesBdd {
 
     }
 
-    public boolean IsDeviceLinked(String deviceId) {
+    public boolean isDeviceLinked(String deviceId) {
         boolean isLinked = false;
         Cursor cursor = db.rawQuery("SELECT COUNT(*) AS count FROM linked_devices WHERE device_id=?",
                 new String[]{
@@ -1097,7 +1097,7 @@ public class AccesBdd {
 
 
 
-    public void UpdateCachedFile(DocumentFile file,String relativePath) {
+    public void updateCachedFile(DocumentFile file, String relativePath) {
         try {
             // Read the current state of the given file and update it in the database
             try (InputStream fis = context.getContentResolver().openInputStream(file.getUri());
@@ -1127,7 +1127,7 @@ public class AccesBdd {
         }
     }
 
-    public Map<String, Globals.SyncInfos> ListSyncAllTasks() {
+    public Map<String, Globals.SyncInfos> listSyncAllTasks() {
         // Used to get all sync task secure_id and root path listed
         // Returns a map containing the secure_id as key and SyncInfos as value
         Map<String, Globals.SyncInfos> list = new HashMap<>();
@@ -1182,7 +1182,7 @@ public class AccesBdd {
         return name;
     }
 
-    public Map<String, Globals.GenArray<Globals.QEvent>> BuildEventQueueFromRetard(String deviceId) {
+    public Map<String, Globals.GenArray<Globals.QEvent>> buildEventQueueFromRetard(String deviceId) {
         // As the device can be late on many tasks, we must create a map with all
         // the different deltas on all different tasks it's late on
 
@@ -1578,23 +1578,6 @@ public class AccesBdd {
         return devicesList;
     }
 
-    // GetFileLastVersionId retrieves the last version ID of a file.
-    public long GetFileLastVersionId(String path) {
-        Cursor cursor = db.rawQuery("SELECT version_id FROM filesystem WHERE path=? AND secure_id=?",
-                new String[]{
-                        path,
-                        secureId
-                }
-        );
-
-        int version_id = 0;
-        if(cursor.moveToFirst()){
-            version_id = cursor.getInt(0);
-        }
-
-        cursor.close();
-        return version_id;
-    }
 
 
     public void removeDeviceFromNetworkMap(String device_id, String ip_addr){

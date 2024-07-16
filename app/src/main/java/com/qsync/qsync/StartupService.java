@@ -40,10 +40,10 @@ public class StartupService extends Service implements FolderPickerCallback{
         if (directory != null && directory.isDirectory()) {
             AccesBdd acces = new AccesBdd( StartupService.this);
 
-            acces.SetSecureId(nt.getTmpSecureIdForCreation());
-            acces.CreateSyncFromOtherEnd(directory.getUri().toString(),nt.getTmpSecureIdForCreation());
+            acces.setSecureId(nt.getTmpSecureIdForCreation());
+            acces.createSyncFromOtherEnd(directory.getUri().toString(),nt.getTmpSecureIdForCreation());
 
-            FileSystem.startDirectoryMonitoring( StartupService.this,directory,acces.GetSecureId());
+            FileSystem.startDirectoryMonitoring( StartupService.this,directory,acces.getSecureId());
             acces.closedb();
 
             nt.setSetupDlLock(false);
@@ -115,7 +115,7 @@ public class StartupService extends Service implements FolderPickerCallback{
                 @Override
                 public void execute() {
                     AccesBdd acces = new AccesBdd(StartupService.this);
-                    Map<String, Globals.SyncInfos> tasks = acces.ListSyncAllTasks();
+                    Map<String, Globals.SyncInfos> tasks = acces.listSyncAllTasks();
                     tasks.forEach((k,v)->{
                         Uri uri;
 

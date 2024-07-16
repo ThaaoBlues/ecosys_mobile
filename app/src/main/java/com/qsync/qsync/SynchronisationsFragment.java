@@ -81,7 +81,7 @@ public class SynchronisationsFragment extends Fragment {
                                         AccesBdd acces = new AccesBdd(getContext());
 
                                         acces.createSync(directory.getUri().toString());
-                                        FileSystem.startDirectoryMonitoring(getContext(),directory,acces.GetSecureId());
+                                        FileSystem.startDirectoryMonitoring(getContext(),directory,acces.getSecureId());
 
                                         acces.closedb();
 
@@ -96,7 +96,7 @@ public class SynchronisationsFragment extends Fragment {
 
         AccesBdd acces = new AccesBdd(getContext());
 
-        Map<String, Globals.SyncInfos> synchros = acces.ListSyncAllTasks();
+        Map<String, Globals.SyncInfos> synchros = acces.listSyncAllTasks();
         acces.closedb();
 
         BackendApi.addButtonsFromSynchroGenArray(
@@ -109,7 +109,7 @@ public class SynchronisationsFragment extends Fragment {
                     public void callback(Globals.SyncInfos sync) {
 
                         AccesBdd acces = new AccesBdd(getContext());
-                        acces.SetSecureId(sync.getSecureId());
+                        acces.setSecureId(sync.getSecureId());
 
                         String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
                         choices = Arrays.copyOf(choices,choices.length+1);
@@ -129,11 +129,11 @@ public class SynchronisationsFragment extends Fragment {
                             public void onClick(DialogInterface dialog, int choice_index) {
 
 
-                                acces.SetSecureId(sync.getSecureId());
+                                acces.setSecureId(sync.getSecureId());
 
                                 switch (choice_index){
                                     case 0:
-                                        acces.RmSync();
+                                        acces.rmSync();
                                         break;
 
                                     case 1:
@@ -168,7 +168,7 @@ public class SynchronisationsFragment extends Fragment {
                                                         String ip_addr = devices.get(i).get("ip_addr");
                                                         String device_id = devices.get(i).get("device_id");
                                                         Networking.sendLinkDeviceRequest(ip_addr,acces);
-                                                        acces.LinkDevice(device_id,ip_addr);
+                                                        acces.linkDevice(device_id,ip_addr);
 
                                                         BackendApi.discardLoadingNotification(getContext());
                                                     }

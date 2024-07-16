@@ -1,9 +1,6 @@
 package com.qsync.qsync;
 
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +10,6 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Map;
 
 public class SelectAppToLinkActivity extends AppCompatActivity {
@@ -40,7 +36,7 @@ public class SelectAppToLinkActivity extends AppCompatActivity {
 
 
         AccesBdd acces = new AccesBdd(SelectAppToLinkActivity.this);
-        Map<String, Globals.SyncInfos> synchros = acces.ListSyncAllTasks();
+        Map<String, Globals.SyncInfos> synchros = acces.listSyncAllTasks();
         acces.closedb();
         Globals.GenArray<Globals.SyncInfos> syncInfosGenArray = syncMapToGenArray(synchros);
         Globals.GenArray<Globals.SyncInfos> appsInfosGenArray = new Globals.GenArray<>();
@@ -61,7 +57,7 @@ public class SelectAppToLinkActivity extends AppCompatActivity {
                     public void callback(Globals.SyncInfos sync) {
 
                         AccesBdd acces = new AccesBdd(SelectAppToLinkActivity.this);
-                        acces.SetSecureId(sync.getSecureId());
+                        acces.setSecureId(sync.getSecureId());
 
                         acces.updateSyncId(sync.getPath(),sync.getSecureId());
                         finish();

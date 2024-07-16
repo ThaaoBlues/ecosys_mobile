@@ -19,7 +19,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.documentfile.provider.DocumentFile;
 
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -174,13 +173,13 @@ public class Networking {
                     Log.i(TAG,"Received a malformed request"+ Arrays.toString(header_buff));
                     return;
                 }
-                acces.SetSecureId(secure_id);
+                acces.setSecureId(secure_id);
 
                 // in case of a link packet, the device is not yet registered in the database
                 // so it can throw an error
-                if (acces.IsDeviceLinked(device_id)) {
+                if (acces.isDeviceLinked(device_id)) {
                     // makes sure it is marked as connected
-                    if (!acces.GetDevicedbState(device_id)) {
+                    if (!acces.getDevicedbState(device_id)) {
                         // needs split as RemoteAddr ads port to the address
                         acces.setDevicedbState(device_id, true, clientSocket.getInetAddress().getHostAddress());
                     }
@@ -219,24 +218,24 @@ public class Networking {
 
                     case "[BEGIN_UPDATE]":
 
-                        if(acces.IsDeviceLinked(device_id)) {
-                            acces.SetFileSystemPatchLockState(device_id, true);
+                        if(acces.isDeviceLinked(device_id)) {
+                            acces.setFileSystemPatchLockState(device_id, true);
                         }
 
                         break;
 
                     case "[END_OF_UPDATE]":
-                        if(acces.IsDeviceLinked(device_id)) {
-                            acces.SetFileSystemPatchLockState(device_id, false);
+                        if(acces.isDeviceLinked(device_id)) {
+                            acces.setFileSystemPatchLockState(device_id, false);
                         }
 
                         break;
                     case "[SETUP_DL]":
 
-                        if(acces.IsDeviceLinked(device_id)){
+                        if(acces.isDeviceLinked(device_id)){
                             Log.d(TAG, "GOT FLAG, BUILDING SETUP QUEUE...");
                             buildSetupQueue(secure_id, device_id);
-                            String response = acces.getMyDeviceId() + ";" + acces.GetSecureId() + ";" + "[MODIFICATION_DONE]";
+                            String response = acces.getMyDeviceId() + ";" + acces.getSecureId() + ";" + "[MODIFICATION_DONE]";
                             outputStream.writeBytes(response);
                         }
 
@@ -247,7 +246,7 @@ public class Networking {
                         // by creating a new sync task with the same path (replace this later by asking to the user)
                         // and same secure_id
                         Log.d(TAG, "Initializing env to welcome the other end folder content");
-                        acces.SetSecureId(secure_id);
+                        acces.setSecureId(secure_id);
                         setSetupDlLock(false);
                         if(Objects.equals(data.FileType, "[APPLICATION]")){
 
@@ -305,7 +304,7 @@ public class Networking {
                         String ipAddr = clientSocket.getInetAddress().getHostAddress();
                         outputStream.flush();
                         outputStream.close();
-                        acces.LinkDevice(device_id, ipAddr);
+                        acces.linkDevice(device_id, ipAddr);
                         acces.setDevicedbState(device_id,true);
 
                         askSetupDownloadToOtherEnd(ipAddr,acces);
@@ -313,7 +312,7 @@ public class Networking {
 
                         break;
                     case "[UNLINK_DEVICE]":
-                        acces.UnlinkDevice(device_id);
+                        acces.unlinkDevice(device_id);
                         break;
                     case "[OTDL]":
                         // signle-file largage aerien
@@ -340,7 +339,7 @@ public class Networking {
                         handleEvent(device_id, data);
                         // send back a modification confirmation, so the other end can remove this machine device_id
                         // from concerned sync task retard entries
-                        String response = acces.getMyDeviceId() + ";" + acces.GetSecureId() + ";" + "[MODIFICATION_DONE]";
+                        String response = acces.getMyDeviceId() + ";" + acces.getSecureId() + ";" + "[MODIFICATION_DONE]";
                         outputStream.writeBytes(response);
                         break;
                 }
@@ -357,9 +356,9 @@ public class Networking {
     public static void handleEvent(String deviceId, Globals.QEvent event) {
 
         AccesBdd acces = new AccesBdd(context);
-        acces.SetSecureId(event.getSecureId());
+        acces.setSecureId(event.getSecureId());
         // First, we lock the filesystem watcher to prevent a ping-pong effect
-        acces.SetFileSystemPatchLockState(deviceId, true);
+        acces.setFileSystemPatchLockState(deviceId, true);
 
         // Get the necessary data from the JSON event
         String relativePath = event.FilePath;
@@ -368,7 +367,7 @@ public class Networking {
         String newRelativePath = event.NewFilePath;
         String absoluteFilePath = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            absoluteFilePath = Paths.get(acces.GetRootSyncPath(), relativePath).toString();
+            absoluteFilePath = Paths.get(acces.getRootSyncPath(), relativePath).toString();
         }
 
         String eventType = event.Flag;
@@ -377,9 +376,9 @@ public class Networking {
 
         DocumentFile root;
         if(acces.isApp()){
-            root = DocumentFile.fromFile(new File(acces.GetRootSyncPath()));
+            root = DocumentFile.fromFile(new File(acces.getRootSyncPath()));
         }else{
-            root = DocumentFile.fromTreeUri(context,Uri.parse(acces.GetRootSyncPath()));
+            root = DocumentFile.fromTreeUri(context,Uri.parse(acces.getRootSyncPath()));
         }
 
 
@@ -542,7 +541,7 @@ public class Networking {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        acces.SetFileSystemPatchLockState(deviceId, false);
+        acces.setFileSystemPatchLockState(deviceId, false);
 
         acces.closedb();
     }
@@ -557,7 +556,7 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.GetSecureId()
+                acces.getSecureId()
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -565,7 +564,7 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(out);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
         bos.flush();
 
@@ -589,7 +588,7 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.GetSecureId()
+                acces.getSecureId()
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -597,7 +596,7 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
         bos.flush();
 
@@ -619,7 +618,7 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.GetSecureId()
+                acces.getSecureId()
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -627,7 +626,7 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
         bos.flush();
 
@@ -648,7 +647,7 @@ public class Networking {
                 null,
                 relativePath,
                 "",
-                acces.GetSecureId()
+                acces.getSecureId()
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -656,7 +655,7 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.GetSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
         bos.flush();
 
@@ -669,7 +668,7 @@ public class Networking {
 
     public static void sendDeviceEventQueueOverNetwork(Globals.GenArray<String> connectedDevices, String secureId, Globals.GenArray<Globals.QEvent> eventQueue, String... ipAddress) {
         AccesBdd acces = new AccesBdd(context);
-        acces.SetSecureId(secureId);
+        acces.setSecureId(secureId);
 
 
         for (int i=0;i<connectedDevices.size();i++) {
@@ -727,7 +726,7 @@ public class Networking {
                         Thread.sleep(1000);
                     }
                 } catch (IOException e) {
-                    if(acces.IsDeviceLinked(deviceId)){
+                    if(acces.isDeviceLinked(deviceId)){
                         acces.setDevicedbState(deviceId,false);
                     }
                     Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
@@ -969,14 +968,14 @@ public class Networking {
 
     public static void buildSetupQueue(String secureId, String deviceId) {
         AccesBdd acces = new AccesBdd(context);
-        acces.SetSecureId(secureId);
+        acces.setSecureId(secureId);
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Uri rootUri = Uri.parse(acces.GetRootSyncPath());
+            Uri rootUri = Uri.parse(acces.getRootSyncPath());
             DocumentFile directory;
             if(acces.isApp()){
-                directory = DocumentFile.fromFile(new File(acces.GetRootSyncPath()));
+                directory = DocumentFile.fromFile(new File(acces.getRootSyncPath()));
             }else{
                 directory = DocumentFile.fromTreeUri(context, rootUri);
             }
@@ -1024,7 +1023,7 @@ public class Networking {
                         null,
                         relativePath,
                         "",
-                        acces.GetSecureId()
+                        acces.getSecureId()
 
                 );
 
@@ -1055,7 +1054,7 @@ public class Networking {
                             DeltaBinaire.buildDeltaFromInputStream(relativePath,fileSize,inputStream,0,new byte[0]),
                             relativePath,
                             "",
-                            acces.GetSecureId()
+                            acces.getSecureId()
                     );
                     inputStream.close();
                     Log.d(TAG,"Notifying to create file : "+event.FilePath);
@@ -1233,13 +1232,13 @@ public class Networking {
                 null,
                 acces.isApp() ? acces.getAppName() : "",
                 String.valueOf(acces.getSyncCreationDate()),
-                acces.GetSecureId()
+                acces.getSecureId()
         );
         Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
         dummyDevice.add(deviceIp);
         Globals.GenArray<Globals.QEvent> eventQueue = new Globals.GenArray<>();
         eventQueue.add(event);
-        sendDeviceEventQueueOverNetwork(dummyDevice, acces.GetSecureId(), eventQueue, deviceIp);
+        sendDeviceEventQueueOverNetwork(dummyDevice, acces.getSecureId(), eventQueue, deviceIp);
 
     }
 

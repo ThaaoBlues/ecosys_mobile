@@ -352,10 +352,10 @@ public class DeltaBinaire {
 
         if(needsSAF){
             AccesBdd acces = new AccesBdd(context);
-            acces.SetSecureId(event.SecureId);
+            acces.setSecureId(event.SecureId);
             DocumentFile root = DocumentFile.fromTreeUri(
                     context,
-                    Uri.parse(acces.GetRootSyncPath())
+                    Uri.parse(acces.getRootSyncPath())
             );
             //Log.d(TAG,"La racine contient (nb de fichiers ) : "+String.valueOf(root.listFiles().length));
 

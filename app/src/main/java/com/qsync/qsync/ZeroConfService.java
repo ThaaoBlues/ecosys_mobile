@@ -11,15 +11,11 @@ package com.qsync.qsync;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 
-import java.io.BufferedReader;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -161,7 +157,7 @@ public class ZeroConfService {
                 // checking if the lost service is a qsync device and setting it to offline
                 for(int i =0;i<connected_devices.size();i++){
                     if(!Networking.CheckIfDeviceOnline(connected_devices.get(i).get("ip_addr"),PORT)){
-                        if(acces.IsDeviceLinked(connected_devices.get(i).get("device_id"))){
+                        if(acces.isDeviceLinked(connected_devices.get(i).get("device_id"))){
                             acces.setDevicedbState(
                                     connected_devices.get(i).get("device_id"),
                                     false,
@@ -215,7 +211,7 @@ public class ZeroConfService {
 
 
 
-                    if (acces.IsDeviceLinked(device.get("device_id"))) {
+                    if (acces.isDeviceLinked(device.get("device_id"))) {
                         acces.setDevicedbState(device.get("device_id"), true, device.get("ip_addr"));
                         Log.d(TAG, "Checking if it missed any updates:");
 
@@ -225,7 +221,7 @@ public class ZeroConfService {
                             BackendApi.showLoadingNotification(context,"Detected a linked device, sending him updates...");
 
                             // Get the event queues for the device
-                            Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.BuildEventQueueFromRetard(device.get("device_id"));
+                            Map<String, Globals.GenArray<Globals.QEvent>> multiQueue = acces.buildEventQueueFromRetard(device.get("device_id"));
 
                             // Process each event queue
                             for (Map.Entry<String, Globals.GenArray<Globals.QEvent>> entry : multiQueue.entrySet()) {
