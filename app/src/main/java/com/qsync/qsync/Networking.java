@@ -235,8 +235,7 @@ public class Networking {
                         if(acces.isDeviceLinked(device_id)){
                             Log.d(TAG, "GOT FLAG, BUILDING SETUP QUEUE...");
                             buildSetupQueue(secure_id, device_id);
-                            String response = acces.getMyDeviceId() + ";" + acces.getSecureId() + ";" + "[MODIFICATION_DONE]";
-                            outputStream.writeBytes(response);
+
                         }
 
                         break;
@@ -245,7 +244,6 @@ public class Networking {
                         // we must prepare the environnement to accept this
                         // by creating a new sync task with the same path (replace this later by asking to the user)
                         // and same secure_id
-                        Log.d(TAG, "Initializing env to welcome the other end folder content");
                         acces.setSecureId(secure_id);
                         setSetupDlLock(false);
                         if(Objects.equals(data.FileType, "[APPLICATION]")){
@@ -256,8 +254,10 @@ public class Networking {
 
 
                             if(acces.checkAppExistenceFromName(data.getFilePath())){
+
+                                DocumentFile root = DocumentFile.fromFile(context.getExternalFilesDir(null)).findFile("apps");
                                 String app_path = PathUtils.joinPaths(
-                                        context.getExternalFilesDir(null).getPath(),
+                                        root.getUri().getPath(),
                                         data.getFilePath()
                                 );
                                 acces.getSecureIdFromRootPath(app_path);
@@ -265,12 +265,16 @@ public class Networking {
                                 long remote_task_creation_timestamp = Long.parseLong(data.getNewFilePath());
                                 long local_task_creation_timestamp = acces.getSyncCreationDate();
 
-                                if(remote_task_creation_timestamp > local_task_creation_timestamp){
+                                if(remote_task_creation_timestamp < local_task_creation_timestamp){
+                                    Log.d(TAG, "Initializing env to welcome the other end folder content");
                                     acces.updateSyncId(app_path,secure_id);
                                 }else{
                                     // older sync on the other device, ask to link but the opposite way
                                     // so the dowload is made on this device
-                                    sendLinkDeviceRequest(acces.getDeviceIP(device_id),acces);
+                                    Log.d(TAG,"Other end task is more recent, inverting the linking process..");
+                                    String ipAddr = clientSocket.getInetAddress().getHostAddress();
+                                    sendLinkDeviceRequest(ipAddr,acces);
+                                    acces.linkDevice(device_id,ipAddr);
                                     return;
                                 }
 
