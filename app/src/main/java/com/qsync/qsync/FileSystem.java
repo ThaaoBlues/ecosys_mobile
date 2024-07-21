@@ -167,9 +167,21 @@ public class FileSystem {
 
     private static void handleCreateEvent(AccesBdd acces, DocumentFile file) {
 
+        // wait to avoid taking some shit like very-short lifespan temporary files
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        if(!file.exists()){
+            return;
+        }
         Log.d(TAG,file.getUri().toString());
         Log.d(TAG,file.getUri().getPath());
         String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
+
+
         // check if file isn't already mapped as this method may be called at each startup
         if(!acces.checkFileExists(relativePath)){
             if (file.isDirectory()) {

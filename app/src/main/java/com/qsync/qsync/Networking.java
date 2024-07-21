@@ -458,6 +458,9 @@ public class Networking {
 
                     break;
                 case "[REMOVE]":
+                    if(!acces.checkFileExists(relativePath)){
+                        break;
+                    }
                     if ("file".equals(fileType)) {
                         acces.rmFile(absoluteFilePath);
                         removeFromFilesystem(root,relativePath,!acces.isApp(),false);
@@ -479,6 +482,10 @@ public class Networking {
                         if(event.Delta != null){
                             Log.d(TAG,"File create came with a delta, using patchFile().");
                             event.setFilePath(relativePath);
+                            DeltaBinaire.Delta delta = event.getDelta();
+                            delta.setFilePath(absoluteFilePath);
+                            event.setDelta(delta);
+
                             DeltaBinaire.patchFile(event,!acces.isApp(),context);
                         }
 
@@ -508,7 +515,6 @@ public class Networking {
                         }
                     }
 
-                    event.getDelta().setFilePath(absoluteFilePath);
                     DeltaBinaire.Delta delta = event.getDelta();
                     delta.setFilePath(absoluteFilePath);
                     event.setDelta(delta);
@@ -523,12 +529,28 @@ public class Networking {
             }
 
             try {
+
+                long fileVersion;
+
+                switch (event.getFlag()){
+                    case "[MOVE]":
+                        fileVersion = acces.getFileLastVersionId(event.getNewFilePath());
+                        break;
+
+                    case "[REMOVE]":
+                        fileVersion = 0;
+                        break;
+
+                    default:
+                        fileVersion = acces.getFileLastVersionId(relativePath);
+                        break;
+                }
                 // so the other end can clear its retard table entries
                 sendModificationDoneEvent(
                         clientSocket.getInetAddress().getHostAddress(),
                         acces,
                         relativePath,
-                        acces.getFileLastVersionId(relativePath)
+                        fileVersion
                 );
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -703,7 +725,13 @@ public class Networking {
 
 
                     // Initialize the connection
-                    Socket socket = new Socket(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId), 8274);
+                    Socket socket = new Socket();
+                    // use 1s timeout to avoid ghost devices
+                    socket.connect(
+                            new InetSocketAddress(ipAddress.length > 0 ? ipAddress[0] : acces.getDeviceIP(deviceId), 8274),
+                            1000
+
+                    );
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
                     String ser_event = eventQueue.get(j).serialize();
@@ -730,11 +758,29 @@ public class Networking {
                         Thread.sleep(1000);
                     }
                 } catch (IOException e) {
-                    if(acces.isDeviceLinked(deviceId)){
-                        acces.setDevicedbState(deviceId,false);
-                    }
-                    Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
+                    if(acces.isDeviceLinked(deviceId)) {
+                        acces.setDevicedbState(deviceId, false);
 
+                        String modType;
+                        switch (eventQueue.get(j).Flag) {
+                            case "[UPDATE]":
+                                modType = "p";
+                                break;
+                            case "[CREATE]":
+                                modType = "c";
+                                break;
+                            case "[REMOVE]":
+                                modType = "d";
+                                break;
+                            case "[MOVE]":
+                                modType = "m";
+                                break;
+                            default:
+                                throw new RuntimeException("Error while refreshing retard table : Unknown flag : " + eventQueue.get(j).Flag);
+                        }
+                        acces.refreshCorrespondingRetardRow(eventQueue.get(j).FilePath, modType);
+                        Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
+                    }
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -1043,14 +1089,19 @@ public class Networking {
             } else if (file.isFile()) {
 
                 try {
-                    InputStream inputStream =
-                            context.getContentResolver().openInputStream(file.getUri());
 
 
-                    ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(file.getUri() , "r");
-                    long fileSize = fileDescriptor.getStatSize();
-
-
+                    InputStream inputStream;
+                    long fileSize;
+                    if(acces.isApp()){
+                        File og_file_object = new File(file.getUri().getPath());
+                        inputStream = new FileInputStream(og_file_object);
+                        fileSize = og_file_object.length();
+                    }else{
+                        inputStream = context.getContentResolver().openInputStream(file.getUri());
+                        ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(file.getUri() , "r");
+                         fileSize = fileDescriptor.getStatSize();
+                    }
 
                     Globals.QEvent event = new Globals.QEvent(
                             "[CREATE]",

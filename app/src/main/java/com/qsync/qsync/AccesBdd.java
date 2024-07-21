@@ -13,6 +13,7 @@ import static com.qsync.qsync.DeltaBinaire.buildDeltaFromInputStream;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
@@ -1740,4 +1741,73 @@ public class AccesBdd {
         db.execSQL("UPDATE sync SET is_being_patch=0");
     }
 
+
+    public void refreshCorrespondingRetardRow(String relativePath, String modtype) {
+        long versionId = getFileLastVersionId(relativePath);
+
+        // Remove the outdated retard entry
+        db.execSQL(
+                "DELETE FROM retard WHERE path=? AND version_id=? AND secure_id=?",
+                new String[]{
+                        relativePath,
+                        String.valueOf(versionId),
+                        secureId
+                }
+        );
+
+        // Get only offline devices
+        Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
+        if (!offlineDevices.isEmpty()) {
+            // Add a line in retard table with all devices linked and the version number
+            StringBuilder strIdsBuilder = new StringBuilder();
+            for (int i =0;i<offlineDevices.size();i++) {
+                strIdsBuilder.append(offlineDevices.get(i)).append(";");
+            }
+            // Remove the last semicolon
+            strIdsBuilder.setLength(strIdsBuilder.length() - 1);
+            String strIds = strIdsBuilder.toString();
+
+            try {
+                db.execSQL(
+                        "INSERT INTO retard (version_id, path, mod_type, devices_to_patch, type, secure_id) VALUES(?,?,?,?,?,?)",
+                        new Object[]{
+                                versionId,
+                                relativePath,
+                                modtype,
+                                strIds,
+                                "file",
+                                secureId
+                        }
+                );
+            } catch (SQLException e) {
+                System.err.println("Error in refreshCorrespondingRetardRow() " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // Update the cached file content to build the next delta (needs absolute path to the file)
+
+        DocumentFile file;
+
+        if(isApp()){
+            file = DocumentFile.fromFile(new File(getRootSyncPath(),relativePath));
+        }else{
+            file = DocumentFile.fromSingleUri(
+                    context,
+                    Uri.parse(getRootSyncPath())
+            );
+
+            String[] parts = relativePath.split("/");
+
+            // null is supposed impossible as we are treating an event on this exact path
+            // well, I might regret not handling this...
+            for(String part : parts){
+                file = file.findFile(part);
+                if(file == null){
+                    throw new RuntimeException("Broken path (part does not exists) while refreshing retard table : "+relativePath );
+                }
+            }
+        }
+        updateCachedFile(file, relativePath);
+    }
 }

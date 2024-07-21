@@ -27,5 +27,6 @@
     <string name="confirm_app_install">Confirm that you want to let the app you are installing access QSync.</string>
     <string name="malicious_app_install">The app you are installing is giving QSync a wrong package name, it could be malicious !</string>
     <string name="app_is_not_registered_in_qsync_or_is_trying_to_access_data_that_is_not_its_own">App is not registered in QSync or is trying to access data that is not its own.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">This action is not supported ( action flag may be misspelled )</string>
 
 </resources>

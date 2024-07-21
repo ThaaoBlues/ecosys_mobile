@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -96,15 +97,29 @@ public class AppsIntentActivity extends AppCompatActivity {
                         DocumentFile appFolder = rootFolder.findFile("apps").findFile(packageName);
 
 
-                        String fileName = intent.getStringExtra("file_name");
+                        String filePath = intent.getStringExtra("file_path");
                         String mimetype = intent.getStringExtra("mime_type");
-                        // sanitize file name
+
+
+                        String[] parts = filePath.split("/");
+
+                        // create necessary directories
+                        DocumentFile currentDir = appFolder;
+                        for(int i = 0;i<parts.length-1;i++){
+                            DocumentFile tmp = currentDir.findFile(parts[i]);
+                            if((currentDir.findFile(parts[i]) == null) && (i < parts.length-1)){
+                                currentDir = currentDir.createDirectory(parts[i]);
+                                Log.d(TAG,"CREATING DIRECTORY : "+parts[i]);
+                            }else{
+                                currentDir = tmp;
+                            }
+                        }
 
                         // create file
                         Uri uri = FileProvider.getUriForFile(
                                 this,
                                 "com.qsync.qsync.fileprovider",
-                                new File(appFolder.createFile(mimetype,fileName).getUri().getPath())
+                                new File(currentDir.createFile(mimetype,parts[parts.length-1]).getUri().getPath())
                         );
                         AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
 
@@ -121,8 +136,63 @@ public class AppsIntentActivity extends AppCompatActivity {
                         return;
                     }
 
+                    break;
 
 
+                case "[CREATE_DIRECTORY]":
+
+                    Log.d(TAG,"AUTHORITY : "+getReferrer().getAuthority());
+                    if(packageName.equals(getReferrer().getAuthority()) && acces.checkAppExistenceFromName(packageName)){
+                        Log.d(TAG,"IN CREATE FILE");
+                        DocumentFile rootFolder = DocumentFile.fromFile(
+                                getExternalFilesDir(null)
+                        );
+
+                        DocumentFile appFolder = rootFolder.findFile("apps").findFile(packageName);
+
+
+                        String filePath = intent.getStringExtra("file_relative_path");
+
+                        String[] parts = filePath.split("/");
+
+                        // create necessary directories
+                        DocumentFile currentDir = appFolder;
+                        for(int i = 0;i<parts.length;i++){
+                            DocumentFile tmp = currentDir.findFile(parts[i]);
+                            if(tmp == null){
+                                currentDir = currentDir.createDirectory(parts[i]);
+                            }else{
+                                currentDir = tmp;
+                            }
+                        }
+
+                        // recover last uri
+                        Uri uri = FileProvider.getUriForFile(
+                                this,
+                                "com.qsync.qsync.fileprovider",
+                                new File(currentDir.getUri().getPath())
+                        );
+
+                        AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+                        intent = new Intent(Intent.ACTION_SEND);
+
+                        intent.setClassName(packageName,packageName+".QSyncCallbackActivity");
+                        intent.putExtra("action_flag","[CREATE_DIRECTORY]");
+                        intent.setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                        startActivity(intent);
+                        finish();
+                    }else{
+                        textView.setText(R.string.app_is_not_registered_in_qsync_or_is_trying_to_access_data_that_is_not_its_own);
+                        return;
+                    }
+                    break;
+
+                default:
+                    textView.setText(R.string.this_action_is_not_supported_action_flag_may_be_misspelled);
+
+                    break;
 
             }
         }
@@ -157,7 +227,11 @@ public class AppsIntentActivity extends AppCompatActivity {
                     rootFolder = rootFolder.findFile("apps");
                 }
 
-                DocumentFile appFolder = rootFolder.createDirectory(packageName);
+                // prevent the same app for calling multiple times install_app
+                DocumentFile appFolder =rootFolder.findFile(packageName);
+                if ( appFolder == null) {
+                    appFolder = rootFolder.createDirectory(packageName);
+                }
 
 
                 if (appFolder != null) {
@@ -179,7 +253,6 @@ public class AppsIntentActivity extends AppCompatActivity {
 
 
                 // create a sync in it
-                //acces.createSync(getSafUris(new File(appFolder.getUri().getPath()))[1].toString());
                 acces.createSync(appFolder.getUri().getPath());
                 acces.addToutEnUn(new Globals.ToutEnUnConfig(
                         packageName,
