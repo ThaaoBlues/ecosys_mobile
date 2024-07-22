@@ -1114,9 +1114,10 @@ public class AccesBdd {
                 byte[] compressedData = bos.toByteArray();
 
 
-                db.execSQL("UPDATE filesystem SET content=? WHERE path=? AND secure_id=?",
+                db.execSQL("UPDATE filesystem SET content=?,size=? WHERE path=? AND secure_id=?",
                         new Object[]{
                                 compressedData,
+                                file.length(),
                                 relativePath,
                                 secureId
                         }

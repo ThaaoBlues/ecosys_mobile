@@ -68,27 +68,6 @@ public class Networking {
 
 
 
-    public static String getDeviceHostname(String ip_addr) {
-
-        final String[] hostname = {""};
-        ProcessExecutor.Function gethn = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                try {
-                    // Get the local host address
-                    InetAddress inetAddress = InetAddress.getByName(ip_addr);
-                    hostname[0] = inetAddress.getHostName();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        ProcessExecutor.startProcess(gethn);
-
-        return hostname[0];
-
-    }
 
     public static String getTmpSecureIdForCreation() {
         return tmpSecureIdForCreation;
@@ -310,7 +289,6 @@ public class Networking {
                         outputStream.close();
                         acces.linkDevice(device_id, ipAddr);
                         acces.setDevicedbState(device_id,true);
-
                         askSetupDownloadToOtherEnd(ipAddr,acces);
 
 
@@ -515,12 +493,18 @@ public class Networking {
                         }
                     }
 
-                    DeltaBinaire.Delta delta = event.getDelta();
-                    delta.setFilePath(absoluteFilePath);
-                    event.setDelta(delta);
 
-                    DeltaBinaire.patchFile(event,!acces.isApp(),context);
-                    acces.updateCachedFile(relativePath,file,!acces.isApp(),absoluteFilePath);
+                    DeltaBinaire.Delta delta = event.getDelta();
+
+                    // sometimes empty delta are sent
+                    if(delta != null){
+                        delta.setFilePath(absoluteFilePath);
+                        event.setDelta(delta);
+
+                        DeltaBinaire.patchFile(event,!acces.isApp(),context);
+                        acces.updateCachedFile(relativePath,file,!acces.isApp(),absoluteFilePath);
+                    }
+
 
                     break;
                 default:

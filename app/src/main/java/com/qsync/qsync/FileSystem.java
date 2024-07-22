@@ -296,46 +296,54 @@ public class FileSystem {
     }
 
     private static void handleRemoveEvent(AccesBdd acces, DocumentFile file) {
-        String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
-        if (file.isFile()) {
-            acces.rmFile(relativePath);
-        } else {
-            acces.rmFolder(relativePath);
+
+        // for some reason I once had a remove event on a file that was still there
+        // followed by a create event -_-
+        if(!file.exists()){
+            String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
+            Log.d(TAG,"relative path = "+relativePath+"\nroot path ="+Uri.parse(acces.getRootSyncPath()).getPath());
+            if (file.isFile()) {
+                acces.rmFile(relativePath);
+            } else {
+                acces.rmFolder(relativePath);
+            }
+
+            // don't send suppression event if sync is in backup mode
+
+
+            if(!acces.isSyncInBackupMode()) {
+
+                Globals.QEvent event = new Globals.QEvent(
+                        "[REMOVE]",
+                        file.isDirectory() ? "folder" : "file",
+                        null,
+                        relativePath,
+                        "",
+                        acces.getSecureId()
+                );
+
+                ProcessExecutor.Function f = new ProcessExecutor.Function() {
+                    @Override
+                    public void execute() {
+
+                        BackendApi.showLoadingNotification(context,"Sending update to other devices");
+
+                        Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
+
+                        queue.add(event);
+
+                        Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.getSecureId(), queue);
+
+                        BackendApi.discardLoadingNotification(context);
+
+                    }
+                };
+
+                ProcessExecutor.startProcess(f);
+            }
         }
 
-        // don't send suppression event if sync is in backup mode
 
-
-        if(!acces.isSyncInBackupMode()) {
-
-            Globals.QEvent event = new Globals.QEvent(
-                    "[REMOVE]",
-                    file.isDirectory() ? "folder" : "file",
-                    null,
-                    relativePath,
-                    "",
-                    acces.getSecureId()
-            );
-
-            ProcessExecutor.Function f = new ProcessExecutor.Function() {
-                @Override
-                public void execute() {
-
-                    BackendApi.showLoadingNotification(context,"Sending update to other devices");
-
-                    Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
-
-                    queue.add(event);
-
-                    Networking.sendDeviceEventQueueOverNetwork(acces.getSyncOnlineDevices(), acces.getSecureId(), queue);
-
-                    BackendApi.discardLoadingNotification(context);
-
-                }
-            };
-
-            ProcessExecutor.startProcess(f);
-        }
 
     }
 }

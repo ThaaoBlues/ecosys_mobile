@@ -129,19 +129,25 @@ public class StartupService extends Service implements FolderPickerCallback{
                             );*/
 
                             df = DocumentFile.fromFile(new File(v.getPath()));
+                            Log.d("Qsync Server ","Starting to monitor (path format) : "+ v.getPath() +"\n Readable = "+df.canRead());
+
                         }else{
                             uri = Uri.parse(v.getPath());
                             df = DocumentFile.fromTreeUri(StartupService.this, uri);
+                            Log.d("Qsync Server ","Starting to monitor (path format) : "+ uri.getPath() +"\n Readable = "+df.canRead());
                         }
+
                         //uri = Uri.parse(v.getPath());
                         //df = DocumentFile.fromTreeUri(StartupService.this, uri);
-                        Log.d("Qsync Server ","Starting to monitor : "+ v.getPath()+"\n Readable = "+df.canRead());
+
 
                         FileSystem.startDirectoryMonitoring(
                                 StartupService.this,
                                 df,
                                 v.getSecureId()
                         );
+
+
 
                     });
 
