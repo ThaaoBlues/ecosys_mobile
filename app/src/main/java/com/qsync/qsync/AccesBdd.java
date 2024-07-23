@@ -1793,7 +1793,7 @@ public class AccesBdd {
         if(isApp()){
             file = DocumentFile.fromFile(new File(getRootSyncPath(),relativePath));
         }else{
-            file = DocumentFile.fromSingleUri(
+            file = DocumentFile.fromTreeUri(
                     context,
                     Uri.parse(getRootSyncPath())
             );

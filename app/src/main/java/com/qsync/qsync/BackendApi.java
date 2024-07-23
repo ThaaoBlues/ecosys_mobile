@@ -304,7 +304,7 @@ public class BackendApi {
         ProcessExecutor.Function nt = new ProcessExecutor.Function() {
             @Override
             public void execute() {
-                NotificationHelper.showLoadingNotification(context,msg);
+                NotificationHelper.showAppRunningNotification(context,msg);
             }
         };
 

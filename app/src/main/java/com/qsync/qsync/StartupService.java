@@ -66,6 +66,8 @@ public class StartupService extends Service implements FolderPickerCallback{
         accesBdd.closedb();
 
         startNetworkingServer();
+
+        BackendApi.showAppRunningNotification(StartupService.this,"QSync is running");
         return START_STICKY;
     }
 
@@ -171,6 +173,7 @@ public class StartupService extends Service implements FolderPickerCallback{
         startActivity(intent);
         SelectorActivity.setCallBack(this);
     }
+
 
 }
 

@@ -207,7 +207,7 @@ public class DeltaBinaire {
         Log.d(TAG, "new file size : " + newFileSize);
 
 
-        while ((globalIndex < oldFileSize || byteIndex < newFileSize)) {
+        while (byteIndex < newFileSize) {
             int bytesRead = 0;
             try {
                 bytesRead = newFileStream.read(newFileBuff);

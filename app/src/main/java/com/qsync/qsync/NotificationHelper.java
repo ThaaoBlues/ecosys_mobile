@@ -34,7 +34,7 @@ public class NotificationHelper {
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_menu_upload) // Use a suitable icon
+                .setSmallIcon(android.R.drawable.ic_popup_sync) // Use a suitable icon
                 .setContentTitle(title)
                 .setContentText("Loading...")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -65,7 +65,7 @@ public class NotificationHelper {
 
         // Build the notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_menu_upload) // Use a suitable icon
+                .setSmallIcon(android.R.drawable.ic_dialog_info) // Use a suitable icon
                 .setContentTitle(title)
                 .setContentText("QSync is running")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
