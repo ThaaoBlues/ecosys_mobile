@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">ecosys</string>
     <string name="action_settings">Nastavení</string>
-    <string name="welcome_msg">Chcete-li používat QSync, nainstalujte jej na ostatní zařízení a připojte je ke stejné síti Wifi :D
+    <string name="welcome_msg">Chcete-li používat ecosys, nainstalujte jej na ostatní zařízení a připojte je ke stejné síti Wifi :D
 \n
-    Navštivte: https://thaaoblues.github.io/qsync</string>
+    Navštivte: https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"Accept the Large Aerien\? Název souboru: \"</string>
     <string name="multi_largage_aerien_msg">\"Přijmout MULTI Largage Aerien\? Pochází z: \"</string>
     <string name="magasin">obchod</string>

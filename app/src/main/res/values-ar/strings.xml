@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">com.qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">إعدادات</string>
-    <string name="welcome_msg">لاستخدام QSync، يرجى تثبيته على أجهزتك الأخرى وتوصيلها بنفس شبكة Wifi:D
+    <string name="welcome_msg">لاستخدام Ecosys، يرجى تثبيته على أجهزتك الأخرى وتوصيلها بنفس شبكة Wifi:D
 \ن
-    زيارة: https://thaaoblues.github.io/qsync</string>
+    زيارة: https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"هل تريد قبول الطائرة الكبيرة؟ اسم الملف: \"</string>
     <string name="multi_largage_aerien_msg">\"هل تقبل الطائرة الجوية المتعددة الحجم؟ قادمة من: \"</string>
     <string name="magasin">المحل</string>

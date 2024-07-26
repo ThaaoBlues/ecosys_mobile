@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">Կարգավորումներ</string>
-    <string name="welcome_msg">QSync-ն օգտագործելու համար տեղադրեք այն ձեր մյուս սարքերում և միացրեք դրանք նույն Wifi ցանցին :D
+    <string name="welcome_msg">Ecosys-ն օգտագործելու համար տեղադրեք այն ձեր մյուս սարքերում և միացրեք դրանք նույն Wifi ցանցին :D
 \n
-    Այցելեք՝ https://thaaoblues.github.io/qsync</string>
+    Այցելեք՝ https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Ֆայլի անունը՝ \"</string>
     <string name="multi_largage_aerien_msg">«Ընդունե՞լ MULTI Largage Aerien-ը: Գալիս է.</string>
     <string name="magasin">խանութ</string>

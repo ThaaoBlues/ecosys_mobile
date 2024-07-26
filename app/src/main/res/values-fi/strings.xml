@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">asetukset</string>
-    <string name="welcome_msg">Jos haluat käyttää QSynciä, asenna se muihin laitteisiisi ja yhdistä ne samaan Wifi-verkkoon :D
+    <string name="welcome_msg">Jos haluat käyttää Ecosysiä, asenna se muihin laitteisiisi ja yhdistä ne samaan Wifi-verkkoon :D
 \n
-    Käy osoitteessa https://thaaoblues.github.io/qsync</string>
+    Käy osoitteessa https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Tiedoston nimi: \"</string>
     <string name="multi_largage_aerien_msg">\"Hyväksy MULTI Largage Aerien\? Lähtöpaikka: \"</string>
     <string name="magasin">tallentaa</string>

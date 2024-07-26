@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">Cilësimet</string>
-    <string name="welcome_msg">To use QSync, please install it on your others devices and connect them to the same Wifi network :D
+    <string name="welcome_msg">To use Ecosys, please install it on your others devices and connect them to the same Wifi network :D
 \n\n
-    Visit : https://thaaoblues.github.io/qsync
+    Visit : https://thaaoblues.github.io/ecosys
     </string>
     <string name="largage_aerien_msg">Accept the Largage Aerien ? File name: </string>
     <string name="multi_largage_aerien_msg">Accept the MULTI Largage Aerien ? Coming from : </string>

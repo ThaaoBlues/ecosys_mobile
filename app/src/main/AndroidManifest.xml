@@ -11,12 +11,12 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Qsync"
+        android:theme="@style/Theme.Ecosys"
         tools:targetApi="31">
         <service
             android:name=".StartupService"
@@ -43,11 +43,11 @@
         <activity
             android:name=".TextViewActivity"
             android:exported="false"
-            android:theme="@style/Theme.Qsync" />
+            android:theme="@style/Theme.Ecosys" />
         <activity
             android:name=".AppsIntentActivity"
             android:exported="true"
-            android:theme="@style/Theme.Qsync">
+            android:theme="@style/Theme.Ecosys">
             <intent-filter>
                 <action android:name="android.intent.action.SYNC" />
 
@@ -59,7 +59,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.qsync.qsync.fileprovider"
+            android:authorities="com.ecosys.ecosys.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true"
             >
@@ -83,7 +83,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Qsync">
+            android:theme="@style/Theme.Ecosys">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">সেটিংস</string>
-    <string name="welcome_msg">QSync ব্যবহার করতে, অনুগ্রহ করে এটি আপনার অন্যান্য ডিভাইসে ইনস্টল করুন এবং একই ওয়াইফাই নেটওয়ার্কের সাথে সংযুক্ত করুন :D
+    <string name="welcome_msg">Ecosys ব্যবহার করতে, অনুগ্রহ করে এটি আপনার অন্যান্য ডিভাইসে ইনস্টল করুন এবং একই ওয়াইফাই নেটওয়ার্কের সাথে সংযুক্ত করুন :D
 \n
-    ভিজিট করুন: https://thaaoblues.github.io/qsync</string>
+    ভিজিট করুন: https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"লার্জেজ এরিয়েন গ্রহণ করুন\? ফাইলের নাম: \"</string>
     <string name="multi_largage_aerien_msg">\"মাল্টি লার্জেজ এরিয়েন গ্রহণ করুন\? থেকে আসছে : \"</string>
     <string name="magasin">magasin</string>

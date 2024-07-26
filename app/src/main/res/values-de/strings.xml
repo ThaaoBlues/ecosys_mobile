@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">Einstellungen</string>
-    <string name="welcome_msg">Um QSync zu verwenden, installieren Sie es bitte auf Ihren anderen Geräten und verbinden Sie sie mit demselben WLAN-Netzwerk :D
+    <string name="welcome_msg">Um Ecosys zu verwenden, installieren Sie es bitte auf Ihren anderen Geräten und verbinden Sie sie mit demselben WLAN-Netzwerk :D
 \N
-    Besuchen Sie: https://thaaoblues.github.io/qsync</string>
+    Besuchen Sie: https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">„Die Largage Aerien akzeptieren\? Dateiname:“</string>
     <string name="multi_largage_aerien_msg">„Akzeptieren Sie den MULTI Large Aerien\? Kommt von:“</string>
     <string name="magasin">speichern</string>

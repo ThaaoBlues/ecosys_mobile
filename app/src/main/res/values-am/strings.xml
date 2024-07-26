@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">ቅንብሮች</string>
-    <string name="welcome_msg">QSyncን ለመጠቀም፣እባክዎ በሌሎች መሳሪያዎችዎ ላይ ይጫኑት እና ከተመሳሳዩ የዋይፋይ አውታረ መረብ ጋር ያገናኙዋቸው፡D
+    <string name="welcome_msg">Ecosysን ለመጠቀም፣እባክዎ በሌሎች መሳሪያዎችዎ ላይ ይጫኑት እና ከተመሳሳዩ የዋይፋይ አውታረ መረብ ጋር ያገናኙዋቸው፡D
 \n
-    ጎብኝ https://thaaoblues.github.io/qsync</string>
+    ጎብኝ https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"ትልቁን ኤሪየን ተቀበል\? የፋይል ስም፡\"</string>
     <string name="multi_largage_aerien_msg">\"MULTI Largage Aerien ተቀበል\? የሚመጣው ከ:\"</string>
     <string name="magasin">መደብር</string>

@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">qsync</string>
+    <string name="app_name">Ecosys</string>
     <string name="action_settings">Parametrlər</string>
-    <string name="welcome_msg">QSync-dən istifadə etmək üçün onu başqa cihazlarınıza quraşdırın və onları eyni Wi-Fi şəbəkəsinə qoşun :D
+    <string name="welcome_msg">Ecosys-dən istifadə etmək üçün onu başqa cihazlarınıza quraşdırın və onları eyni Wi-Fi şəbəkəsinə qoşun :D
 \n
-    Ziyarət edin: https://thaaoblues.github.io/qsync</string>
+    Ziyarət edin: https://thaaoblues.github.io/ecosys</string>
     <string name="largage_aerien_msg">\"Böyük Aerien qəbul edin\? Fayl adı: \"</string>
     <string name="multi_largage_aerien_msg">\"MULTI Largage Aerien-i qəbul edirsiniz\? Gəlir:\"</string>
     <string name="magasin">mağaza</string>

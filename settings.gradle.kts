@@ -27,5 +27,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "qsync"
+rootProject.name = "ecosys"
 include(":app")

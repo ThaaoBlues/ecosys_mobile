@@ -11,11 +11,11 @@ plugins {
 }
 
 android {
-    namespace = "com.qsync.qsync"
+    namespace = "com.ecosys.ecosys"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.qsync.qsync"
+        applicationId = "com.ecosys.ecosys"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -48,8 +48,6 @@ dependencies {
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
     implementation(libs.activity)
-    //implementation(files("/home/thaao/dev/projects/qsync_mobile_bind/qsync.aar"))
-    //implementation(files("libs/commons-io-2.16.1.jar"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

@@ -14,7 +14,7 @@
 
     <fragment
         android:id="@+id/LargageAerienFragment"
-        android:name="com.qsync.qsync.LargageAerienFragment"
+        android:name="com.ecosys.ecosys.LargageAerienFragment"
         android:label="Fragment largage aérien"
         tools:layout="@layout/fragment_largage_aerien">
 
@@ -24,7 +24,7 @@
     </fragment>
     <fragment
         android:id="@+id/SynchronisationsFragment"
-        android:name="com.qsync.qsync.SynchronisationsFragment"
+        android:name="com.ecosys.ecosys.SynchronisationsFragment"
         android:label="Fragment synchronisations"
         tools:layout="@layout/fragment_synchronisations">
         <action
@@ -36,7 +36,7 @@
         android:id="@+id/fragment_magasin_constraint_layout"
         android:label="fragment magasin"
         tools:layout="@layout/fragment_magasin"
-        android:name="com.qsync.qsync.MagasinFragment"
+        android:name="com.ecosys.ecosys.MagasinFragment"
         >
 
 

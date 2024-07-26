@@ -8,10 +8,11 @@
 
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.Qsync" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.Ecosys" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+
     </style>
 
-    <style name="Theme.Qsync" parent="Base.Theme.Qsync" />
+    <style name="Theme.Ecosys" parent="Base.Theme.Ecosys" />
 </resources>
