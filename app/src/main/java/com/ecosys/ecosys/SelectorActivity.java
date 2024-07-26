@@ -25,7 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 public class SelectorActivity extends AppCompatActivity {
     public ActivityResultLauncher<Intent> selectFolderLauncher;
 
-    private static final String TAG = "QSync Server : SelectorActivity";
+    private static final String TAG = "Ecosys Server : SelectorActivity";
 
     public static FolderPickerCallback callback;
 

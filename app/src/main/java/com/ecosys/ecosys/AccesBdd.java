@@ -50,7 +50,7 @@ public class AccesBdd {
     private SQLiteDatabase db;
     private Context context;
 
-    private String TAG = "Qsync Server : AccesBdd";
+    private String TAG = "Ecosys Server : AccesBdd";
 
 
     public AccesBdd(Context context){
@@ -286,7 +286,7 @@ public class AccesBdd {
 
 
             //db.execSQL("INSERT INTO filesystem (path, version_id, type, size, secure_id, content) VALUES (?,?,?, ?, ?, ?)",args);
-            Log.d("Qsync Server : Database","Added file to filesystem map. return value : ");
+            Log.d("Ecosys Server : Database","Added file to filesystem map. return value : ");
 
 
             // Handle adding file to retard
@@ -1147,7 +1147,7 @@ public class AccesBdd {
             }
             info.setPath(cursor.getString(1));
             info.setBackup_mode(isSyncInBackupMode());
-            Log.d("Qsync server : Syncinfos",info.toString());
+            Log.d("Ecosys server : Syncinfos",info.toString());
             list.put(info.getSecureId(), info);
         }
 

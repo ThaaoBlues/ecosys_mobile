@@ -26,7 +26,7 @@ public class StartupService extends Service implements FolderPickerCallback{
 
 
     private Networking nt;
-    private String TAG ="QSync Server : StartupService";
+    private String TAG ="Ecosys Server : StartupService";
 
     public StartupService() {
     }
@@ -67,7 +67,7 @@ public class StartupService extends Service implements FolderPickerCallback{
 
         startNetworkingServer();
 
-        BackendApi.showAppRunningNotification(StartupService.this,"QSync is running");
+        BackendApi.showAppRunningNotification(StartupService.this,"Ecosys is running");
         return START_STICKY;
     }
 
@@ -131,12 +131,12 @@ public class StartupService extends Service implements FolderPickerCallback{
                             );*/
 
                             df = DocumentFile.fromFile(new File(v.getPath()));
-                            Log.d("Qsync Server ","Starting to monitor (path format) : "+ v.getPath() +"\n Readable = "+df.canRead());
+                            Log.d("Ecosys Server ","Starting to monitor (path format) : "+ v.getPath() +"\n Readable = "+df.canRead());
 
                         }else{
                             uri = Uri.parse(v.getPath());
                             df = DocumentFile.fromTreeUri(StartupService.this, uri);
-                            Log.d("Qsync Server ","Starting to monitor (path format) : "+ uri.getPath() +"\n Readable = "+df.canRead());
+                            Log.d("Ecosys Server ","Starting to monitor (path format) : "+ uri.getPath() +"\n Readable = "+df.canRead());
                         }
 
                         //uri = Uri.parse(v.getPath());

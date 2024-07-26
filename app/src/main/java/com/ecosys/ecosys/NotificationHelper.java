@@ -67,7 +67,7 @@ public class NotificationHelper {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info) // Use a suitable icon
                 .setContentTitle(title)
-                .setContentText("QSync is running")
+                .setContentText("Ecosys is running")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setOngoing(true); // Make it persistent
         // Display the notification

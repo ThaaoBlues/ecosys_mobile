@@ -185,7 +185,7 @@ public class LargageAerienFragment extends Fragment {
                                                                                 fos.write(text.getBytes());
 
                                                                                 fos.close();
-                                                                                Log.d("Qsync Server : Largage Aerien Fragment",Uri.parse(outputFile.getPath()).toString());
+                                                                                Log.d("Ecosys Server : Largage Aerien Fragment",Uri.parse(outputFile.getPath()).toString());
                                                                                 SendLA(Uri.parse(outputFile.getPath()));
 
                                                                             } catch (IOException e) {
@@ -275,13 +275,13 @@ public class LargageAerienFragment extends Fragment {
                 File tarFile = new File(
                         getContext().getFilesDir(),
                         "/largage_aerien/multilargage.tar");
-                Log.d("Qsync Server","tarring file...");
+                Log.d("Ecosys Server","tarring file...");
 
                 FileTar.tarFiles(getContext(),uris,tarFile.getPath());
-                Log.d("Qsync Server","tar file built !");
+                Log.d("Ecosys Server","tar file built !");
 
                 nt.sendLargageAerien(Uri.fromFile(tarFile), target_device.get("ip_addr"),true);
-                Log.d("Qsync Server","Sending multiple largage aerien :"+tarFile.getName());
+                Log.d("Ecosys Server","Sending multiple largage aerien :"+tarFile.getName());
 
                 BackendApi.discardLoadingNotification(getContext());
             }

@@ -28,7 +28,7 @@ import java.util.Map;
 public class BackendApi {
     private static final String TAG = "BackendApi";
 
-    private static final String QSYNC_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
+    private static final String ECOSYS_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
 
     public static String askInput(String flag, String inputContext,Context context,Boolean textMode) {
         final String[] result = new String[1];

@@ -33,7 +33,7 @@ public class AppsIntentActivity extends AppCompatActivity {
     private TextView textView;
     private String PROVIDER_ROOT=  "content://com.ecosys.ecosys.fileprovider/apps/";
 
-    private static String TAG = "Qsync Server : AppsIntentActivity";
+    private static String TAG = "Ecosys Server : AppsIntentActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,7 +123,7 @@ public class AppsIntentActivity extends AppCompatActivity {
 
                         intent = new Intent(Intent.ACTION_SEND);
 
-                        intent.setClassName(packageName,packageName+".QSyncCallbackActivity");
+                        intent.setClassName(packageName,packageName+".EcosysCallbackActivity");
                         intent.putExtra("action_flag","[CREATE_FILE]");
                         intent.setDataAndType(uri, mimetype);
                         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
@@ -175,7 +175,7 @@ public class AppsIntentActivity extends AppCompatActivity {
 
                         intent = new Intent(Intent.ACTION_SEND);
 
-                        intent.setClassName(packageName,packageName+".QSyncCallbackActivity");
+                        intent.setClassName(packageName,packageName+".EcosysCallbackActivity");
                         intent.putExtra("action_flag","[CREATE_DIRECTORY]");
                         intent.setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR);
                         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
@@ -279,7 +279,7 @@ public class AppsIntentActivity extends AppCompatActivity {
 
                 intent = new Intent(Intent.ACTION_SEND);
 
-                intent.setClassName(packageName, packageName + ".QSyncCallbackActivity");
+                intent.setClassName(packageName, packageName + ".EcosysCallbackActivity");
                 intent.putExtra("flag", "[INSTALL_APP]");
                 intent.putExtra(Intent.EXTRA_STREAM, uri);
                 intent.setDataAndType(uri, "*/*");

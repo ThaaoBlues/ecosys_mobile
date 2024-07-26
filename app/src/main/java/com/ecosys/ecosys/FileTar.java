@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 
 public class FileTar {
-    private static final String TAG = "Qsync File Tar";
+    private static final String TAG = "Ecosys File Tar";
 
     public static void tarFiles(Context context, Uri[] fileUris, String outputTarFilePath) {
         try (FileOutputStream fos = new FileOutputStream(outputTarFilePath);
@@ -46,7 +46,7 @@ public class FileTar {
                         // Calculate the size of the file
                         ParcelFileDescriptor fileDescriptor = context.getContentResolver().openFileDescriptor(uri , "r");
                         long fileSize = fileDescriptor.getStatSize();
-                        Log.d("Qsync Server","FILE SIZE !!!! = "+fileSize);
+                        Log.d("Ecosys Server","FILE SIZE !!!! = "+fileSize);
                         TarArchiveEntry tarEntry = new TarArchiveEntry(fileName);
                         tarEntry.setSize(fileSize);
                         taos.putArchiveEntry(tarEntry);

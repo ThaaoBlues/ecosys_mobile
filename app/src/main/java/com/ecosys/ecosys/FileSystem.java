@@ -236,7 +236,7 @@ public class FileSystem {
                 Log.e(TAG,"Unable to open file to build binary delta",e);
             }
         }else{
-            Log.d("Qsync Server : FileSystem",relativePath+" File already mapped.");
+            Log.d("Ecosys Server : FileSystem",relativePath+" File already mapped.");
         }
 
 

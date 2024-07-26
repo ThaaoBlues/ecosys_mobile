@@ -44,11 +44,11 @@ import java.util.Objects;
 public class Networking {
 
     public static final int HEADER_LENGTH = 83;
-    private static final String TAG = "QSync Server";
+    private static final String TAG = "Ecosys Server";
     private static ServerSocket serverSocket;
     private static Socket clientSocket;
     private static Context context;
-    private static String QSYNC_WRITABLE_DIRECTORY;
+    private static String ECOSYS_WRITABLE_DIRECTORY;
 
     private static ActivityResultLauncher<Intent> selectFolderLauncher;
 
@@ -60,7 +60,7 @@ public class Networking {
 
     Networking(Context mcontext, String mFilesDir) {
         context = mcontext;
-        QSYNC_WRITABLE_DIRECTORY = mFilesDir;
+        ECOSYS_WRITABLE_DIRECTORY = mFilesDir;
 
     }
 
@@ -812,18 +812,18 @@ public class Networking {
         try {
             if (value) {
                 // Create a network lock file
-                File lockFile = new File(QSYNC_WRITABLE_DIRECTORY,deviceId + ".nlock");
+                File lockFile = new File(ECOSYS_WRITABLE_DIRECTORY,deviceId + ".nlock");
                 if(lockFile.exists()){
                     removeFromFilesystem(null,lockFile.getPath(),false);
                 }
                 if (!lockFile.createNewFile()) {
-                    Log.e("SetEventNetworkLock", "Failed to create network lock file in directory : "+QSYNC_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
+                    Log.e("SetEventNetworkLock", "Failed to create network lock file in directory : "+ECOSYS_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
                 }
-                Log.d("SetEventNetworkLock", "CREATED network lock file in directory : "+QSYNC_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
+                Log.d("SetEventNetworkLock", "CREATED network lock file in directory : "+ECOSYS_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
 
             } else {
                 // Remove the network lock file
-                File lockFile = new File(QSYNC_WRITABLE_DIRECTORY,deviceId + ".nlock");
+                File lockFile = new File(ECOSYS_WRITABLE_DIRECTORY,deviceId + ".nlock");
                 if (!lockFile.delete()) {
                     Log.e("SetEventNetworkLock", "Failed to remove network lock file");
                 }
@@ -836,7 +836,7 @@ public class Networking {
     public static boolean getEventNetworkLockForDevice(String deviceId) {
         try {
             // Check if the network lock file exists
-            File lockFile = new File(QSYNC_WRITABLE_DIRECTORY,deviceId + ".nlock");
+            File lockFile = new File(ECOSYS_WRITABLE_DIRECTORY,deviceId + ".nlock");
             return lockFile.exists();
         } catch (Exception e) {
             Log.e("GetEventNetworkLock", "Error occurred in GetEventNetworkLockForDevice", e);
@@ -1127,18 +1127,18 @@ public class Networking {
 
 
     public static void handleLargageAerien(Globals.QEvent data, String ipAddress,String msg,boolean assumeYes,boolean multiple) {
-        String fileName = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/"+data.FilePath).getName();
+        String fileName = new File(ECOSYS_WRITABLE_DIRECTORY,"/largage_aerien/"+data.FilePath).getName();
 
 
 
         String userResponse = BackendApi.askInput("[OTDL]", msg,context,false);
         if (userResponse.equalsIgnoreCase("y") || userResponse.equalsIgnoreCase("yes") || userResponse.equalsIgnoreCase("oui") || assumeYes) {
             try {
-                boolean directoryExists = new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien").exists();
+                boolean directoryExists = new File(ECOSYS_WRITABLE_DIRECTORY,"/largage_aerien").exists();
                 if (!directoryExists) {
-                    new File(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien").mkdirs();
+                    new File(ECOSYS_WRITABLE_DIRECTORY,"/largage_aerien").mkdirs();
                 }
-                String filePath = PathUtils.joinPaths(QSYNC_WRITABLE_DIRECTORY,"/largage_aerien/" + fileName);
+                String filePath = PathUtils.joinPaths(ECOSYS_WRITABLE_DIRECTORY,"/largage_aerien/" + fileName);
                 data.setFilePath(filePath);
                 data.Delta.setFilePath(filePath);
 

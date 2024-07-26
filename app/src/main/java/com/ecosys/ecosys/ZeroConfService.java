@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class ZeroConfService {
 
-    private static final String TAG = "Qsync Server : ZeroConfService";
+    private static final String TAG = "Ecosys Server : ZeroConfService";
     private static final String SERVICE_TYPE = "_ecosys._tcp.";
 
     private final Context context;
@@ -64,7 +64,7 @@ public class ZeroConfService {
         serviceInfo.setPort(PORT);
 
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener);
-        Log.d(TAG,"Device Qsync service registered."+serviceInfo.toString());
+        Log.d(TAG,"Device Ecosys service registered."+serviceInfo.toString());
 
 
         // put all the devices as disconnected to start fresh
@@ -140,7 +140,7 @@ public class ZeroConfService {
 
                 if(serviceInfo.getServiceType().equals(SERVICE_TYPE)){
                     nsdManager.resolveService(serviceInfo,initializeResolveListener());
-                    Log.d(TAG, "Qsync friend service found :D : " + serviceInfo);
+                    Log.d(TAG, "Ecosys friend service found :D : " + serviceInfo);
 
                 }
 

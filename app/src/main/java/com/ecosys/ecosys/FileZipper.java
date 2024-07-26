@@ -25,7 +25,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 
 public class FileZipper {
-    private static final String TAG = "Qsync File Zipper";
+    private static final String TAG = "Ecosys File Zipper";
 
     public static void zipFiles(Context context, Uri[] fileUris, String outputZipFilePath) {
         try (FileOutputStream fos = new FileOutputStream(outputZipFilePath);

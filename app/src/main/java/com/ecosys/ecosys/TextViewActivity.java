@@ -25,7 +25,7 @@ import java.io.IOException;
 
 public class TextViewActivity extends AppCompatActivity {
 
-    private static String TAG = "Qsync Server : TextViewActivity";
+    private static String TAG = "Ecosys Server : TextViewActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

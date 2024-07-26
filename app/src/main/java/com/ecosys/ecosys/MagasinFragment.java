@@ -72,7 +72,7 @@ public class MagasinFragment extends Fragment {
     private void fetchConfig(View view) {
         new Thread(() -> {
             try {
-                URL url = new URL("https://raw.githubusercontent.com/ThaaoBlues/qsync/master/magasin_database.json");
+                URL url = new URL("https://raw.githubusercontent.com/ThaaoBlues/ecosys/master/magasin_database.json");
                 HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 

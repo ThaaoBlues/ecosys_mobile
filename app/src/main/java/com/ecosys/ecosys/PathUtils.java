@@ -27,7 +27,7 @@ import java.nio.channels.FileChannel;
 public class PathUtils {
 
 
-    private static String TAG = "Qsync Server : PathUtils";
+    private static String TAG = "Ecosys Server : PathUtils";
     public static String joinPaths(String path1, String path2) {
         File file1 = new File(path1);
         File file2 = new File(file1, path2);
@@ -58,7 +58,7 @@ public class PathUtils {
 
             // Delete the original file after successful copy
             sourceFile.delete();
-            Log.d("Qsync Path Utils","Downloads file path : "+destinationPath);
+            Log.d("Ecosys Path Utils","Downloads file path : "+destinationPath);
             return destinationPath;
         } catch (IOException e) {
             e.printStackTrace();

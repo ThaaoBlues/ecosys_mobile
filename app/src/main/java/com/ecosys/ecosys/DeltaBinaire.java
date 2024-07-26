@@ -149,7 +149,7 @@ public class DeltaBinaire {
             Log.e(TAG, "Error building delta: " + e.getMessage());
         }
 
-        Log.d("Qsync Server : binary delta","build this delta : ");
+        Log.d("Ecosys Server : binary delta","build this delta : ");
 
         return delta;
     }*/
@@ -211,9 +211,9 @@ public class DeltaBinaire {
             int bytesRead = 0;
             try {
                 bytesRead = newFileStream.read(newFileBuff);
-                //Log.i("Qsync Server","byte index : "+byteIndex);
+                //Log.i("Ecosys Server","byte index : "+byteIndex);
             } catch (IOException e) {
-                Log.i("Qsync Server","Error while reading File for Largage Aerien"+e.getMessage());
+                Log.i("Ecosys Server","Error while reading File for Largage Aerien"+e.getMessage());
             }
             if (bytesRead == -1 ) {
                 break;
@@ -312,7 +312,7 @@ public class DeltaBinaire {
 
                 globalIndex += 1;
 
-                //Log.i("Qsync Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
+                //Log.i("Ecosys Server","Loop condition : "+(i < oldFileSize || byteIndex < newFileSize));
 
             }
 
