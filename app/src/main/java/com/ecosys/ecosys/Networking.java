@@ -439,11 +439,12 @@ public class Networking {
                     }
                     if ("file".equals(fileType)) {
                         acces.rmFile(absoluteFilePath);
-                        removeFromFilesystem(root,relativePath,!acces.isApp(),false);
                     } else {
                         acces.rmFolder(absoluteFilePath);
-                        removeFromFilesystem(root,relativePath,!acces.isApp(),true);
                     }
+
+                    removeFromFilesystem(root,relativePath,!acces.isApp());
+
                     break;
                 case "[CREATE]":
 
@@ -813,7 +814,7 @@ public class Networking {
                 // Create a network lock file
                 File lockFile = new File(QSYNC_WRITABLE_DIRECTORY,deviceId + ".nlock");
                 if(lockFile.exists()){
-                    removeFromFilesystem(null,lockFile.getPath(),false,false);
+                    removeFromFilesystem(null,lockFile.getPath(),false);
                 }
                 if (!lockFile.createNewFile()) {
                     Log.e("SetEventNetworkLock", "Failed to create network lock file in directory : "+QSYNC_WRITABLE_DIRECTORY+"/"+deviceId+".nlock");
@@ -845,21 +846,34 @@ public class Networking {
 
 
 
-    public static void removeFromFilesystem(DocumentFile root,String relativePath,boolean needSAF,boolean isDir) {
+    public static void removeFromFilesystem(DocumentFile root,String relativePath,boolean needSAF) {
 
         if(needSAF){
 
             Uri fileUri = Uri.withAppendedPath(root.getUri(),relativePath);
 
 
-            DocumentFile f;
-            if(isDir){
-                f = DocumentFile.fromSingleUri(context,fileUri);
-            }else{
-                f = DocumentFile.fromTreeUri(context,fileUri);
+
+            String[] parts = relativePath.split("/");
+            DocumentFile currentFile = root;
+
+            // Traverse the path and create directories if necessary
+
+            // as Uri creation is a bit funky with appended path
+            // we have to crawl to the desired end of the tree x')
+            for (String part : parts) {
+                if (!part.isEmpty()) {
+                    currentFile = currentFile.findFile(part);
+                    if (currentFile == null) {
+                        Log.d(TAG, "Could not find the file to delete :  " + fileUri.getPath());
+                        return;
+                    }
+                }
             }
 
-            f.delete();
+            currentFile.delete();
+            Log.d(TAG,"File deleted : "+currentFile.getUri().getPath());
+
 
         }else{
 
