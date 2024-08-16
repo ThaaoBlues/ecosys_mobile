@@ -1249,21 +1249,25 @@ public class Networking {
                             FileTar.untarFile(filePath,Path.of(filePath).getParent().toString());
                         }
                     }else{
-                        BackendApi.openFile(context,
-                                Uri.parse(
-                                        filePath
-                                )
-                        );
+
 
                         // open textview if we are receiving a text file
                         if(fileName.endsWith(".txt")){
+                            Log.d(TAG,"Opening textview activity to view text file : "+filePath);
                             Intent myIntent = new Intent(context, TextViewActivity.class);
                             myIntent.putExtra(
                                     "file_path",
                                     filePath
                             );
+                            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                             context.startActivity(myIntent);
 
+                        }else {
+                            BackendApi.openFile(context,
+                                    Uri.parse(
+                                            filePath
+                                    )
+                            );
                         }
                     }
 
