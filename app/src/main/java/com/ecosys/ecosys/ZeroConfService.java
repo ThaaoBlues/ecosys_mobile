@@ -11,6 +11,7 @@ package com.ecosys.ecosys;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -42,24 +43,14 @@ public class ZeroConfService {
     }
 
 
-
-
-
-    private String getAndroidId() {
-        // Retrieve the Android ID
-        String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        return androidId;
-    }
-
     public void register() {
-        String serviceName = getAndroidId();
+        String serviceName = Build.MANUFACTURER+" "+Build.MODEL;
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceName(serviceName);
         serviceInfo.setServiceType(SERVICE_TYPE);
         String device_id = acces.getMyDeviceId();
         serviceInfo.setAttribute("device_id",device_id);
-        serviceInfo.setAttribute("version","0.0.1-PreAlpha");
-
+        serviceInfo.setAttribute("version",Globals.VERSION);
 
         serviceInfo.setPort(PORT);
 

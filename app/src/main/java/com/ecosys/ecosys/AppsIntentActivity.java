@@ -80,13 +80,24 @@ public class AppsIntentActivity extends AppCompatActivity {
             switch (actionFlag){
                 case "[INSTALL_APP]":
                     installApp(intent,packageName,acces);
+                    intent = new Intent(Intent.ACTION_SEND);
+
+                    intent.setClassName(packageName,packageName+".EcosysCallbackActivity");
+                    intent.putExtra("action_flag","[INSTALL_APP]");
+                    intent.putExtra("secure_id",acces.getSecureId());
+                    startActivity(intent);
+                    finish();
                     break;
 
                 case "[CREATE_FILE]":
 
+                    String secureId = intent.getStringExtra("secure_id");
+                    if(secureId == null){
+                        textView.setText(R.string.app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own);
+                    }
 
-                    Log.d(TAG,"AUTHORITY : "+getReferrer().getAuthority());
-                    if(packageName.equals(getReferrer().getAuthority()) && acces.checkAppExistenceFromName(packageName)){
+                    acces.setSecureId(secureId);
+                    if(acces.checkAppExistenceFromSecureId(secureId)){
                        Log.d(TAG,"IN CREATE FILE");
                         DocumentFile rootFolder = DocumentFile.fromFile(
                                 getExternalFilesDir(null)
@@ -139,9 +150,14 @@ public class AppsIntentActivity extends AppCompatActivity {
 
                 case "[CREATE_DIRECTORY]":
 
-                    Log.d(TAG,"AUTHORITY : "+getReferrer().getAuthority());
-                    if(packageName.equals(getReferrer().getAuthority()) && acces.checkAppExistenceFromName(packageName)){
-                        Log.d(TAG,"IN CREATE FILE");
+                    secureId = intent.getStringExtra("secure_id");
+                    if(secureId == null){
+                        textView.setText(R.string.app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own);
+                    }
+
+                    acces.setSecureId(secureId);
+                    if(acces.checkAppExistenceFromSecureId(secureId)){
+                        Log.d(TAG,"IN CREATE DIRECTORY");
                         DocumentFile rootFolder = DocumentFile.fromFile(
                                 getExternalFilesDir(null)
                         );

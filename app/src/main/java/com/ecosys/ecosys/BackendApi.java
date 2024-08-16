@@ -8,20 +8,31 @@
 
 package com.ecosys.ecosys;
 
+import static android.app.Activity.RESULT_OK;
+
+import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
+import static androidx.core.content.ContextCompat.startActivity;
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
 
 import java.util.Map;
 
@@ -29,7 +40,17 @@ public class BackendApi {
     private static final String TAG = "BackendApi";
 
     private static final String ECOSYS_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
+        // Initialize the ActivityResultLauncher
 
+    public static void launchInputActivityAndBroadCastResult( String flag, String inputContext, Context context, boolean textMode) {
+        Intent intent = new Intent(context, InputActivity.class);
+        intent.putExtra(InputActivity.FLAG_KEY, flag);
+        intent.putExtra(InputActivity.INPUT_CONTEXT_KEY, inputContext);
+        intent.putExtra(InputActivity.TEXT_MODE_KEY, textMode);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // Use the ActivityResultLauncher to start the InputActivity
+        context.startActivity(intent);
+    }
     public static String askInput(String flag, String inputContext,Context context,Boolean textMode) {
         final String[] result = new String[1];
 
@@ -39,6 +60,7 @@ public class BackendApi {
                 final Handler handler = new Handler(Looper.getMainLooper());
 
                 handler.post(new Runnable() {
+                    @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void run() {
 
@@ -65,8 +87,14 @@ public class BackendApi {
                             result[0] = null;
                             dialog.cancel();
                         });
+
+                        AlertDialog alert = builder.create();
                         Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
-                        builder.show();
+
+                        // as we send this from a service started from an activity that does not exists anymore
+                        alert.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                        alert.show();
+
                     }
                 });
 

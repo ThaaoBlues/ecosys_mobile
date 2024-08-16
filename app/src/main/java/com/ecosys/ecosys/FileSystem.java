@@ -213,7 +213,8 @@ public class FileSystem {
                         delta,
                         relativePath,
                         "",
-                        acces.getSecureId()
+                        acces.getSecureId(),
+                        0
                 );
 
                 Globals.GenArray<Globals.QEvent> queue = new Globals.GenArray<>();
@@ -270,7 +271,8 @@ public class FileSystem {
                                 delta,
                                 relativePath,
                                 "",
-                                acces.getSecureId()
+                                acces.getSecureId(),
+                                acces.getFileLastVersionId(relativePath)-1
                         );
 
                         BackendApi.showLoadingNotification(context,"Sending update to other devices");
@@ -319,7 +321,8 @@ public class FileSystem {
                         null,
                         relativePath,
                         "",
-                        acces.getSecureId()
+                        acces.getSecureId(),
+                        0
                 );
 
                 ProcessExecutor.Function f = new ProcessExecutor.Function() {

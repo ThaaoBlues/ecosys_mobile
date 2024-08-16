@@ -16,6 +16,7 @@ import java.util.List;
 public class Globals {
 
 
+    public static final String VERSION = "0.0.2-Beta";
 
     public static class QEvent {
         public String Flag;
@@ -24,15 +25,17 @@ public class Globals {
         public String FilePath;
         public String NewFilePath;
         public String SecureId;
+        public long VersionToPatch;
 
         // Constructor
-        public QEvent(String flag, String fileType, DeltaBinaire.Delta delta, String filePath, String newFilePath, String secureId) {
+        public QEvent(String flag, String fileType, DeltaBinaire.Delta delta, String filePath, String newFilePath, String secureId,long versionToPatch) {
             this.Flag = flag;
             this.FileType = fileType;
             this.Delta = delta;
             this.FilePath = filePath;
             this.NewFilePath = newFilePath;
             this.SecureId = secureId;
+            this.VersionToPatch = versionToPatch;
         }
 
         @Override
@@ -44,6 +47,7 @@ public class Globals {
                     ", filePath='" + this.FilePath + '\'' +
                     ", newFilePath='" + this.NewFilePath + '\'' +
                     ", secureId='" + this.SecureId + '\'' +
+                    ", versionToPatch="+this.VersionToPatch+
                     '}';
         }
 
@@ -96,6 +100,13 @@ public class Globals {
             this.SecureId = secureId;
         }
 
+        public long getVersionToPatch() {
+            return this.VersionToPatch;
+        }
+
+        public void setVersionToPatch(int versionToPatch) {
+            this.VersionToPatch = versionToPatch;
+        }
 
         public String serialize() {
             StringBuilder EventStringBuilder = new StringBuilder();
@@ -127,6 +138,8 @@ public class Globals {
             EventStringBuilder.append(this.FilePath);
             EventStringBuilder.append(";");
             EventStringBuilder.append(this.NewFilePath);
+            EventStringBuilder.append(";");
+            EventStringBuilder.append(this.VersionToPatch);
             EventStringBuilder.append(";");
             EventStringBuilder.append(this.SecureId);
 
@@ -163,7 +176,8 @@ public class Globals {
             this.FileType = parts[1];
             this.FilePath = parts[4];
             this.NewFilePath = parts[5];
-            this.SecureId = parts[6];
+            this.VersionToPatch = parts[6].isBlank() ? 0 : Long.parseLong(parts[6]);
+            this.SecureId = parts[7];
         }
     }
 

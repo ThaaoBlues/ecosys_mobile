@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
         android:allowBackup="true"
@@ -18,16 +19,20 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Ecosys"
         tools:targetApi="31">
+        <activity
+            android:name=".InputActivity"
+            android:exported="false" />
+
         <service
             android:name=".StartupService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
-        <receiver android:name=".BootReceiver"
+        <receiver
+            android:name=".BootReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
 
@@ -61,12 +66,10 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.ecosys.ecosys.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true"
-            >
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
-
         </provider>
 
         <activity

@@ -8,6 +8,8 @@
 
 package com.ecosys.ecosys;
 
+import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -57,6 +59,8 @@ public class Networking {
     private static boolean setupDlLock;
 
     private static ProcessExecutor.Function networkingCallForPicker;
+
+    private static String broadcastresult = null;
 
     Networking(Context mcontext, String mFilesDir) {
         context = mcontext;
@@ -179,7 +183,8 @@ public class Networking {
                         null,
                         "",
                         "",
-                        ""
+                        "",
+                        0
                 );
                 data.deserializeQEvent(body_buff.toString());
 
@@ -315,12 +320,72 @@ public class Networking {
                         );
                         break;
                     default:
+
+
+                        // Check if update has already been made or not
+                        // as multiple devices may send the same patch
+
+                        switch (data.getFileType()) {
+                            case "file":
+
+                                // voir ici parce que dans certains evenements ça pourrait foirer
+                                // par exemple un remove puis un update reçu en retard ne passerait pas
+                                // et resterait dans les retards chez l'autre  :/
+                                if (acces.checkFileExists(data.getFilePath())) {
+                                    // remove event has always a version_id of 0
+                                    if (acces.getFileLastVersionId(data.getFilePath()) > data.getVersionToPatch() && !data.getFlag().equals("[REMOVE]")) {
+                                        // don't do outdated modifications
+                                        sendModificationDoneEvent(
+                                                clientSocket.getInetAddress().getHostAddress(),
+                                                acces,
+                                                data.FilePath,
+                                                data.VersionToPatch+1
+                                        );
+                                        return;
+                                    }
+                                } else {
+                                    // un ev qui arrive en retard apres une suppression
+                                    if (!data.getFlag().equals("[CREATE]")) {
+                                        // don't do outdated modifications
+                                        sendModificationDoneEvent(
+                                                clientSocket.getInetAddress().getHostAddress(),
+                                                acces,
+                                                data.FilePath,
+                                                data.VersionToPatch
+                                        );
+                                        return;
+                                    }
+                                }
+
+                                break;
+
+                            case "folder":
+                                // as a folder event is always related with moves/deletions or creation
+                                if (acces.checkFileExists(data.getFilePath()) == data.getFlag().equals("[CREATE]")) {
+                                    // don't do outdated modifications
+                                    sendModificationDoneEvent(
+                                            clientSocket.getInetAddress().getHostAddress(),
+                                            acces,
+                                            data.FilePath,
+                                            data.VersionToPatch
+                                    );
+                                    return;
+                                }
+                                break;
+
+                            default:
+                                break;
+                        }
+
+
+                        //store the event for offline linked devices
+                        // so the update does not have to come from the same device for every others
+                        acces.storeReceivedEventForOthersDevices(data);
+
+
+
                         // regular file event
                         handleEvent(device_id, data);
-                        // send back a modification confirmation, so the other end can remove this machine device_id
-                        // from concerned sync task retard entries
-                        String response = acces.getMyDeviceId() + ";" + acces.getSecureId() + ";" + "[MODIFICATION_DONE]";
-                        outputStream.writeBytes(response);
                         break;
                 }
                 outputStream.flush();
@@ -565,7 +630,8 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.getSecureId()
+                acces.getSecureId(),
+                0
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -597,7 +663,8 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.getSecureId()
+                acces.getSecureId(),
+                0
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -627,7 +694,8 @@ public class Networking {
                 null,
                 "",
                 "",
-                acces.getSecureId()
+                acces.getSecureId(),
+                0
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -656,7 +724,8 @@ public class Networking {
                 null,
                 relativePath,
                 "",
-                acces.getSecureId()
+                acces.getSecureId(),
+                acces.getFileLastVersionId(relativePath)-1
         ).serialize();
 
         Log.d(TAG,"serialized Event");
@@ -741,7 +810,8 @@ public class Networking {
                         Thread.sleep(1000);
                     }
                 } catch (IOException e) {
-                    if(acces.isDeviceLinked(deviceId)) {
+
+                    if(acces.isDeviceLinked(deviceId) && isEventFilesystemRelated(eventQueue.get(j).Flag)) {
                         acces.setDevicedbState(deviceId, false);
 
                         String modType;
@@ -759,7 +829,7 @@ public class Networking {
                                 modType = "m";
                                 break;
                             default:
-                                throw new RuntimeException("Error while refreshing retard table : Unknown flag : " + eventQueue.get(j).Flag);
+                                throw new RuntimeException("Error while refreshing retard table : Unknown flag passed the flag filter : " + eventQueue.get(j).Flag);
                         }
                         acces.refreshCorrespondingRetardRow(eventQueue.get(j).FilePath, modType);
                         Log.e("SendDeviceEvent", "Error occurred while sending event over network", e);
@@ -1069,7 +1139,8 @@ public class Networking {
                         null,
                         relativePath,
                         "",
-                        acces.getSecureId()
+                        acces.getSecureId(),
+                        0
 
                 );
 
@@ -1105,7 +1176,8 @@ public class Networking {
                             DeltaBinaire.buildDeltaFromInputStream(relativePath,fileSize,inputStream,0,new byte[0]),
                             relativePath,
                             "",
-                            acces.getSecureId()
+                            acces.getSecureId(),
+                            0
                     );
                     inputStream.close();
                     Log.d(TAG,"Notifying to create file : "+event.FilePath);
@@ -1131,8 +1203,29 @@ public class Networking {
 
 
 
-        String userResponse = BackendApi.askInput("[OTDL]", msg,context,false);
+        //String userResponse = BackendApi.askInput("[OTDL]", msg,context,false);
+
+
+        // Now you can call the method to start the InputActivity
+        BackendApi.launchInputActivityAndBroadCastResult("[SINGLE_LINE_INPUT_OR_CONFIRMATION_DIALOG]", msg, context, false);
+        // get result from startup service
+
+        while (broadcastresult == null){
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        String userResponse = broadcastresult;
+
+        Log.d(TAG,"Reçu le resultat : "+userResponse);
+
+
         if (userResponse.equalsIgnoreCase("y") || userResponse.equalsIgnoreCase("yes") || userResponse.equalsIgnoreCase("oui") || assumeYes) {
+
+            resetBroadcastResult();
             try {
                 boolean directoryExists = new File(ECOSYS_WRITABLE_DIRECTORY,"/largage_aerien").exists();
                 if (!directoryExists) {
@@ -1221,7 +1314,8 @@ public class Networking {
                     delta,
                     fileName,
                     "",
-                    "le_ciel_me_tombe_sur_la_tete_000000000000"
+                    "le_ciel_me_tombe_sur_la_tete_000000000000",
+                    0
             );
 
             Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
@@ -1283,7 +1377,8 @@ public class Networking {
                 null,
                 acces.isApp() ? acces.getAppName() : "",
                 String.valueOf(acces.getSyncCreationDate()),
-                acces.getSecureId()
+                acces.getSecureId(),
+                0
         );
         Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
         dummyDevice.add(deviceIp);
@@ -1292,6 +1387,21 @@ public class Networking {
         sendDeviceEventQueueOverNetwork(dummyDevice, acces.getSecureId(), eventQueue, deviceIp);
 
     }
+    
+    public static void resetBroadcastResult(){
+        broadcastresult = null;
+    }
+    public static void setBroadcastResult(String result){
+        broadcastresult = result;
+    }
 
+    private static boolean isEventFilesystemRelated(String flag) {
+        boolean ret = !flag.equals("[MOTDL]");
+        ret = ret && !flag.equals("[OTDL]");
+        ret = ret && !flag.equals("[LINK_DEVICE]");
+        ret = ret && !flag.equals("[UNLINK_DEVICE]");
+        ret = ret && !flag.equals("[MODIFICATION_DONE]");
+        return ret;
+    }
 
 }

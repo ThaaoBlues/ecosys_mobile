@@ -13,6 +13,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -26,25 +27,39 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.ecosys.ecosys.databinding.ActivityMainBinding;
 
+import android.provider.Settings;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import java.security.Permission;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
+    private static final int MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW = 3;
+
+    private static final String TAG = "Ecosys : MainActivity";
     private SharedPreferences prefs;
 
 
 
 
-    public void requestPermission(final Activity activity, final String permission, final int requestCode) {
+    public void requestPermission(final Activity activity, final String permission, final int requestCode, final String msg) {
+        Log.d(TAG,"Requestion permission if not granted : "+permission);
+
         if (ActivityCompat.checkSelfPermission(activity, permission) != PackageManager.PERMISSION_GRANTED) {
+
+            if(requestCode == MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW){
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                startActivity (intent);
+            }
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
                 // Show an explanation to the user why you need the permission
                 // After the user sees the explanation, try again to request the permission
                 new AlertDialog.Builder(this)
-                        .setTitle("Notification Permission Needed")
-                        .setMessage("This app needs the Notification permission to show you when it is talking to your others devices.")
+                        .setTitle("Permission Needed")
+                        .setMessage(msg)
                         .setPositiveButton("OK", (dialog, which) -> {
                             ActivityCompat.requestPermissions(this,
                                     new String[]{permission},
@@ -60,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
                         requestCode);
             }
         } else {
+            Log.d(TAG,"Permission already granted");
             // Permission has already been granted
         }
     }
@@ -78,6 +94,9 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     // Permission denied
                 }
+                break;
+
+            case MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW:
                 break;
         }
     }
@@ -99,8 +118,18 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         */
 
-        requestPermission(MainActivity.this,"android.permission.POST_NOTIFICATIONS",MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS);
-
+        requestPermission(
+                MainActivity.this,
+                "android.permission.POST_NOTIFICATIONS",
+                MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS,
+                "This app needs the Notification permission to show you when it is talking to your others devices."
+        );
+        /*requestPermission(
+                MainActivity.this,
+                "android.permission.SYSTEM_ALERT_WINDOW",
+                MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW,
+                "This app needs the system alert permission to ask your approval when you receive a Largage Aerien."
+        );*/
 
 
         prefs = getSharedPreferences("com.ecosys.ecosys", MODE_PRIVATE);
@@ -111,6 +140,16 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this,SelectorActivity.class);
         intent.putExtra("flag","[MAKE_SURE_SERVERS_ARE_RUNNING]");
         startActivity(intent);
+
+
+
+        /*if(!ProcessExecutor.isMyServiceRunning(MainActivity.this,StartupService.class)){
+            Log.d(TAG,"Service was not running at application startup !! Starting it now");
+            Intent intent = new Intent(this, StartupService.class);
+            startService(intent);
+            finish();
+        }*/
+
 
     }
 

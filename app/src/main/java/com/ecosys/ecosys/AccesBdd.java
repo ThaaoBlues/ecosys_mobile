@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 import java.io.ByteArrayInputStream;
@@ -817,6 +818,19 @@ public class AccesBdd {
         }
     }
 
+    public boolean checkAppExistenceFromSecureId(String secureId) {
+        Cursor cursor = db.rawQuery("SELECT * FROM apps WHERE secure_id=?",new String[]{
+                secureId
+        });
+
+        boolean ex = cursor.moveToFirst();
+
+        cursor.close();
+
+        return ex;
+    }
+
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private class FileVisitor extends SimpleFileVisitor<Path> {
         private final String rootPath;
@@ -1191,7 +1205,7 @@ public class AccesBdd {
 
         // FILES
         Map<String, Globals.GenArray<Globals.QEvent>> queue = new HashMap<>();
-        Cursor cursor = db.rawQuery("SELECT r.secure_id,d.delta,r.mod_type,r.path,r.type FROM retard AS r JOIN delta AS d ON r.path=d.path AND r.version_id=d.version_id AND r.secure_id=d.secure_id WHERE r.devices_to_patch LIKE ?",
+        Cursor cursor = db.rawQuery("SELECT r.secure_id,d.delta,r.mod_type,r.path,r.type,r.version_id FROM retard AS r JOIN delta AS d ON r.path=d.path AND r.version_id=d.version_id AND r.secure_id=d.secure_id WHERE r.devices_to_patch LIKE ?",
 
                 new String[]{
                         "%"+deviceId+"%"
@@ -1199,9 +1213,20 @@ public class AccesBdd {
                 );
         while (cursor.moveToNext()) {
             // build delta
-            Globals.QEvent event = new Globals.QEvent("","",null,"","","");
+            Globals.QEvent event = new Globals.QEvent(
+                    "",
+                    "",
+                    null,
+                    "",
+                    "",
+                    "",
+                    0
+                    );
             event.setFlag(Globals.modTypesReverse().get(cursor.getString(2)));
             event.setFileType(cursor.getString(4));
+            int versionId = cursor.getInt(4);
+            // as ion creation version_id will be set to zero
+            event.setVersionToPatch(  versionId == 0 ? versionId:versionId-1 );
 
             try{
                 ObjectInputStream obj = new ObjectInputStream(new
@@ -1232,7 +1257,8 @@ public class AccesBdd {
 
         // FOLDERS
 
-        cursor = db.rawQuery("SELECT r.secure_id,r.mod_type,r.path,r.type FROM retard AS r WHERE r.devices_to_patch LIKE ? AND r.type='folder'",
+        cursor = db.rawQuery(
+                "SELECT r.secure_id,r.mod_type,r.path,r.type FROM retard AS r WHERE r.devices_to_patch LIKE ? AND r.type='folder'",
 
                 new String[]{
                         "%"+deviceId+"%"
@@ -1240,11 +1266,21 @@ public class AccesBdd {
                 );
         while (cursor.moveToNext()) {
             // build delta
-            Globals.QEvent event = new Globals.QEvent("","",null,"","","");
+            Globals.QEvent event = new Globals.QEvent(
+                    "",
+                    "",
+                    null,
+                    "",
+                    "",
+                    "",
+                    0
+            );
             event.setFlag(Globals.modTypesReverse().get(cursor.getString(1)));
             event.setFileType(cursor.getString(3));
             event.setFilePath(cursor.getString(2));
             event.setSecureId(cursor.getString(0));
+            // the stored version_id is the version resulting of the patch, not the version to which apply the patch
+            event.setVersionToPatch(0);
 
             if (!queue.containsKey(event.getSecureId())) {
                 queue.put(event.getSecureId(), new Globals.GenArray<>());
@@ -1811,4 +1847,153 @@ public class AccesBdd {
         }
         updateCachedFile(file, relativePath);
     }
+
+
+
+
+
+
+    public void storeReceivedEventForOthersDevices(Globals.QEvent event) {
+        // Map of modification types
+        HashMap<String, String> MODTYPES = new HashMap<>();
+        MODTYPES.put("creation", "c");
+        MODTYPES.put("delete", "d");
+        MODTYPES.put("patch", "p");
+        MODTYPES.put("move", "m");
+
+        // Get only offline devices
+        Globals.GenArray<String> offlineDevices = getSyncOfflineDevices();
+        if (!offlineDevices.isEmpty()) {
+            StringBuilder strIdsBuilder = new StringBuilder();
+            for (int i = 0; i < offlineDevices.size(); i++) {
+                strIdsBuilder.append(offlineDevices.get(i)).append(";");
+            }
+            // Remove the last semicolon
+            String strIds = strIdsBuilder.substring(0, strIdsBuilder.length() - 1);
+
+            if ("file".equals(event.getFileType())) {
+                switch (event.getFlag()) {
+                    case "[UPDATE]":
+                        try {
+                            db.execSQL("INSERT INTO delta (path,version_id,delta,secure_id) VALUES(?,?,?,?)",
+                                    new Object[]{
+                                            event.getFilePath(),
+                                            event.getVersionToPatch() + 1,
+                                            serialize(event.getDelta()),
+                                            secureId
+                                    });
+
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,\"file\",?)",
+                                    new Object[]{
+                                            event.getVersionToPatch() + 1,
+                                            event.getFilePath(),
+                                            MODTYPES.get("patch"),
+                                            strIds,
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while storing binary delta in database: " + e.getMessage());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                        break;
+
+                    case "[CREATE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,\"file\",?)",
+                                    new Object[]{
+                                            event.getVersionToPatch() + 1,
+                                            event.getFilePath(),
+                                            MODTYPES.get("creation"),
+                                            strIds,
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard: " + e.getMessage());
+                        }
+                        break;
+
+                    case "[REMOVE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,\"file\",?)",
+                                    new Object[]{
+                                            event.getVersionToPatch() + 1,
+                                            event.getFilePath(),
+                                            MODTYPES.get("delete"),
+                                            strIds,
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard: " + e.getMessage());
+                        }
+                        break;
+
+                    case "[MOVE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)",
+                                    new Object[]{
+                                            event.getVersionToPatch() + 1,
+                                            event.getFilePath(),
+                                            MODTYPES.get("move"),
+                                            strIds,
+                                            event.getFileType(),
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard: " + e.getMessage());
+                        }
+                        break;
+                }
+            } else {
+                switch (event.getFlag()) {
+                    case "[CREATE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,\"folder\",?)",
+                                    new Object[]{
+                                            0,
+                                            event.getFilePath(),
+                                            MODTYPES.get("creation"),
+                                            strIds,
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard in AddFolderToRetard: " + e.getMessage());
+                        }
+                        break;
+
+                    case "[MOVE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,?,?)",
+                                    new Object[]{
+                                            0,
+                                            event.getFilePath(),
+                                            MODTYPES.get("move"),
+                                            strIds,
+                                            event.getFileType(),
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard: " + e.getMessage());
+                        }
+                        break;
+
+                    case "[REMOVE]":
+                        try {
+                            db.execSQL("INSERT INTO retard (version_id,path,mod_type,devices_to_patch,type,secure_id) VALUES(?,?,?,?,\"folder\",?)",
+                                    new Object[]{
+                                            0,
+                                            event.getFilePath(),
+                                            MODTYPES.get("delete"),
+                                            strIds,
+                                            secureId
+                                    });
+                        } catch (SQLException e) {
+                            Log.e("DB_ERROR", "Error while inserting new retard: " + e.getMessage());
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
 }
