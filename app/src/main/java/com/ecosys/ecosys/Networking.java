@@ -769,7 +769,7 @@ public class Networking {
             for (int j=0;j<eventQueue.size();j++) {
 
 
-                Log.d("SendDeviceEvent", "SENDING EVENT : " +  eventQueue.get(j));
+                //Log.d("SendDeviceEvent", "SENDING EVENT : " +  eventQueue.get(j));
 
                 setEventNetworkLockForDevice(deviceId, true);
 
@@ -788,7 +788,7 @@ public class Networking {
 
                     String ser_event = eventQueue.get(j).serialize();
 
-                    Log.d(TAG,"serialized Event");
+                    //Log.d(TAG,"serialized Event  = "+ser_event);
 
                     BufferedOutputStream bos = new BufferedOutputStream(outputStream);
                     // Send the message

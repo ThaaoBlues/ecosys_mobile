@@ -27,6 +27,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.fragment.app.FragmentTransition;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.ecosys.ecosys.databinding.FragmentLargageAerienBinding;
@@ -70,6 +72,14 @@ public class LargageAerienFragment extends Fragment {
                 NavHostFragment.findNavController(LargageAerienFragment.this)
                         .navigate(R.id.action_FirstFragment_to_SecondFragment)
         );
+
+        binding.buttonLargageVersMagasin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavHostFragment.findNavController(LargageAerienFragment.this)
+                        .navigate(R.id.action_LargageAerienFragment_to_fragment_magasin);
+            }
+        });
 
 
 

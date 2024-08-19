@@ -200,6 +200,12 @@ public class StartupService extends Service implements FolderPickerCallback{
     }
 
 
+    @Override
+    public void onDestroy(){
+        unregisterReceiver(resultReceiver);
+    }
+
+
 }
 
 

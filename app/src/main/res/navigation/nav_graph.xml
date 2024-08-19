@@ -21,6 +21,9 @@
         <action
             android:id="@+id/action_FirstFragment_to_SecondFragment"
             app:destination="@id/SynchronisationsFragment" />
+        <action
+            android:id="@+id/action_LargageAerienFragment_to_fragment_magasin"
+            app:destination="@id/fragment_magasin" />
     </fragment>
     <fragment
         android:id="@+id/SynchronisationsFragment"
@@ -29,11 +32,14 @@
         tools:layout="@layout/fragment_synchronisations">
         <action
             android:id="@+id/action_SynchronisationsFragment_to_fragment_magasin"
-            app:destination="@id/fragment_magasin_constraint_layout" />
+            app:destination="@id/fragment_magasin" />
+        <action
+            android:id="@+id/action_SynchronisationsFragment_to_LargageAerienFragment"
+            app:destination="@id/LargageAerienFragment" />
     </fragment>
 
     <fragment
-        android:id="@+id/fragment_magasin_constraint_layout"
+        android:id="@+id/fragment_magasin"
         android:label="fragment magasin"
         tools:layout="@layout/fragment_magasin"
         android:name="com.ecosys.ecosys.MagasinFragment"
@@ -43,5 +49,8 @@
         <action
             android:id="@+id/action_fragment_magasin_to_LargageAerienFragment"
             app:destination="@id/LargageAerienFragment" />
+        <action
+            android:id="@+id/action_fragment_magasin_to_SynchronisationsFragment"
+            app:destination="@id/SynchronisationsFragment" />
     </fragment>
 </navigation>

@@ -58,6 +58,15 @@ public class SynchronisationsFragment extends Fragment {
                         .navigate(R.id.action_SynchronisationsFragment_to_fragment_magasin)
         );
 
+        binding.buttonSynchroVersLargageAerien.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                NavHostFragment.findNavController(SynchronisationsFragment.this)
+                        .navigate(R.id.action_SynchronisationsFragment_to_LargageAerienFragment);
+
+            }
+        });
+
 
         selectFolderLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -209,12 +218,7 @@ public class SynchronisationsFragment extends Fragment {
             }
         });
 
-        binding.buttonSynchroVersLargageAerien.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getParentFragmentManager().popBackStack();
-            }
-        });
+
 
 
 

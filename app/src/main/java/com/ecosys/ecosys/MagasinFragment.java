@@ -62,8 +62,13 @@ public class MagasinFragment extends Fragment {
                         .navigate(R.id.action_fragment_magasin_to_LargageAerienFragment)
         );
 
+        binding.buttonMagasinVersSynchronisations.setOnClickListener(v ->
+                NavHostFragment.findNavController(MagasinFragment.this)
+                        .navigate(R.id.action_fragment_magasin_to_SynchronisationsFragment)
+        );
 
-        fetchConfig(binding.fragmentMagasinConstraintLayout);
+
+        fetchConfig(binding.fragmentMagasin);
 
 
 
@@ -100,7 +105,7 @@ public class MagasinFragment extends Fragment {
 
             for (int i = 0; i < data.length(); i++) {
                 JSONObject config = data.getJSONObject(i);
-                Log.d(TAG,config.getJSONArray("SupportedPlatforms").toString());
+                //Log.d(TAG,config.getJSONArray("SupportedPlatforms").toString());
                 if (config.getJSONArray("SupportedPlatforms").toString().contains("Android")) {
                     View card = LayoutInflater.from(context).inflate(R.layout.card_layout, container, false);
 

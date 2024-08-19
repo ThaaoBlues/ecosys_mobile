@@ -79,14 +79,20 @@ public class AppsIntentActivity extends AppCompatActivity {
 
             switch (actionFlag){
                 case "[INSTALL_APP]":
-                    installApp(intent,packageName,acces);
-                    intent = new Intent(Intent.ACTION_SEND);
 
-                    intent.setClassName(packageName,packageName+".EcosysCallbackActivity");
-                    intent.putExtra("action_flag","[INSTALL_APP]");
-                    intent.putExtra("secure_id",acces.getSecureId());
-                    startActivity(intent);
-                    finish();
+                    if (acces.checkAppExistenceFromName(packageName)) {
+                        textView.setText("An application with this name is already registered");
+                    } else {
+                        installApp(intent, packageName, acces);
+                        intent = new Intent(Intent.ACTION_SEND);
+
+                        intent.setClassName(packageName, packageName + ".EcosysCallbackActivity");
+                        intent.putExtra("action_flag", "[INSTALL_APP]");
+                        intent.putExtra("secure_id", acces.getSecureId());
+                        startActivity(intent);
+                        finish();
+
+                    }
                     break;
 
                 case "[CREATE_FILE]":
@@ -217,94 +223,74 @@ public class AppsIntentActivity extends AppCompatActivity {
     private void installApp(Intent intent, String packageName, AccesBdd acces){
         Log.d(TAG,"IN INSTALL APP");
 
+        DocumentFile rootFolder = DocumentFile.fromFile(
+                getExternalFilesDir(null)
+        );
 
-                /*String rp = BackendApi.askInput(
-                        "[INSTALL_APP]",
-                        getString(R.string.confirm_app_install),
-                        AppsIntentActivity.this,
-                        false
-                );*/
-
-        String rp = "y";
-        if(rp.equals("y")) {
-            if (acces.checkAppExistenceFromName(packageName)) {
-                textView.setText("An application with this name is already registered");
-            } else {
-                DocumentFile rootFolder = DocumentFile.fromFile(
-                        getExternalFilesDir(null)
-                );
-
-                // make sure the apps folder is present
-                if (rootFolder.findFile("apps") == null) {
-                    rootFolder = rootFolder.createDirectory("apps");
-                } else {
-                    rootFolder = rootFolder.findFile("apps");
-                }
-
-                // prevent the same app for calling multiple times install_app
-                DocumentFile appFolder =rootFolder.findFile(packageName);
-                if ( appFolder == null) {
-                    appFolder = rootFolder.createDirectory(packageName);
-                }
-
-
-                if (appFolder != null) {
-                    Log.d(TAG, "Folder created successfully: " + appFolder.getUri());
-                } else {
-                    // app must already exists, don't link the new one
-                    Log.e(TAG, "Failed to create folder into : " + rootFolder.getUri().getPath());
-                    return;
-                }
-
-                Uri uri = FileProvider.getUriForFile(
-                        this,
-                        "com.ecosys.ecosys.fileprovider",
-                        new File(appFolder.getUri().getPath())
-                );
-
-
-
-
-
-                // create a sync in it
-                acces.createSync(appFolder.getUri().getPath());
-                acces.addToutEnUn(new Globals.ToutEnUnConfig(
-                        packageName,
-                        "",
-                        false,
-                        "",
-                        "",
-                        "",
-                        uri.getPath(),
-                        "",
-                        ""
-                ));
-
-
-                Log.d(TAG,"Restarting background processes to take account of new app...");
-                // restart networking and files watching service to take account of new task
-                if(ProcessExecutor.isMyServiceRunning(AppsIntentActivity.this,StartupService.class)){
-                    stopService( new Intent(this, StartupService.class));
-                }
-                startService( new Intent(this, StartupService.class));
-                Log.d(TAG,"Service restarted");
-
-
-                AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-
-
-                intent = new Intent(Intent.ACTION_SEND);
-
-                intent.setClassName(packageName, packageName + ".EcosysCallbackActivity");
-                intent.putExtra("flag", "[INSTALL_APP]");
-                intent.putExtra(Intent.EXTRA_STREAM, uri);
-                intent.setDataAndType(uri, "*/*");
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                startActivity(intent);
-
-
-            }
+        // make sure the apps folder is present
+        if (rootFolder.findFile("apps") == null) {
+            rootFolder = rootFolder.createDirectory("apps");
+        } else {
+            rootFolder = rootFolder.findFile("apps");
         }
+
+        // prevent the same app for calling multiple times install_app
+        DocumentFile appFolder =rootFolder.findFile(packageName);
+        if ( appFolder == null) {
+            appFolder = rootFolder.createDirectory(packageName);
+        }
+
+
+        if (appFolder != null) {
+            Log.d(TAG, "Folder created successfully: " + appFolder.getUri());
+        } else {
+            // app must already exists, don't link the new one
+            Log.e(TAG, "Failed to create folder into : " + rootFolder.getUri().getPath());
+            return;
+        }
+
+        Uri uri = FileProvider.getUriForFile(
+                this,
+                "com.ecosys.ecosys.fileprovider",
+                new File(appFolder.getUri().getPath())
+        );
+
+
+
+
+
+        // create a sync in it
+        acces.createSync(appFolder.getUri().getPath());
+        acces.addToutEnUn(new Globals.ToutEnUnConfig(
+                packageName,
+                "",
+                false,
+                "",
+                "",
+                "",
+                uri.getPath(),
+                "",
+                ""
+        ));
+
+
+        Log.d(TAG,"Restarting background processes to take account of new app...");
+        // restart networking and files watching service to take account of new task
+        if(ProcessExecutor.isMyServiceRunning(AppsIntentActivity.this,StartupService.class)){
+            stopService( new Intent(this, StartupService.class));
+        }
+        startService( new Intent(this, StartupService.class));
+        Log.d(TAG,"Service restarted");
+
+
+        AppsIntentActivity.this.grantUriPermission(packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
+
+
+
+
+
+
     }
 
 
