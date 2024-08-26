@@ -1,15 +1,23 @@
 <resources>
-    <string name="app_name">Ecosys</string>
+    <string name="app_name">إيكوسيس</string>
     <string name="action_settings">إعدادات</string>
     <string name="welcome_msg">لاستخدام Ecosys، يرجى تثبيته على أجهزتك الأخرى وتوصيلها بنفس شبكة Wifi:D
-\ن
+\n\n
     زيارة: https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">\"هل تريد قبول الطائرة الكبيرة؟ اسم الملف: \"</string>
-    <string name="multi_largage_aerien_msg">\"هل تقبل الطائرة الجوية المتعددة الحجم؟ قادمة من: \"</string>
-    <string name="magasin">المحل</string>
+    <string name="largage_aerien_msg">هل تقبل الطائرة الكبيرة؟ اسم الملف:</string>
+    <string name="multi_largage_aerien_msg">هل تقبل الطائرة الهوائية المتعددة الكبيرة؟ قادم من :</string>
+    <string name="magasin">محل</string>
     <string name="synchronisations">التزامنات</string>
-    <string name="select_a_device_to_send_a_largageaerien">حدد جهازًا لإرسال LargeageAerien</string>
+    <string name="select_a_device_to_send_a_largageaerien">حدد جهازًا لإرسال طائرة جوية كبيرة الحجم</string>
     <string name="largage_aerien">إنزال جوي</string>
     <string name="create_a_new_task">إنشاء مهمة جديدة</string>
+    <string name="largage_aerien_explication">الميزة الأولى لبرنامج Ecosys: Largeage Aerien، إنها مجرد AirDrop ولكنها أفضل لأنها مفتوحة المصدر.</string>
+    <string name="sync_task_explication">الميزة الثانية لبرنامج Ecosys: يمكنك مزامنة أي مجلد بين أي من أجهزتك (الصور والمستندات...)، وسيتم تحديثه عندما تكون على نفس الشبكة!</string>
+    <string name="magasin_explication">الميزة الثالثة لـ Ecosys: يتيح لك سوقنا تثبيت التطبيقات التي ستستخدم Ecosys لمزامنة بياناتها بين أجهزتك!</string>
+    <string name="backup_mode_explication">آخر ميزة في Ecosys: يمكنك تنشيط \"وضع النسخ الاحتياطي\" في أي من مهام المزامنة الخاصة بك حتى لا يتم حذف أي شيء تحذفه على هذا الجهاز على الأجهزة الأخرى! مفيدة لصورك ;)</string>
+    <string name="confirm_app_install">أكد أنك تريد السماح للتطبيق الذي تقوم بتثبيته بالوصول إلى Ecosys.</string>
+    <string name="malicious_app_install">التطبيق الذي تقوم بتثبيته يعطي Ecosys اسمًا خاطئًا للحزمة، فقد يكون ضارًا!</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">التطبيق غير مسجل في Ecosys أو يحاول الوصول إلى بيانات ليست خاصة به.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">هذا الإجراء غير مدعوم (قد يكون هناك خطأ إملائي في علامة الإجراء)</string>
 
 </resources>

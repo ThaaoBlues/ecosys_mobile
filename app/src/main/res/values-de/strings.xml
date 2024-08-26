@@ -1,15 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Ecosys</string>
-    <string name="action_settings">Einstellungen</string>
-    <string name="welcome_msg">Um Ecosys zu verwenden, installieren Sie es bitte auf Ihren anderen Geräten und verbinden Sie sie mit demselben WLAN-Netzwerk :D
-\N
-    Besuchen Sie: https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">„Die Largage Aerien akzeptieren\? Dateiname:“</string>
-    <string name="multi_largage_aerien_msg">„Akzeptieren Sie den MULTI Large Aerien\? Kommt von:“</string>
-    <string name="magasin">speichern</string>
-    <string name="synchronisations">Synchronisierungen</string>
-    <string name="select_a_device_to_send_a_largageaerien">Wählen Sie ein Gerät aus, um ein LargageAerien zu senden</string>
-    <string name="largage_aerien">Luftabwurf</string>
-    <string name="create_a_new_task">eine neue Aufgabe erstellen</string>
-
+	<string name='app_name'>Ökosys</string>
+	<string name='action_settings'>Einstellungen</string>
+	<string name='welcome_msg'>Um Ecosys zu verwenden, installieren Sie es bitte auf Ihren anderen Geräten und verbinden Sie sie mit demselben WLAN-Netzwerk :D
+\n\n
+Besuchen Sie: https://thaaoblues.github.io
+</string>
+	<string name='largage_aerien_msg'>Akzeptieren Sie den Large Aerien ? Dateiname:</string>
+	<string name='multi_largage_aerien_msg'>Akzeptieren Sie den MULTI Large Aerien? Kommend von:</string>
+	<string name='magasin'>Magazin</string>
+	<string name='synchronisations'>Synchronisierungen</string>
+	<string name='select_a_device_to_send_a_largageaerien'>Wählen Sie ein Gerät aus, um einen großen Aerien zu senden</string>
+	<string name='largage_aerien'>große Antenne</string>
+	<string name='create_a_new_task'>eine neue Aufgabe erstellen</string>
+	<string name='largage_aerien_explication'>Erstes Feature von Ecosys: Large Aerien. Es ist nur AirDrop, aber besser, weil es Open Source ist.</string>
+	<string name='sync_task_explication'>Zweite Funktion von Ecosys: Sie können beliebige Ordner zwischen Ihren Geräten synchronisieren (Bilder, Dokumente usw.). Die Aktualisierung erfolgt, wenn sich die Geräte im selben Netzwerk befinden!</string>
+	<string name='magasin_explication'>Dritte Funktion von Ecosys: Auf unserem Marktplatz können Sie Apps installieren, die Ecosys verwenden, um ihre Daten zwischen Ihren Geräten zu synchronisieren!</string>
+	<string name='backup_mode_explication'>Letzte Funktion von Ecosys: Sie können den „Backup-Modus“ für jede Ihrer Synchronisierungsaufgaben aktivieren, sodass alles, was Sie auf diesem Gerät löschen, nicht auf den anderen gelöscht wird! Nützlich für Ihre Bilder ;)</string>
+	<string name='confirm_app_install'>Bestätigen Sie, dass Sie der App, die Sie installieren, Zugriff auf Ecosys gewähren möchten.</string>
+	<string name='malicious_app_install'>Die App, die Sie installieren, gibt Ecosys einen falschen Paketnamen. Das könnte bösartig sein!</string>
+	<string name='app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own'>Die App ist nicht bei Ecosys registriert oder versucht, auf Daten zuzugreifen, die ihr nicht gehören.</string>
+	<string name='this_action_is_not_supported_action_flag_may_be_misspelled'>Diese Aktion wird nicht unterstützt (Aktionsflagge ist möglicherweise falsch geschrieben)</string>
 </resources>

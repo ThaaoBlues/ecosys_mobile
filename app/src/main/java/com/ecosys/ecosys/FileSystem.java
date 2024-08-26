@@ -169,7 +169,7 @@ public class FileSystem {
 
         // wait to avoid taking some shit like very-short lifespan temporary files
         try {
-            Thread.sleep(1000);
+            Thread.sleep(100);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }

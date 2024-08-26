@@ -21,19 +21,23 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.documentfile.provider.DocumentFile;
 
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -137,10 +141,9 @@ public class Networking {
                 AccesBdd acces = new AccesBdd(context);
 
                 // get the device id and secure sync id from header
-                char[] header_buff = new char[HEADER_LENGTH];
-                InputStreamReader inputStreamReader = new InputStreamReader(clientSocket.getInputStream(), StandardCharsets.UTF_8);
-                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                bufferedReader.read(header_buff, 0, HEADER_LENGTH);
+                byte[] header_buff = new byte[HEADER_LENGTH];
+                BufferedInputStream bis = new BufferedInputStream(clientSocket.getInputStream());
+                bis.read(header_buff, 0, HEADER_LENGTH);
                 String device_id;
                 String secure_id;
                 Log.i(TAG,"Header : "+ Arrays.toString(header_buff));
@@ -167,14 +170,16 @@ public class Networking {
                 }
 
                 // read the body of the request and store it in a buffer
-                StringBuilder body_buff = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null) {
-                    body_buff.append(line);
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buff = new byte[1024];
+
+                int n;
+                while ((n = bis.read(buff)) != -1) {
+                    baos.write(buff, 0, n);
                 }
 
-                Log.d(TAG, "Request body : " + body_buff);
-
+                baos.flush();
 
 
                 Globals.QEvent data = new Globals.QEvent(
@@ -186,7 +191,7 @@ public class Networking {
                         "",
                         0
                 );
-                data.deserializeQEvent(body_buff.toString());
+                data.deserializeQEvent(baos.toByteArray());
 
                 // check if this is a regular file event of a special request
                 Log.d(TAG, "RECEIVING EVENT : " + data);
@@ -624,7 +629,7 @@ public class Networking {
         Socket socket = new Socket(ipAddress, 8274);
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-        String ser_event = new Globals.QEvent(
+        File event_file = new Globals.QEvent(
                 "[SETUP_DL]",
                 "",
                 null,
@@ -639,9 +644,13 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(out);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId());
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        writeEventFileToStream(bos,event_file);
+
         bos.flush();
+
 
         Log.d(TAG,"Event Sent");
 
@@ -657,7 +666,7 @@ public class Networking {
         Socket socket = new Socket(ipAddress, 8274);
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-        String ser_event = new Globals.QEvent(
+        File event_file = new Globals.QEvent(
                 "[BEGIN_UPDATE]",
                 "",
                 null,
@@ -672,8 +681,11 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId());
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        writeEventFileToStream(bos,event_file);
+
         bos.flush();
 
         // Close the connection
@@ -688,7 +700,7 @@ public class Networking {
         Socket socket = new Socket(ipAddress, 8274);
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-        String ser_event = new Globals.QEvent(
+        File event_file = new Globals.QEvent(
                 "[END_OF_UPDATE]",
                 "",
                 null,
@@ -703,8 +715,12 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId());
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        writeEventFileToStream(bos,event_file);
+
+
         bos.flush();
 
         // Close the connection
@@ -718,7 +734,7 @@ public class Networking {
         Socket socket = new Socket(ipAddress, 8274);
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-        String ser_event = new Globals.QEvent(
+        File event_file = new Globals.QEvent(
                 "[MODIFICATION_DONE]",
                 String.valueOf(versionId),
                 null,
@@ -733,8 +749,11 @@ public class Networking {
         BufferedOutputStream bos = new BufferedOutputStream(outputStream);
         // Send the message
         StringBuilder reqBuilder = new StringBuilder();
-        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId()).append(ser_event);
+        reqBuilder.append(acces.getMyDeviceId()).append(";").append(acces.getSecureId());
         bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+        writeEventFileToStream(bos,event_file);
+
         bos.flush();
 
         // Close the connection
@@ -786,15 +805,17 @@ public class Networking {
                     );
                     DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
 
-                    String ser_event = eventQueue.get(j).serialize();
+                    File event_file = eventQueue.get(j).serialize();
 
                     //Log.d(TAG,"serialized Event  = "+ser_event);
 
                     BufferedOutputStream bos = new BufferedOutputStream(outputStream);
                     // Send the message
                     StringBuilder reqBuilder = new StringBuilder();
-                    reqBuilder.append(acces.getMyDeviceId()).append(";").append(secureId).append(ser_event);
+                    reqBuilder.append(acces.getMyDeviceId()).append(";").append(secureId);
                     bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+
+                    writeEventFileToStream(bos,event_file);
                     bos.flush();
 
                     // Close the connection
@@ -852,6 +873,29 @@ public class Networking {
 
         acces.closedb();
 
+    }
+
+
+    private static void writeEventFileToStream(BufferedOutputStream bos, File event_file) throws FileNotFoundException {
+        int BUFF_SIZE  = DeltaBinaire.calculateBufferSize(event_file.length());
+        byte[] fileBuffer = new byte[BUFF_SIZE];
+
+        FileInputStream fis = new FileInputStream(event_file);
+
+        int bytesRead;
+
+        while(true) {
+            try {
+                bytesRead = fis.read(fileBuffer);
+                if (bytesRead == -1 ) { // EOF
+                    break;
+                }
+                bos.write(fileBuffer,0,bytesRead);
+            } catch (IOException e) {
+                Log.i("Ecosys Server","Error while reading serialized event file : "+e.getMessage());
+            }
+
+        }
     }
 
     public static void checkDeviceAvailability(String IpAddr,String deviceId){
@@ -948,9 +992,15 @@ public class Networking {
         }else{
 
             try {
-                File fileOrDir = new File(
-                        root.getUri().getPath(),relativePath
-                );
+                File fileOrDir;
+                if(root != null){
+                    fileOrDir = new File(
+                            root.getUri().getPath(),relativePath
+                    );
+                }else{
+                    fileOrDir = new File(relativePath);
+                }
+
 
 
                 if (fileOrDir.isDirectory()) {

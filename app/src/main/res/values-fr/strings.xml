@@ -1,15 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Ecosys</string>
-    <string name="action_settings">Paramètres</string>
-    <string name="welcome_msg">Pour utiliser Ecosys, veuillez l\'installer sur vos autres appareils et connectez-les au même réseau Wifi :D
-\n
-    Visite : https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">\"Accepter le Largage Aerien \? Nom du fichier : \"</string>
-    <string name="multi_largage_aerien_msg">\"Accepter le MULTI Largage Aerien \? Venant de : \"</string>
-    <string name="magasin">magasin</string>
-    <string name="synchronisations">Synchronisations</string>
-    <string name="select_a_device_to_send_a_largageaerien">Sélectionnez un appareil pour envoyer un LargageAerien</string>
-    <string name="largage_aerien">largage aérien</string>
-    <string name="create_a_new_task">créer une nouvelle tâche</string>
-
+	<string name='app_name'>Écosystèmes</string>
+	<string name='action_settings'>Paramètres</string>
+	<string name='welcome_msg'>Pour utiliser Ecosys, veuillez l\'installer sur vos autres appareils et les connecter au même réseau Wifi :D
+\n\n
+Visitez : https://thaaoblues.github.io
+</string>
+	<string name='largage_aerien_msg'>Accepter le Largage Aerien ? Nom du fichier :</string>
+	<string name='multi_largage_aerien_msg'>Acceptez le MULTI Largage Aerien ? En provenance de :</string>
+	<string name='magasin'>magasin</string>
+	<string name='synchronisations'>Synchronisations</string>
+	<string name='select_a_device_to_send_a_largageaerien'>Sélectionnez un appareil pour envoyer un grand Aerien</string>
+	<string name='largage_aerien'>grand aérien</string>
+	<string name='create_a_new_task'>créer une nouvelle tâche</string>
+	<string name='largage_aerien_explication'>Première fonctionnalité d\'Ecosys : Largage Aerien, c\'est juste AirDrop mais en mieux car il est open-source.</string>
+	<string name='sync_task_explication'>Deuxième fonctionnalité d’Ecosys : Vous pouvez synchroniser n’importe quel dossier entre n’importe lequel de vos appareils (images, documents…), il se mettra à jour dès qu’ils seront sur le même réseau !</string>
+	<string name='magasin_explication'>Troisième fonctionnalité d\'Ecosys : Notre marketplace vous permet d\'installer des applications qui utiliseront Ecosys pour synchroniser leurs données entre vos appareils !</string>
+	<string name='backup_mode_explication'>Dernière fonctionnalité d\'Ecosys : Vous pouvez activer le \"Mode sauvegarde\" sur n\'importe laquelle de vos tâches de synchronisation afin que tout ce que vous supprimez sur cet appareil ne soit pas supprimé sur les autres ! Utile pour vos photos ;)</string>
+	<string name='confirm_app_install'>Confirmez que vous souhaitez autoriser l\'application que vous installez à accéder à Ecosys.</string>
+	<string name='malicious_app_install'>L\'application que vous installez donne à Ecosys un nom de package erroné, cela peut être malveillant !</string>
+	<string name='app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own'>L\'application n\'est pas enregistrée dans Ecosys ou tente d\'accéder à des données qui ne lui appartiennent pas.</string>
+	<string name='this_action_is_not_supported_action_flag_may_be_misspelled'>Cette action n\'est pas prise en charge (l\'indicateur d\'action peut être mal orthographié)</string>
 </resources>

@@ -9,10 +9,22 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.Ecosys" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
-
+        <item name="android:colorBackground">@color/bg2</item>
+        <item name="android:colorPrimary">@color/card1</item>
+        <!--<item name="android:colorPrimaryVariant">@color/card2</item>-->
+        <!--<item name="android:colorOnPrimary">@color/bg2</item>-->
+        <item name="android:colorSecondary">@color/btn1</item>
+        <!--<item name="android:colorOnSecondary">@color/bg2</item>-->
+        <!--<item name="android:colorOnSurface">@color/font1</item>-->
+        <item name="android:textColor">@color/font1</item>
+        <item name="android:buttonStyle">@style/Widget.Button.Coral</item>
     </style>
 
     <style name="Theme.Ecosys" parent="Base.Theme.Ecosys" />
+
+    <!-- Button Styles -->
+    <style name="Widget.Button.Coral" parent="Widget.MaterialComponents.Button">
+        <item name="backgroundTint">@color/btn1</item>
+        <item name="android:textColor">@color/bg2</item>
+    </style>
 </resources>

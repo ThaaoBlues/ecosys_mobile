@@ -139,7 +139,7 @@ public class BackendApi {
                         EditText input;
                         input = new EditText(context);
                         input.setInputType(InputType.TYPE_CLASS_TEXT |InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-
+                        input.setMaxHeight(250);
                         input.setWidth(100);
                         builder.setView(input);
 

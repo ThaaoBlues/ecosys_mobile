@@ -7,4 +7,15 @@
   ~  */
   -->
 
-<resources></resources>
+<resources>
+    <!-- Light Theme Colors -->
+    <color name="bg1">#F0EBE3</color>  <!-- Light beige -->
+    <color name="bg2">#F9F4EF</color>  <!-- Very light beige -->
+    <color name="font1">#333333</color> <!-- Dark gray -->
+    <color name="card1">#355C7D</color> <!-- Deep blue -->
+    <color name="card2">#6C5B7B</color> <!-- Muted purple -->
+    <color name="btn1">#FF6F61</color> <!-- Coral -->
+    <color name="btn2">#6B8E23</color> <!-- Olive green -->
+    <color name="btn3">#FFD700</color> <!-- Gold -->
+    <color name="btn4">#98FB98</color> <!-- Pale green -->
+</resources>

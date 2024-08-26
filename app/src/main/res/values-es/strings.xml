@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name='app_name'>Ecosistemas</string>
+	<string name='action_settings'>Ajustes</string>
+	<string name='welcome_msg'>Para utilizar Ecosys, instálalo en tus otros dispositivos y conéctalos a la misma red wifi :D
+\n\n
+Visita: https://thaaoblues.github.io
+</string>
+	<string name='largage_aerien_msg'>¿Aceptas el Largage Aerien? Nombre del archivo:</string>
+	<string name='multi_largage_aerien_msg'>¿Aceptas el MULTI Largage Aerien? Vienes de:</string>
+	<string name='magasin'>tienda</string>
+	<string name='synchronisations'>Sincronizaciones</string>
+	<string name='select_a_device_to_send_a_largageaerien'>Seleccione un dispositivo para enviar un Largage Aerien</string>
+	<string name='largage_aerien'>gran altitud aérea</string>
+	<string name='create_a_new_task'>crear una nueva tarea</string>
+	<string name='largage_aerien_explication'>Primera característica de Ecosys: Largage Aerien. Es como AirDrop pero mejor porque es de código abierto.</string>
+	<string name='sync_task_explication'>Segunda característica de Ecosys: puedes sincronizar cualquier carpeta entre cualquiera de tus dispositivos (imágenes, documentos…), ¡se actualizará siempre que estén en la misma red!</string>
+	<string name='magasin_explication'>Tercera característica de Ecosys: ¡Nuestro mercado te permite instalar aplicaciones que usarán Ecosys para sincronizar sus datos entre tus dispositivos!</string>
+	<string name='backup_mode_explication'>Última característica de Ecosys: ¡puedes activar el \"Modo de copia de seguridad\" en cualquiera de tus tareas de sincronización para que todo lo que elimines en este dispositivo no se elimine en los demás! Útil para tus fotos ;)</string>
+	<string name='confirm_app_install'>Confirme que desea permitir que la aplicación que está instalando acceda a Ecosys.</string>
+	<string name='malicious_app_install'>La aplicación que estás instalando le está dando a Ecosys un nombre de paquete incorrecto; ¡podría ser malicioso!</string>
+	<string name='app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own'>La aplicación no está registrada en Ecosys o está intentando acceder a datos que no son suyos.</string>
+	<string name='this_action_is_not_supported_action_flag_may_be_misspelled'>Esta acción no es compatible (el indicador de acción puede estar mal escrito)</string>
+</resources>

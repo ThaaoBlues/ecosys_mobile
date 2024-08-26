@@ -1,13 +1,13 @@
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
   ~ /**
-  ~  * Created by Théo Mougnibas on 27/06/2024 17:18
+  ~  * Created by Théo Mougnibas on 20/08/2024 22:49
   ~  * Copyright (c) 2024 . All rights reserved.
-  ~  * Last modified 27/06/2024 17:18
+  ~  * Last modified 20/08/2024 22:49
   ~  */
   -->
 
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<resources>
+
     <style name="Base.Theme.Ecosys" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:colorBackground">@color/bg2</item>
         <item name="android:colorPrimary">@color/card1</item>

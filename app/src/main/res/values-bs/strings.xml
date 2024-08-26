@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Ecosys</string>
+    <string name="action_settings">Postavke</string>
+    <string name="welcome_msg">Da biste koristili Ecosys, instalirajte ga na svoje druge uređaje i povežite ih na istu Wifi mrežu :D
+\n\n
+    Posjetite: https://thaaoblues.github.io/ecosys</string>
+    <string name="largage_aerien_msg">Prihvatiti Largage Aerien \? Naziv fajla:</string>
+    <string name="multi_largage_aerien_msg">Prihvatite MULTI Largage Aerien \? Dolazi iz:</string>
+    <string name="magasin">trgovina</string>
+    <string name="synchronisations">Sinhronizacije</string>
+    <string name="select_a_device_to_send_a_largageaerien">Odaberite uređaj za slanje Largage Aeriena</string>
+    <string name="largage_aerien">airdrop</string>
+    <string name="create_a_new_task">kreirajte novi zadatak</string>
+    <string name="largage_aerien_explication">Prva karakteristika Ecosys-a: Largage Aerien, to je samo AirDrop, ali bolji jer je otvorenog koda.</string>
+    <string name="sync_task_explication">Druga karakteristika Ecosys-a: Možete sinkronizirati bilo koju mapu između bilo kojeg vašeg uređaja (slike, dokumenti…), ažurirat će se kad god su na istoj mreži!</string>
+    <string name="magasin_explication">Treća karakteristika Ecosys-a: Naše tržište vam omogućava da instalirate aplikacije koje će koristiti Ecosys za sinkronizaciju svojih podataka između vaših uređaja!</string>
+    <string name="backup_mode_explication">Posljednja karakteristika Ecosys-a: Možete aktivirati \"Način sigurnosne kopije\" na bilo kojem zadatku sinhronizacije tako da sve što izbrišete na ovom uređaju neće biti izbrisano na drugim uređajima! Korisno za vaše slike ;)</string>
+    <string name="confirm_app_install">Potvrdite da želite dozvoliti aplikaciji koju instalirate pristup Ecosysu.</string>
+    <string name="malicious_app_install">Aplikacija koju instalirate daje Ecosys-u pogrešan naziv paketa, moglo bi biti zlonamjerno!</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">Aplikacija nije registrirana u Ecosysu ili pokušava pristupiti podacima koji nisu njeni.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">Ova radnja nije podržana (zastavica akcije je možda pogrešno napisana)</string>
+
+</resources>

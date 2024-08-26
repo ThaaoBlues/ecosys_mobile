@@ -1,15 +1,23 @@
 <resources>
-    <string name="app_name">Ecosys</string>
+    <string name="app_name">Ekosistem</string>
     <string name="action_settings">Parametrlər</string>
-    <string name="welcome_msg">Ecosys-dən istifadə etmək üçün onu başqa cihazlarınıza quraşdırın və onları eyni Wi-Fi şəbəkəsinə qoşun :D
-\n
+    <string name="welcome_msg">Ecosys-dən istifadə etmək üçün onu digər cihazlarınıza quraşdırın və onları eyni Wi-Fi şəbəkəsinə qoşun :D
+\n\n
     Ziyarət edin: https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">\"Böyük Aerien qəbul edin\? Fayl adı: \"</string>
-    <string name="multi_largage_aerien_msg">\"MULTI Largage Aerien-i qəbul edirsiniz\? Gəlir:\"</string>
+    <string name="largage_aerien_msg">Böyük Aerien qəbul edirsiniz\? Fayl adı:</string>
+    <string name="multi_largage_aerien_msg">MULTI Largage Aerien-i qəbul edirsiniz\? Gələn:</string>
     <string name="magasin">mağaza</string>
     <string name="synchronisations">Sinxronizasiyalar</string>
-    <string name="select_a_device_to_send_a_largageaerien">LargageAerien göndərmək üçün cihaz seçin</string>
+    <string name="select_a_device_to_send_a_largageaerien">Largage Aerien göndərmək üçün cihaz seçin</string>
     <string name="largage_aerien">airdrop</string>
     <string name="create_a_new_task">yeni tapşırıq yaradın</string>
+    <string name="largage_aerien_explication">Ecosys-in ilk xüsusiyyəti: Böyük Aerien, bu, sadəcə AirDrop-dur, lakin açıq mənbə olduğu üçün daha yaxşıdır.</string>
+    <string name="sync_task_explication">Ecosys-in ikinci xüsusiyyəti: İstənilən qovluğu istənilən cihazınız (şəkillər, sənədlər...) arasında sinxronizasiya edə bilərsiniz, onlar eyni şəbəkədə olduqda o, yenilənəcək!</string>
+    <string name="magasin_explication">Ecosys-in üçüncü xüsusiyyəti: Bizim bazarımız sizə cihazlarınız arasında məlumatlarını sinxronlaşdırmaq üçün Ecosys-dən istifadə edəcək proqramlar quraşdırmaq imkanı verir!</string>
+    <string name="backup_mode_explication">Ecosys-in son xüsusiyyəti: Siz sinxronizasiya tapşırığınızın hər hansı birində \"Yedək rejimi\"ni aktivləşdirə bilərsiniz ki, bu cihazda sildiyiniz hər şey digərlərində silinməsin! Şəkilləriniz üçün faydalıdır ;)</string>
+    <string name="confirm_app_install">Quraşdırdığınız tətbiqin Ecosys-ə daxil olmasına icazə vermək istədiyinizi təsdiqləyin.</string>
+    <string name="malicious_app_install">Quraşdırdığınız proqram Ecosys-ə səhv paket adı verir, bu zərərli ola bilər!</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">Tətbiq Ecosys-də qeydiyyatdan keçməyib və ya özünə məxsus olmayan dataya daxil olmağa çalışır.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">Bu əməliyyat dəstəklənmir ( fəaliyyət bayrağı səhv yazılmış ola bilər )</string>
 
 </resources>

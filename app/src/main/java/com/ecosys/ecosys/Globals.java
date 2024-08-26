@@ -8,8 +8,19 @@
 
 package com.ecosys.ecosys;
 
+import android.util.Log;
+
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,8 +38,29 @@ public class Globals {
         public String SecureId;
         public long VersionToPatch;
 
+        // separate main fields of the request
+        public static final byte[] FIELD_SEPARATOR = new byte[]{
+                (byte) 0x00, (byte) 0xFF, (byte) 0x00, (byte) 0xFF,
+                '-', '-', 'C', 'H', 'A', 'M', 'P', '-', '-', 'C', 'H', 'A', 'M', 'P', '-',
+                (byte) 0xFF, (byte) 0x00, (byte) 0xFF, (byte) 0x00
+        };
+
+        // separate specific values of a field
+        public static final byte[] VALUE_SEPARATOR = new byte[]{
+                (byte) 0x00, (byte) 0xFF, (byte) 0x00, (byte) 0xFF,
+                '-', '-', 'V', 'A', 'L', 'U', 'E', '-', '-', 'V', 'A', 'L', 'U', 'E', '-',
+                (byte) 0xFF, (byte) 0x00, (byte) 0xFF, (byte) 0x00
+        };
+
+        // separate delta instructions
+        public static final byte[] INSTRUCTION_SEPARATOR = new byte[]{
+                (byte) 0x00, (byte) 0xFF, (byte) 0x00, (byte) 0xFF,
+                '-', '-', 'I', 'N', 'S', 'T', 'R', 'U', 'C', 'T', 'I', 'O', 'N', '-', '-', 'I', 'N', 'S', 'T', 'R', 'U', 'C', 'T', 'I', 'O', 'N', '-',
+                (byte) 0xFF, (byte) 0x00, (byte) 0xFF, (byte) 0x00
+        };
+
         // Constructor
-        public QEvent(String flag, String fileType, DeltaBinaire.Delta delta, String filePath, String newFilePath, String secureId,long versionToPatch) {
+        public QEvent(String flag, String fileType, DeltaBinaire.Delta delta, String filePath, String newFilePath, String secureId, long versionToPatch) {
             this.Flag = flag;
             this.FileType = fileType;
             this.Delta = delta;
@@ -47,7 +79,7 @@ public class Globals {
                     ", filePath='" + this.FilePath + '\'' +
                     ", newFilePath='" + this.NewFilePath + '\'' +
                     ", secureId='" + this.SecureId + '\'' +
-                    ", versionToPatch="+this.VersionToPatch+
+                    ", versionToPatch=" + this.VersionToPatch +
                     '}';
         }
 
@@ -108,80 +140,211 @@ public class Globals {
             this.VersionToPatch = versionToPatch;
         }
 
-        public String serialize() {
-            StringBuilder EventStringBuilder = new StringBuilder();
-            EventStringBuilder.append(this.Flag);
-            EventStringBuilder.append(";");
-            EventStringBuilder.append(this.FileType);
-            EventStringBuilder.append(";");
+        public File serialize() throws IOException {
 
-            if(this.Delta != null) {
-                for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
-                    EventStringBuilder.append(instruction.InstructionType).append(",");
-                    for (int data : instruction.Data) {
-                        EventStringBuilder.append(data).append(",");
+            // Create a temporary file
+            File tempFile = File.createTempFile("event_serialized_", ".tmp");
+            tempFile.deleteOnExit(); // Ensure the file is deleted when the JVM exits
+
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+                byte[] fsephex = bytesToHex(FIELD_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+                // Write Flag and FileType
+                bos.write(this.Flag.getBytes(StandardCharsets.UTF_8));
+                bos.write(fsephex);
+                bos.write(this.FileType.getBytes(StandardCharsets.UTF_8));
+                bos.write(fsephex);
+
+                // Write Delta if not null
+                if (this.Delta != null) {
+                    byte[] vsephex = bytesToHex(VALUE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+                    byte[] instsephex = bytesToHex(INSTRUCTION_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+                    for (DeltaBinaire.DeltaInstruction instruction : this.Delta.Instructions) {
+                        bos.write(instruction.InstructionType.getBytes(StandardCharsets.UTF_8));
+                        bos.write(vsephex);
+
+                        bos.write(instruction.Data);
+
+                        bos.write(vsephex);
+
+                        bos.write(String.valueOf(instruction.ByteIndex).getBytes(StandardCharsets.UTF_8));
+                        if (this.Delta.Instructions.indexOf(instruction) < this.Delta.Instructions.size() - 1) {
+                            bos.write(instsephex);
+                        }
+
                     }
-                    EventStringBuilder.append(instruction.ByteIndex).append("|");
+                    bos.write(fsephex);
+                    bos.write(this.Delta.getFilePath().getBytes(StandardCharsets.UTF_8));
+                } else {
+                    bos.write(fsephex);
                 }
-                // Remove the last "|"
-                if (EventStringBuilder.length() > 0) {
-                    EventStringBuilder.setLength(EventStringBuilder.length() - 1);
-                }
-                EventStringBuilder.append(";");
-                EventStringBuilder.append(this.Delta.getFilePath());
 
-            }else {
-                EventStringBuilder.append(";");
+                // Write other fields
+                bos.write(fsephex);
+                bos.write(this.FilePath.getBytes(StandardCharsets.UTF_8));
+                bos.write(fsephex);
+                bos.write(this.NewFilePath.getBytes(StandardCharsets.UTF_8));
+                bos.write(fsephex);
+                bos.write(String.valueOf(this.VersionToPatch).getBytes(StandardCharsets.UTF_8));
+                bos.write(fsephex);
+                bos.write(this.SecureId.getBytes(StandardCharsets.UTF_8));
             }
 
-            EventStringBuilder.append(";");
-            EventStringBuilder.append(this.FilePath);
-            EventStringBuilder.append(";");
-            EventStringBuilder.append(this.NewFilePath);
-            EventStringBuilder.append(";");
-            EventStringBuilder.append(this.VersionToPatch);
-            EventStringBuilder.append(";");
-            EventStringBuilder.append(this.SecureId);
-
-            return EventStringBuilder.toString();
-
-
+            // Return reference to the temporary file
+            return tempFile;
 
         }
 
-        public void deserializeQEvent(String data) {
-            String[] parts = data.split(";");
+        public void deserializeQEvent(byte[] data) {
+            ByteBuffer buffer = ByteBuffer.wrap(data);
 
-            // check if a binary delta is present
-            if(!parts[2].isEmpty()){
-                String[] instructionParts = parts[2].split("\\|");
+            // Define separators as hexadecimal strings
+            byte[] HEX_FIELD_SEPARATOR = bytesToHex(FIELD_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+            byte[] HEX_VALUE_SEPARATOR = bytesToHex(VALUE_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+            byte[] HEX_INSTRUCTION_SEPARATOR = bytesToHex(INSTRUCTION_SEPARATOR).getBytes(StandardCharsets.UTF_8);
+
+            // Read Flag
+            this.Flag = readString(buffer, HEX_FIELD_SEPARATOR,true);
+
+            // Read FileType
+            this.FileType = readString(buffer, HEX_FIELD_SEPARATOR,true);
+
+            // Check if a binary delta is present
+            if (buffer.remaining() > 0 && !startsWith(buffer, HEX_FIELD_SEPARATOR)) {
                 List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
-                for (String instructionStr : instructionParts) {
-                    String[] instructionData = instructionStr.split(",");
-                    byte[] dataBytes = new byte[instructionData.length - 2];
-                    for (int i = 1; i < instructionData.length - 1; i++) {
-                        dataBytes[i - 1] = (byte) Integer.parseInt(instructionData[i]);
+
+                while (true) {
+                    // Read Instruction Type
+                    String instructionType = readString(buffer, HEX_VALUE_SEPARATOR,true);
+                    Log.d("QEvent", "Instruction Type: " + instructionType);
+
+                    // Read binary Data until VALUE_SEPARATOR
+                    byte[] dataBytes = readBytesUntil(buffer, HEX_VALUE_SEPARATOR);
+
+
+                    // Read Byte Index
+
+                    // LAST SEPARATOR OF THE LAST INSTRUCTION IS IN FACT A FIELD SEPARATOR SO WE MUST
+                    // USE A DERIVATIVE OF THE READSTRING METHOD
+
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    while (buffer.remaining() > 0) {
+                        byte b = buffer.get();
+                        baos.write(b);
+                        if (startsWith(buffer, HEX_INSTRUCTION_SEPARATOR)) {
+                            // don't skip last boundary as its existence reveal the presence of another instruction
+                            break;
+
+                            // last instruction of delta
+                        }else if (startsWith(buffer,HEX_FIELD_SEPARATOR)){
+                            buffer.position(buffer.position() + HEX_FIELD_SEPARATOR.length); // Skip the separator
+
+                            break;
+                        }
                     }
-                    long byteIndex = Long.parseLong(instructionData[instructionData.length - 1]);
-                    instructions.add(new DeltaBinaire.DeltaInstruction(instructionData[0], dataBytes, byteIndex));
+                    long byteIndex = Long.parseLong(baos.toString());
+                    Log.d("QEvent", "Byte Index: " + byteIndex);
+
+                    instructions.add(new DeltaBinaire.DeltaInstruction(instructionType, dataBytes, byteIndex));
+
+                    // Check if there is another instruction (check for INSTRUCTION_SEPARATOR)
+                    if (buffer.remaining() > 0 && startsWith(buffer, HEX_INSTRUCTION_SEPARATOR)) {
+                        Log.d("QEvent", "Another instruction found");
+                        buffer.position(buffer.position() + HEX_INSTRUCTION_SEPARATOR.length); // Skip the INSTRUCTION_SEPARATOR
+                    } else {
+                        break;
+                    }
                 }
+
                 DeltaBinaire.Delta delta = new DeltaBinaire.Delta();
                 delta.Instructions = instructions;
-                delta.setFilePath(parts[3]);
+
+                // Read Delta File Path
+                delta.setFilePath(readString(buffer, HEX_FIELD_SEPARATOR,true));
 
                 this.Delta = delta;
-
+            } else {
+                buffer.position(buffer.position() + HEX_FIELD_SEPARATOR.length); // Skip FIELD_SEPARATOR for Delta
             }
-            this.Flag = parts[0];
-            this.FileType = parts[1];
-            this.FilePath = parts[4];
-            this.NewFilePath = parts[5];
-            this.VersionToPatch = parts[6].isBlank() ? 0 : Long.parseLong(parts[6]);
-            this.SecureId = parts[7];
+
+            // Read other fields
+            this.FilePath = readString(buffer, HEX_FIELD_SEPARATOR,true);
+            this.NewFilePath = readString(buffer, HEX_FIELD_SEPARATOR,true);
+            this.VersionToPatch = Long.parseLong(readString(buffer, HEX_FIELD_SEPARATOR,true));
+            this.SecureId = readString(buffer, HEX_FIELD_SEPARATOR,true);
         }
+
+        // Convert a hexadecimal string to a byte array
+        private byte[] hexToByteArray(String hex) {
+            int len = hex.length();
+            byte[] data = new byte[len / 2];
+            for (int i = 0; i < len; i += 2) {
+                data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                        + Character.digit(hex.charAt(i+1), 16));
+            }
+            return data;
+        }
+
+        // Method to check if the buffer starts with a specific byte array
+        private boolean startsWith(ByteBuffer buffer, byte[] separator) {
+            if (buffer.remaining() < separator.length) {
+                return false;
+            }
+
+            for (int i = 0; i < separator.length; i++) {
+                if (buffer.get(buffer.position() + i) != separator[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Method to read a string from the buffer until a specific byte array is found
+        private String readString(ByteBuffer buffer, byte[] separator,boolean skip) {
+
+            // prevent stealing a byte from the next field if this one is empty
+            if (startsWith(buffer, separator)) {
+                buffer.position(buffer.position() + separator.length);
+                return "";
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while (buffer.remaining() > 0) {
+                byte b = buffer.get();
+                baos.write(b);
+                if (startsWith(buffer, separator)) {
+                    if(skip){
+                        buffer.position(buffer.position() + separator.length); // Skip the separator
+                    }
+                    break;
+                }
+            }
+            Log.d("Globals",baos.toString());
+            return baos.toString(); // Convert byte array to string using UTF-8 encoding
+        }
+
+        // Method to read bytes from the buffer until a specific byte array is found
+        private byte[] readBytesUntil(ByteBuffer buffer, byte[] separator) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while (buffer.remaining() > 0) {
+                byte b = buffer.get();
+                baos.write(b);
+                if (startsWith(buffer, separator)) {
+                    buffer.position(buffer.position() + separator.length); // Skip the separator
+                    break;
+                }
+            }
+            return baos.toByteArray();
+        }
+        
+        private static String bytesToHex(byte[] bytes) {
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : bytes) {
+                hexString.append(String.format("%02X", b));
+            }
+            return hexString.toString();
+        }
+
     }
-
-
 
     public interface GenArrayInterface<T> {
         void add(T val);

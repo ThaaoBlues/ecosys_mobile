@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name='app_name'>Ecosys</string>
+	<string name='action_settings'>Configurações</string>
+	<string name='welcome_msg'>Para usar o Ecosys, instale-o em seus outros dispositivos e conecte-os à mesma rede Wifi :D
+\n\n
+Visite: https://thaaoblues.github.io
+</string>
+	<string name='largage_aerien_msg'>Aceitar o Largege Aerien ? Nome do arquivo:</string>
+	<string name='multi_largage_aerien_msg'>Aceitar o MULTI Largage Aerien ? Vindo de :</string>
+	<string name='magasin'>revista</string>
+	<string name='synchronisations'>Sincronizações</string>
+	<string name='select_a_device_to_send_a_largageaerien'>Selecione um dispositivo para enviar um Largege Aerien</string>
+	<string name='largage_aerien'>largada aérea</string>
+	<string name='create_a_new_task'>criar uma nova tarefa</string>
+	<string name='largage_aerien_explication'>Primeiro recurso do Ecosys: Largage Aerien. É como o AirDrop, mas melhor porque é de código aberto.</string>
+	<string name='sync_task_explication'>Segundo recurso do Ecosys: você pode sincronizar qualquer pasta entre qualquer um dos seus dispositivos (fotos, documentos…), e ela será atualizada sempre que estiverem na mesma rede!</string>
+	<string name='magasin_explication'>Terceiro recurso do Ecosys: Nosso marketplace permite que você instale aplicativos que usarão o Ecosys para sincronizar seus dados entre seus dispositivos!</string>
+	<string name='backup_mode_explication'>Último recurso do Ecosys: Você pode ativar o \"Modo de backup\" em qualquer uma das suas tarefas de sincronização, então qualquer coisa que você excluir neste dispositivo não será excluída nos outros! Útil para suas fotos ;)</string>
+	<string name='confirm_app_install'>Confirme que você deseja permitir que o aplicativo que você está instalando acesse o Ecosys.</string>
+	<string name='malicious_app_install'>O aplicativo que você está instalando está dando ao Ecosys um nome de pacote errado. Pode ser malicioso!</string>
+	<string name='app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own'>O aplicativo não está registrado no Ecosys ou está tentando acessar dados que não são seus.</string>
+	<string name='this_action_is_not_supported_action_flag_may_be_misspelled'>Esta ação não é suportada (o sinalizador de ação pode estar escrito incorretamente)</string>
+</resources>

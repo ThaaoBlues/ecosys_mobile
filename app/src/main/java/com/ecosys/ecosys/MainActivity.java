@@ -134,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("com.ecosys.ecosys", MODE_PRIVATE);
         //prefs.edit().putBoolean("firstrun", true).commit();
-        deleteDatabase("ecosys");
+        //deleteDatabase("ecosys");
 
 
         Intent intent = new Intent(MainActivity.this,SelectorActivity.class);

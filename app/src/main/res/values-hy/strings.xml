@@ -1,15 +1,23 @@
 <resources>
-    <string name="app_name">Ecosys</string>
+    <string name="app_name">Էկոզիա</string>
     <string name="action_settings">Կարգավորումներ</string>
-    <string name="welcome_msg">Ecosys-ն օգտագործելու համար տեղադրեք այն ձեր մյուս սարքերում և միացրեք դրանք նույն Wifi ցանցին :D
-\n
+    <string name="welcome_msg">Ecosys-ից օգտվելու համար խնդրում ենք տեղադրել այն ձեր մյուս սարքերում և միացնել դրանք նույն Wifi ցանցին :D
+\n\n
     Այցելեք՝ https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">\"Accept the Largage Aerien \? Ֆայլի անունը՝ \"</string>
-    <string name="multi_largage_aerien_msg">«Ընդունե՞լ MULTI Largage Aerien-ը: Գալիս է.</string>
+    <string name="largage_aerien_msg">Ընդունե՞լ Largage Aerien-ին: Ֆայլի անունը.</string>
+    <string name="multi_largage_aerien_msg">Ընդունե՞լ MULTI Largage Aerien-ը: Գալիս է.</string>
     <string name="magasin">խանութ</string>
     <string name="synchronisations">Համաժամեցումներ</string>
-    <string name="select_a_device_to_send_a_largageaerien">Ընտրեք սարք՝ LargageAerien ուղարկելու համար</string>
+    <string name="select_a_device_to_send_a_largageaerien">Ընտրեք սարք՝ մեծ օդաչու ուղարկելու համար</string>
     <string name="largage_aerien">օդային կաթիլ</string>
     <string name="create_a_new_task">ստեղծել նոր առաջադրանք</string>
+    <string name="largage_aerien_explication">Ecosys-ի առաջին հատկանիշը. Մեծ օդափոխություն, այն պարզապես AirDrop է, բայց ավելի լավ, քանի որ այն բաց կոդով է:</string>
+    <string name="sync_task_explication">Ecosys-ի երկրորդ առանձնահատկությունը. Դուք կարող եք համաժամացնել ցանկացած թղթապանակ ձեր ցանկացած սարքի միջև (նկարներ, փաստաթղթեր…), այն կթարմացվի, երբ նրանք լինեն նույն ցանցում:</string>
+    <string name="magasin_explication">Ecosys-ի երրորդ առանձնահատկությունը. Մեր շուկան թույլ է տալիս տեղադրել հավելվածներ, որոնք կօգտագործեն Ecosys-ը՝ իրենց տվյալները ձեր սարքերի միջև համաժամեցնելու համար:</string>
+    <string name="backup_mode_explication">Ecosys-ի վերջին առանձնահատկությունը. Դուք կարող եք ակտիվացնել «Պահուստավորման ռեժիմը» ​​ձեր համաժամացման ցանկացած առաջադրանքում, որպեսզի այն, ինչ ջնջեք այս սարքից, չջնջվի մյուսների վրա: Օգտակար է ձեր նկարների համար ;)</string>
+    <string name="confirm_app_install">Հաստատեք, որ ցանկանում եք թույլ տալ, որ հավելվածը, որը տեղադրում եք, մուտք գործի Ecosys:</string>
+    <string name="malicious_app_install">Ձեր տեղադրած հավելվածը Ecosys-ին սխալ փաթեթի անվանում է տալիս, այն կարող է վնասակար լինել:</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">Հավելվածը գրանցված չէ Ecosys-ում կամ փորձում է մուտք գործել տվյալներ, որոնք իրենը չեն:</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">Այս գործողությունը չի աջակցվում (գործողության դրոշը կարող է սխալ գրվել)</string>
 
 </resources>

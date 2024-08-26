@@ -1,16 +1,24 @@
 <resources>
-    <string name="app_name">Ecosys</string>
+    <string name="app_name">Ekosiste</string>
     <string name="action_settings">Cilësimet</string>
     <string name="welcome_msg">To use Ecosys, please install it on your others devices and connect them to the same Wifi network :D
 \n\n
-    Visit : https://thaaoblues.github.io/ecosys
+    Visit : https://thaaoblues.github.io
     </string>
-    <string name="largage_aerien_msg">Accept the Largage Aerien ? File name: </string>
-    <string name="multi_largage_aerien_msg">Accept the MULTI Largage Aerien ? Coming from : </string>
+    <string name="largage_aerien_msg">Prano Aerien Largage\? Emri i skedarit:</string>
+    <string name="multi_largage_aerien_msg">Pranoni MULTI Largage Aerien\? Vjen nga:</string>
     <string name="magasin">dyqan</string>
     <string name="synchronisations">Sinkronizimet</string>
-    <string name="select_a_device_to_send_a_largageaerien">Select a device to send a Largage Aerien</string>
+    <string name="select_a_device_to_send_a_largageaerien">Zgjidhni një pajisje për të dërguar një Aerien të Madh</string>
     <string name="largage_aerien">hedhjen e ajrit</string>
     <string name="create_a_new_task">krijoni një detyrë të re</string>
+    <string name="largage_aerien_explication">Tipari i parë i Ecosys: Largage Aerien, është thjesht AirDrop, por më i mirë sepse është me burim të hapur.</string>
+    <string name="sync_task_explication">Karakteristika e dytë e Ecosys: Mund të sinkronizoni çdo dosje midis çdo pajisjeje (foto, dokumente…), ajo do të përditësohet sa herë që janë në të njëjtin rrjet!</string>
+    <string name="magasin_explication">Tipari i tretë i Ecosys: Tregu ynë ju lejon të instaloni aplikacione që do të përdorin Ecosys për të sinkronizuar të dhënat e tyre midis pajisjeve tuaja!</string>
+    <string name="backup_mode_explication">Karakteristika e fundit e Ecosys: Mund të aktivizoni \"Modalitetin e rezervimit\" në çdo detyrë sinkronizimi, në mënyrë që çdo gjë që fshini në këtë pajisje të mos fshihet në të tjerat! E dobishme për fotot tuaja ;)</string>
+    <string name="confirm_app_install">Konfirmoni që dëshironi të lejoni që aplikacioni që po instaloni të hyjë në Ecosys.</string>
+    <string name="malicious_app_install">Aplikacioni që po instaloni po i jep Ecosys një emër të gabuar pakete, mund të jetë keqdashës!</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">Aplikacioni nuk është i regjistruar në Ecosys ose po përpiqet të aksesojë të dhëna që nuk janë të tijat.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">Ky veprim nuk mbështetet (flamuri i veprimit mund të jetë i shkruar gabimisht)</string>
 
 </resources>

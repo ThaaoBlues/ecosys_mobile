@@ -1,15 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Ecosys</string>
-    <string name="action_settings">समायोजन</string>
-    <string name="welcome_msg">Ecosys का उपयोग करने के लिए, कृपया इसे अपने अन्य उपकरणों पर इंस्टॉल करें और उन्हें उसी वाईफ़ाई नेटवर्क से कनेक्ट करें:D
-\एन
-    जाएँ: https://thaaoblues.github.io/ecosys</string>
-    <string name="largage_aerien_msg">\"बड़े पैमाने पर एरियन स्वीकार करें\? फ़ाइल का नाम:\"</string>
-    <string name="multi_largage_aerien_msg">\"मल्टी लार्जेज एरियन स्वीकार करें\? से आ रहा है:\"</string>
-    <string name="magasin">इकट्ठा करना</string>
-    <string name="synchronisations">सिंक्रनाइज़ेशन करें</string>
-    <string name="select_a_device_to_send_a_largageaerien">लार्जेजएरियन भेजने के लिए एक उपकरण का चयन करें</string>
-    <string name="largage_aerien">एयरड्रॉप</string>
-    <string name="create_a_new_task">एक नया कार्य बनाएँ</string>
-
+	<string name='app_name'>इकोसिस</string>
+	<string name='action_settings'>समायोजन</string>
+	<string name='welcome_msg'>इकोसिस का उपयोग करने के लिए, कृपया इसे अपने अन्य डिवाइस पर इंस्टॉल करें और उन्हें उसी वाईफाई नेटवर्क से कनेक्ट करें :D
+\n\n
+यहां जाएं : https://thaaoblues.github.io
+</string>
+	<string name='largage_aerien_msg'>लार्जेज एरियन स्वीकार करें? फ़ाइल का नाम:</string>
+	<string name='multi_largage_aerien_msg'>मल्टी लार्ज एरियन स्वीकार करें? से आ रहा है:</string>
+	<string name='magasin'>Magasin</string>
+	<string name='synchronisations'>सिंक्रनाइज़ेशन करें</string>
+	<string name='select_a_device_to_send_a_largageaerien'>लार्जेज एरियन भेजने के लिए डिवाइस का चयन करें</string>
+	<string name='largage_aerien'>लार्जेज एरियन</string>
+	<string name='create_a_new_task'>नया कार्य बनाएं</string>
+	<string name='largage_aerien_explication'>इकोसिस की पहली विशेषता: लार्ज एयरियन, यह सिर्फ एयरड्रॉप है लेकिन बेहतर है क्योंकि यह ओपन-सोर्स है।</string>
+	<string name='sync_task_explication'>इकोसिस की दूसरी विशेषता: आप अपने किसी भी डिवाइस (चित्र, दस्तावेज़ …) के बीच किसी भी फ़ोल्डर को सिंक्रनाइज़ कर सकते हैं, जब भी वे एक ही नेटवर्क पर होंगे तो यह अपडेट हो जाएगा!</string>
+	<string name='magasin_explication'>इकोसिस की तीसरी विशेषता: हमारा मार्केटप्लेस आपको ऐसे ऐप्स इंस्टॉल करने देता है जो आपके डिवाइसों के बीच अपने डेटा को सिंक्रनाइज़ करने के लिए इकोसिस का उपयोग करेंगे!</string>
+	<string name='backup_mode_explication'>इकोसिस की अंतिम विशेषता: आप अपने किसी भी सिंक्रोनाइजेशन कार्य पर \"बैकअप मोड\" सक्रिय कर सकते हैं, इसलिए आप इस डिवाइस पर जो कुछ भी हटाते हैं वह अन्य पर नहीं हटाया जाएगा! आपके चित्रों के लिए उपयोगी ;)</string>
+	<string name='confirm_app_install'>पुष्टि करें कि आप जिस ऐप को इंस्टॉल कर रहे हैं उसे इकोसिस तक पहुंच देना चाहते हैं।</string>
+	<string name='malicious_app_install'>आप जो ऐप इंस्टॉल कर रहे हैं वह इकोसिस को गलत पैकेज नाम दे रहा है, यह दुर्भावनापूर्ण हो सकता है!</string>
+	<string name='app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own'>ऐप इकोसिस में पंजीकृत नहीं है या वह ऐसे डेटा तक पहुंचने का प्रयास कर रहा है जो उसका अपना नहीं है।</string>
+	<string name='this_action_is_not_supported_action_flag_may_be_misspelled'>यह क्रिया समर्थित नहीं है (क्रिया ध्वज की वर्तनी ग़लत हो सकती है)</string>
 </resources>

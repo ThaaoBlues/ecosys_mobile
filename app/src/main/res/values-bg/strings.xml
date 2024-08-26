@@ -1,21 +1,12 @@
-<!--
-  ~ /**
-  ~  * Created by Théo Mougnibas on 27/06/2024 17:18
-  ~  * Copyright (c) 2024 . All rights reserved.
-  ~  * Last modified 27/06/2024 17:18
-  ~  */
-  -->
-
 <resources>
     <string name="app_name">Ecosys</string>
-    <string name="action_settings">Settings</string>
-    <string name="welcome_msg">To use Ecosys, please install it on your others devices and connect them to the same Wifi network :D
+    <string name="action_settings">Настройки</string>
+    <string name="welcome_msg">За да използвате Ecosys, моля, инсталирайте го на другите си устройства и ги свържете към същата Wifi мрежа :D
 \n\n
-    Visit : https://thaaoblues.github.io
-    </string>
-    <string name="largage_aerien_msg">Accept the Largage Aerien ? File name: </string>
-    <string name="multi_largage_aerien_msg">Accept the MULTI Largage Aerien ? Coming from : </string>
-    <string name="magasin">magasin</string>
+    Посетете: https://thaaoblues.github.io/ecosys</string>
+    <string name="largage_aerien_msg">Приемам Largage Aerien\? Име на файла:</string>
+    <string name="multi_largage_aerien_msg">Приемате ли MULTI Largage Aerien\? идва от:</string>
+    <string name="magasin">магазин</string>
     <string name="synchronisations">Synchronisations</string>
     <string name="select_a_device_to_send_a_largageaerien">Select a device to send a Largage Aerien</string>
     <string name="largage_aerien">largage aérien</string>

@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Ecosys</string>
+    <string name="action_settings">Налады</string>
+    <string name="welcome_msg">Каб выкарыстоўваць Ecosys, усталюйце яго на іншыя прылады і падключыце іх да той жа сеткі Wi-Fi :D
+\n\n
+    Наведайце: https://thaaoblues.github.io/ecosys</string>
+    <string name="largage_aerien_msg">Прыняць Largage Aerien\? Імя файла:</string>
+    <string name="multi_largage_aerien_msg">Прыняць MULTI Largage Aerien\? Адкуль:</string>
+    <string name="magasin">захоўваць</string>
+    <string name="synchronisations">Сінхранізацыі</string>
+    <string name="select_a_device_to_send_a_largageaerien">Выберыце прыладу для адпраўкі Largage Aerien</string>
+    <string name="largage_aerien">дэсантны</string>
+    <string name="create_a_new_task">стварыць новую задачу</string>
+    <string name="largage_aerien_explication">Першая асаблівасць Ecosys: Largage Aerien, гэта проста AirDrop, але лепш, таму што ён з адкрытым зыходным кодам.</string>
+    <string name="sync_task_explication">Другая асаблівасць Ecosys: вы можаце сінхранізаваць любую папку паміж любымі вашымі прыладамі (малюнкі, дакументы…), яна будзе абнаўляцца кожны раз, калі яны знаходзяцца ў адной сетцы!</string>
+    <string name="magasin_explication">Трэцяя асаблівасць Ecosys: наша гандлёвая пляцоўка дазваляе ўсталёўваць прыкладанні, якія будуць выкарыстоўваць Ecosys для сінхранізацыі дадзеных паміж вашымі прыладамі!</string>
+    <string name="backup_mode_explication">Апошняя асаблівасць Ecosys: Вы можаце актываваць «Рэжым рэзервовага капіравання» для любой задачы сінхранізацыі, каб усё, што вы выдалілі на гэтай прыладзе, не было выдалена на іншых! Карысна для вашых фатаграфій;)</string>
+    <string name="confirm_app_install">Пацвердзіце, што вы хочаце дазволіць праграме, якую вы ўсталёўваеце, доступ да Ecosys.</string>
+    <string name="malicious_app_install">Прыкладанне, якое вы ўсталёўваеце, дае Ecosys няправільную назву пакета, гэта можа быць шкоднасным!</string>
+    <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">Прыкладанне не зарэгістравана ў Ecosys або спрабуе атрымаць доступ да чужых даных.</string>
+    <string name="this_action_is_not_supported_action_flag_may_be_misspelled">Гэта дзеянне не падтрымліваецца (сцяг дзеяння можа быць напісаны з памылкай)</string>
+
+</resources>

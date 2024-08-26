@@ -25,8 +25,6 @@ public class BootReceiver extends BroadcastReceiver {
             intent = new Intent(context, StartupService.class);
             context.startService(intent);
 
-
-
             /*Intent activityIntent = new Intent(context, SelectorActivity.class);
             activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activityIntent.putExtra("flag","[BOOT_EVENT]");
