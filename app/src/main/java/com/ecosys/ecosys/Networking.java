@@ -814,6 +814,7 @@ public class Networking {
                     StringBuilder reqBuilder = new StringBuilder();
                     reqBuilder.append(acces.getMyDeviceId()).append(";").append(secureId);
                     bos.write(reqBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                    bos.flush();
 
                     writeEventFileToStream(bos,event_file);
                     bos.flush();

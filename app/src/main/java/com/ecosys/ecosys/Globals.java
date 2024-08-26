@@ -27,7 +27,7 @@ import java.util.List;
 public class Globals {
 
 
-    public static final String VERSION = "0.0.3-Beta";
+    public static final String VERSION = "0.0.4-Beta";
 
     public static class QEvent {
         public String Flag;
@@ -335,7 +335,7 @@ public class Globals {
             }
             return baos.toByteArray();
         }
-        
+
         private static String bytesToHex(byte[] bytes) {
             StringBuilder hexString = new StringBuilder();
             for (byte b : bytes) {
