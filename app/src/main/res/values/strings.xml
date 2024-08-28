@@ -28,5 +28,6 @@
     <string name="malicious_app_install">The app you are installing is giving Ecosys a wrong package name, it could be malicious !</string>
     <string name="app_is_not_registered_in_Ecosys_or_is_trying_to_access_data_that_is_not_its_own">App is not registered in Ecosys or is trying to access data that is not its own.</string>
     <string name="this_action_is_not_supported_action_flag_may_be_misspelled">This action is not supported ( action flag may be misspelled )</string>
+    <string name="dont_forget_to_enable_ecosys_autostart_in_your_settings_so_it_can_talk_to_your_devices_without_you_even_knowing_it">Dont forget to enable ecosys autostart in your settings so it can talk to your devices without you even knowing it !</string>
 
 </resources>

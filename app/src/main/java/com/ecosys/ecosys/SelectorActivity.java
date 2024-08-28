@@ -60,6 +60,8 @@ public class SelectorActivity extends AppCompatActivity {
         switch (flag){
 
             case "[BOOT_EVENT]":
+                Log.d("BOOTRECEIVER","IN SELECTOR ACTIVITY");
+
                 intent = new Intent(this, StartupService.class);
                 startService(intent);
                 finish();

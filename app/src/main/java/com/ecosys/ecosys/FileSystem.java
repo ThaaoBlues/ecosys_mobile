@@ -74,7 +74,7 @@ public class FileSystem {
         Map<String, FileInfo> currentState = new HashMap<>();
         populateState(directory, currentState, directory.getUri().toString());
 
-        Log.d(TAG,"IsThisFileSystemBeingPatched()="+acces.isThisFileSystemBeingPatched());
+        //Log.d(TAG,"IsThisFileSystemBeingPatched()="+acces.isThisFileSystemBeingPatched());
         if(!acces.isThisFileSystemBeingPatched()){
             // Check for new, modified, or renamed files
             for (Map.Entry<String, FileInfo> entry : currentState.entrySet()) {
@@ -82,7 +82,7 @@ public class FileSystem {
                 FileInfo fileInfo = entry.getValue();
 
                 if (!previousState.containsKey(filePath)) {
-                    Log.d("FileMonitor", "New file detected: " + filePath);
+                    //Log.d("FileMonitor", "New file detected: " + filePath);
 
                     avoidGhostDevices(acces);
 
@@ -98,7 +98,7 @@ public class FileSystem {
 
 
                 } else if (!previousState.get(filePath).lastModified.equals(fileInfo.lastModified) && !fileInfo.isDirectory) {
-                    Log.d("FileMonitor", "Modified file detected: " + filePath);
+                    //Log.d("FileMonitor", "Modified file detected: " + filePath);
                     avoidGhostDevices(acces);
                     if(acces.isApp()){
                         handleWriteEvent(context,acces,DocumentFile.fromFile(new File(filePath.replace("file://",""))));
@@ -112,7 +112,7 @@ public class FileSystem {
                 FileInfo previousFileInfo = previousState.get(filePath);
                 if (previousFileInfo != null && !previousFileInfo.uri.equals(fileInfo.uri)) {
                     avoidGhostDevices(acces);
-                    Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
+                    //Log.d("FileMonitor", "Renamed file detected: " + previousFileInfo.uri + " -> " + fileInfo.uri);
                 }
             }
 
@@ -122,7 +122,7 @@ public class FileSystem {
                     FileInfo fileInfo = previousState.get(filePath);
                     avoidGhostDevices(acces);
                     // same reason as for creation, Uri is not usefull in Tree mode for directories
-                    Log.d(TAG,"File suppression detected "+filePath);
+                    //Log.d(TAG,"File suppression detected "+filePath);
                     handleRemoveEvent(acces,DocumentFile.fromSingleUri(context,fileInfo.uri) );
 
 
@@ -177,8 +177,8 @@ public class FileSystem {
         if(!file.exists()){
             return;
         }
-        Log.d(TAG,file.getUri().toString());
-        Log.d(TAG,file.getUri().getPath());
+        //Log.d(TAG,file.getUri().toString());
+        //Log.d(TAG,file.getUri().getPath());
         String relativePath = PathUtils.getRelativePath(Uri.parse(acces.getRootSyncPath()).getPath(),file.getUri().getPath());
 
 
@@ -237,7 +237,7 @@ public class FileSystem {
                 Log.e(TAG,"Unable to open file to build binary delta",e);
             }
         }else{
-            Log.d("Ecosys Server : FileSystem",relativePath+" File already mapped.");
+            //Log.d("Ecosys Server : FileSystem",relativePath+" File already mapped.");
         }
 
 

@@ -72,7 +72,7 @@ public class StartupService extends Service implements FolderPickerCallback{
     public int onStartCommand(Intent intent, int flags, int startId) {
         // Perform background tasks
         // Service will continue to run until explicitly stopped
-        Toast.makeText(StartupService.this, "BOOT EVENT COMPLETE", Toast.LENGTH_LONG).show();
+        //Toast.makeText(StartupService.this, "BOOT EVENT COMPLETE", Toast.LENGTH_LONG).show();
 
 
         // make sure not crash has stuck a task in a locked state

@@ -14,22 +14,21 @@ import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.material.snackbar.Snackbar;
+
 public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("BOOTRECEIVER","BOOT EVENT RECEIVED");
+
 
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             Log.d("BOOTRECEIVER","BOOT EVENT RECEIVED");
-            intent = new Intent(context, StartupService.class);
-            context.startService(intent);
 
-            /*Intent activityIntent = new Intent(context, SelectorActivity.class);
+            Intent activityIntent = new Intent(context, SelectorActivity.class);
             activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             activityIntent.putExtra("flag","[BOOT_EVENT]");
-            context.startActivity(activityIntent);*/
-
+            context.startActivity(activityIntent);
 
         }
     }

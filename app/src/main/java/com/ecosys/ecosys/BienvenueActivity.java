@@ -76,9 +76,12 @@ public class BienvenueActivity extends AppCompatActivity {
                         msg.setText(R.string.backup_mode_explication);
                         break;
                     case 5:
+                        img.setImageDrawable(getDrawable(R.drawable.settings));
+                        msg.setText(R.string.dont_forget_to_enable_ecosys_autostart_in_your_settings_so_it_can_talk_to_your_devices_without_you_even_knowing_it);
+                        break;
+                    case 6:
                         Intent myIntent = new Intent(BienvenueActivity.this, MainActivity.class);
                         startActivity(myIntent);
-                        break;
 
                 }
 

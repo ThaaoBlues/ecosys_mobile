@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int MY_PERMISSIONS_REQUEST_POST_NOTIFICATIONS = 2;
     private static final int MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW = 3;
+    private static final int MY_PERMISSIONS_REQUEST_RECEIVE_BOOT_COMPLETED = 4;
 
     private static final String TAG = "Ecosys : MainActivity";
     private SharedPreferences prefs;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
                 startActivity (intent);
             }
+
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
                 // Show an explanation to the user why you need the permission
                 // After the user sees the explanation, try again to request the permission
@@ -98,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
 
             case MY_PERMISSIONS_REQUEST_SYSTEM_ALERT_WINDOW:
                 break;
+
+            case MY_PERMISSIONS_REQUEST_RECEIVE_BOOT_COMPLETED:
+                break;
         }
     }
 
@@ -131,10 +136,26 @@ public class MainActivity extends AppCompatActivity {
                 "This app needs the system alert permission to ask your approval when you receive a Largage Aerien."
         );*/
 
+        requestPermission(
+                MainActivity.this,
+                "android.permission.RECEIVE_BOOT_COMPLETED",
+                MY_PERMISSIONS_REQUEST_RECEIVE_BOOT_COMPLETED,
+                "This app needs the permission to know if your device has booted to start itself."
+        );
 
         prefs = getSharedPreferences("com.ecosys.ecosys", MODE_PRIVATE);
+
+        if(!prefs.getBoolean("autostart",false)){
+            AutoStartPermissionManager as = new AutoStartPermissionManager(MainActivity.this);
+            as.requestAutoStartPermission();
+            prefs.edit().putBoolean("autostart",true).apply();
+        }
+
+
         //prefs.edit().putBoolean("firstrun", true).commit();
         //deleteDatabase("ecosys");
+
+
 
 
         Intent intent = new Intent(MainActivity.this,SelectorActivity.class);
