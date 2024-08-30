@@ -18,7 +18,8 @@
         android:largeHeap="true"
         android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Ecosys"
+        android:theme="@style/Base.Theme.Ecosys"
+
         tools:targetApi="31">
 
         <receiver

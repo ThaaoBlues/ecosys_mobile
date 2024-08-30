@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ /**
+  ~  * Created by Théo Mougnibas on 30/08/2024 13:24
+  ~  * Copyright (c) 2024 . All rights reserved.
+  ~  * Last modified 30/08/2024 13:24
+  ~  */
+  -->
+
+<!-- res/layout/dialog_custom_layout.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/rounded_alert_dialog_bg">
+
+    <TextView
+        android:id="@+id/text_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Custom Title"
+        android:textSize="18sp"
+        android:textColor="@color/font1"
+        android:gravity="center"
+        android:paddingBottom="8dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/text_dialog_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="This is a custom message."
+        android:textSize="16sp"
+        android:textColor="@color/font1"
+        android:gravity="center" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="10dp"
+        android:id="@+id/text_dialog_input_layout"
+        >
+
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:paddingTop="16dp">
+
+        <Button
+            android:id="@+id/text_dialog_positive_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="OK"
+            android:textColor="@color/font1"
+            style="@style/Widget.Button.2"/>
+
+        <Button
+            android:id="@+id/text_dialog_negative_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="@color/font1"
+            style="@style/Widget.Button.2"
+            android:layout_marginStart="8dp" />
+    </LinearLayout>
+
+</LinearLayout>

@@ -17,6 +17,8 @@
 
     <Button
         android:id="@+id/buttonMagasinVersLargageAerien"
+        android:theme="@style/Widget.Button.2"
+        android:textColor="@color/bg2"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_marginTop="16dp"
@@ -46,6 +48,8 @@
 
     <Button
         android:id="@+id/buttonMagasinVersSynchronisations"
+        android:theme="@style/Widget.Button.2"
+        android:textColor="@color/bg2"
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_marginStart="40dp"

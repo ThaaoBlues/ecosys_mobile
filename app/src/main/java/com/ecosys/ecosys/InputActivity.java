@@ -10,14 +10,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -91,9 +96,22 @@ public class InputActivity extends Activity {
                     @RequiresApi(api = Build.VERSION_CODES.O)
                     @Override
                     public void run() {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle(flag);
-                        builder.setMessage(inputContext);
+
+                        LayoutInflater inflater = getLayoutInflater();
+                        View dialogView = inflater.inflate(R.layout.text_dialog_custom_layout, null);
+
+                        // Build the alert dialog
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context,R.style.TransparentDialogStyle);
+                        builder.setView(dialogView);
+
+
+
+
+                        TextView title = dialogView.findViewById(R.id.text_dialog_title);
+                        title.setText(R.string.select_an_action);
+
+                        TextView msg = dialogView.findViewById(R.id.text_dialog_message);
+                        msg.setText(R.string.largage_aerien_msg);
 
                         // Set up the input
                         EditText input;
@@ -104,17 +122,29 @@ public class InputActivity extends Activity {
                             input = null;
                         }
 
-                        // Set up the buttons
-                        builder.setPositiveButton("OK", (dialog, which) -> {
-                            result[0] = textMode ? input.getText().toString() : "y";
-                            dialog.dismiss();
-                        });
-                        builder.setNegativeButton("Cancel", (dialog, which) -> {
-                            result[0] = null;
-                            dialog.cancel();
+                        AlertDialog alert = builder.create();
+
+
+                        Button positiveButton = dialogView.findViewById(R.id.text_dialog_positive_button);
+
+                        positiveButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                result[0] = textMode ? input.getText().toString() : "y";
+                                alert.dismiss();
+                            }
                         });
 
-                        AlertDialog alert = builder.create();
+                        Button negativeButton = dialogView.findViewById(R.id.text_dialog_negative_button);
+
+                        negativeButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                result[0] = textMode ? input.getText().toString() : "n";
+                                alert.dismiss();
+                            }
+                        });
+
                         Log.d("BACKEND API", "LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
 
                         // Adjust window type to ensure it shows over other apps

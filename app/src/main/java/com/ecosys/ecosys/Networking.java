@@ -1289,40 +1289,40 @@ public class Networking {
 
                 DeltaBinaire.patchFile(data,false,context);
                 //Log.d("LARGAGE AERIEN","CONTENU DU FICHIER APRES PATCH : "+ Arrays.toString(readBytesFromFile(filePath)));
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-                    // Now,we move the recently received file to the downloads folder
-                    filePath = PathUtils.moveFileToDownloads(context,filePath);
-                    BackendApi.displayToast(context,"The file is now available in your Downloads folder.");
-
-                    if(multiple){
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            FileTar.untarFile(filePath,Path.of(filePath).getParent().toString());
-                        }
-                    }else{
 
 
-                        // open textview if we are receiving a text file
-                        if(fileName.endsWith(".txt")){
-                            Log.d(TAG,"Opening textview activity to view text file : "+filePath);
-                            Intent myIntent = new Intent(context, TextViewActivity.class);
-                            myIntent.putExtra(
-                                    "file_path",
-                                    filePath
-                            );
-                            myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            context.startActivity(myIntent);
+                // Now,we move the recently received file to the downloads folder
+                filePath = PathUtils.moveFileToDownloads(filePath);
+                BackendApi.displayToast(context,"The file is now available in your Downloads folder.");
 
-                        }else {
-                            BackendApi.openFile(context,
-                                    Uri.parse(
-                                            filePath
-                                    )
-                            );
-                        }
+                if(multiple){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        FileTar.untarFile(filePath,Path.of(filePath).getParent().toString());
                     }
+                }else{
 
+
+                    // open textview if we are receiving a text file
+                    Log.d(TAG,"checking end of file name : "+data.FilePath);
+                    if(data.FilePath.endsWith(".txt")){
+                        Log.d(TAG,"Opening textview activity to view text file : "+filePath);
+                        Intent myIntent = new Intent(context, TextViewActivity.class);
+                        myIntent.putExtra(
+                                "file_path",
+                                filePath
+                        );
+                        myIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(myIntent);
+
+                    }else {
+                        BackendApi.openFile(context,
+                                Uri.parse(
+                                        filePath
+                                )
+                        );
+                    }
                 }
+
             } catch (Exception e) {
                 Log.e("HandleAirdrop", "Error while handling Largage Aerien", e);
             }

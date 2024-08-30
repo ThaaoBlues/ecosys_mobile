@@ -34,7 +34,7 @@ public class PathUtils {
         return file2.getPath();
     }
 
-    public static String moveFileToDownloads(Context context, String filePath) {
+    public static String moveFileToDownloads(String filePath) {
         File sourceFile = new File(filePath);
         File destinationFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), sourceFile.getName());
         String destinationPath = destinationFile.getPath();

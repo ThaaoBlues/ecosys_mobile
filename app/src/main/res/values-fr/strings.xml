@@ -10,8 +10,8 @@ Visitez : https://thaaoblues.github.io
 	<string name='multi_largage_aerien_msg'>Acceptez le MULTI Largage Aerien ? En provenance de :</string>
 	<string name='magasin'>magasin</string>
 	<string name='synchronisations'>Synchronisations</string>
-	<string name='select_a_device_to_send_a_largageaerien'>Sélectionnez un appareil pour envoyer un grand Aerien</string>
-	<string name='largage_aerien'>grand aérien</string>
+	<string name='select_a_device_to_send_a_largageaerien'>Sélectionnez un appareil pour envoyer un Largage Aerien</string>
+	<string name='largage_aerien'>Largage aérien</string>
 	<string name='create_a_new_task'>créer une nouvelle tâche</string>
 	<string name='largage_aerien_explication'>Première fonctionnalité d\'Ecosys : Largage Aerien, c\'est juste AirDrop mais en mieux car il est open-source.</string>
 	<string name='sync_task_explication'>Deuxième fonctionnalité d’Ecosys : Vous pouvez synchroniser n’importe quel dossier entre n’importe lequel de vos appareils (images, documents…), il se mettra à jour dès qu’ils seront sur le même réseau !</string>

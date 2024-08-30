@@ -47,12 +47,12 @@ public class TextViewActivity extends AppCompatActivity {
             File f = new File(file_path);
             // Display the received values (you can handle them as needed)
             EditText textView = findViewById(R.id.editTextTextMultiLine);
+
             try {
                 FileInputStream fis = new FileInputStream(f);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     textView.setText(new String(fis.readAllBytes()));
                 }
-                assert fis != null;
                 fis.close();
 
             } catch (IOException e) {

@@ -12,23 +12,28 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.fragment.app.FragmentTransition;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.ecosys.ecosys.databinding.FragmentLargageAerienBinding;
@@ -144,79 +149,103 @@ public class LargageAerienFragment extends Fragment {
                                                 public void callback(Map<String, String> device) {
 
 
-                                                    String[] choices = {"Send files","Send some text"};
-                                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                                    LayoutInflater inflater = getLayoutInflater();
+                                                    View dialogView = inflater.inflate(R.layout.buttons_dialog_custom_layout, null);
 
-                                                    builder.setTitle("Select an action");
+                                                    // Build the alert dialog
+                                                    AlertDialog.Builder builder = new AlertDialog.Builder(getContext(),R.style.TransparentDialogStyle);
+                                                    builder.setView(dialogView);
 
-                                                    builder.setItems(choices, new DialogInterface.OnClickListener() {
+
+                                                    // Create the dialog
+                                                    AlertDialog alertDialog = builder.create();
+
+                                                    alertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+                                                    // set transparent background to not shit on the rounded corners of the layout
+                                                    alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+                                                    alertDialog.getWindow().setDimAmount(0);
+
+                                                    TextView title = dialogView.findViewById(R.id.buttons_dialog_title);
+                                                    title.setText(R.string.select_an_action);
+
+                                                    TextView msg = dialogView.findViewById(R.id.buttons_dialog_message);
+                                                    msg.setText(R.string.select_something_to_send_to_the_other_device);
+
+
+                                                    LinearLayout buttonsLayout = dialogView.findViewById(R.id.dialog_buttons_layout);
+                                                    float widthInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PT, 100, getResources().getDisplayMetrics());
+
+
+                                                    // Create the first button (for the first choice)
+                                                    Button sendFilesButton = new Button(getContext());
+                                                    sendFilesButton.setLayoutParams(new LinearLayout.LayoutParams((int) widthInPx, LinearLayout.LayoutParams.WRAP_CONTENT)); // Adjust width and height as needed
+                                                    sendFilesButton.setText("Send Files");
+                                                    sendFilesButton.setTextColor(ContextCompat.getColor(getContext(),R.color.bg1));
+                                                    sendFilesButton.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.btn1));
+                                                    sendFilesButton.setOnClickListener(new View.OnClickListener() {
                                                         @Override
-                                                        public void onClick(DialogInterface dialog, int which) {
+                                                        public void onClick(View v) {
                                                             target_device = device;
-
-                                                            switch (which){
-                                                                case 0:
-                                                                    dialog.dismiss();
-                                                                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                                                                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                                                                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                                                    intent.setType("*/*");
-
-
-                                                                    // Optionally, specify a URI for the file that should appear in the
-                                                                    // system file picker when it loads.
-                                                                    //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, );
-
-                                                                    selectFileLauncher.launch(intent);
-
-                                                                    break;
-                                                                case 1:
-                                                                    dialog.dismiss();
-
-
-                                                                    ProcessExecutor.Function aski = new ProcessExecutor.Function() {
-                                                                        @Override
-                                                                        public void execute() {
-                                                                            String text = BackendApi.askMultilineInput(
-                                                                                    "TYPE YOUR TEXT HERE",
-                                                                                    "Type/paste the text you want to send here",
-                                                                                    getContext()
-                                                                            );
-
-                                                                            try {
-                                                                                File outputFile = File.createTempFile(
-                                                                                        "text",
-                                                                                        ".txt",
-                                                                                        getContext().getCacheDir()
-                                                                                );
-
-                                                                                FileOutputStream fos = new FileOutputStream(outputFile);
-
-                                                                                fos.write(text.getBytes());
-
-                                                                                fos.close();
-                                                                                Log.d("Ecosys Server : Largage Aerien Fragment",Uri.parse(outputFile.getPath()).toString());
-                                                                                SendLA(Uri.parse(outputFile.getPath()));
-
-                                                                            } catch (IOException e) {
-                                                                                throw new RuntimeException(e);
-                                                                            }
-                                                                        }
-                                                                    };
-
-                                                                    ProcessExecutor.startProcess(aski);
-
-                                                                    break;
-
-
-
-
-                                                                default:
-                                                                    break;
-
-                                                            }
+                                                            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                                                            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                                                            intent.addCategory(Intent.CATEGORY_OPENABLE);
+                                                            intent.setType("*/*");
+                                                            selectFileLauncher.launch(intent);
+                                                            alertDialog.dismiss();
                                                         }
                                                     });
+
+                                                    // Create the second button (for the second choice)
+                                                    Button sendTextButton = new Button(getContext());
+                                                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int) widthInPx, LinearLayout.LayoutParams.WRAP_CONTENT);
+                                                    params.topMargin = 20;
+                                                    sendTextButton.setLayoutParams(params);
+                                                    sendTextButton.setText("Send some text");
+                                                    sendTextButton.setTextColor(ContextCompat.getColor(getContext(),R.color.bg1));
+                                                    sendTextButton.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.btn1));
+                                                    sendTextButton.setOnClickListener(new View.OnClickListener() {
+                                                        @Override
+                                                        public void onClick(View v) {
+                                                            target_device = device;
+
+                                                            ProcessExecutor.Function aski = new ProcessExecutor.Function() {
+                                                                @Override
+                                                                public void execute() {
+                                                                    String text = BackendApi.askMultilineInput(
+                                                                            "TYPE YOUR TEXT HERE",
+                                                                            "Type/paste the text you want to send here",
+                                                                            getContext()
+                                                                    );
+
+                                                                    try {
+                                                                        File outputFile = File.createTempFile(
+                                                                                "text",
+                                                                                ".txt",
+                                                                                getContext().getCacheDir()
+                                                                        );
+
+                                                                        FileOutputStream fos = new FileOutputStream(outputFile);
+                                                                        fos.write(text.getBytes());
+                                                                        fos.close();
+
+                                                                        Log.d("Ecosys Server : Largage Aerien Fragment", Uri.parse(outputFile.getPath()).toString());
+                                                                        SendLA(Uri.parse(outputFile.getPath()));
+
+                                                                    } catch (IOException e) {
+                                                                        throw new RuntimeException(e);
+                                                                    }
+                                                                }
+                                                            };
+
+                                                            ProcessExecutor.startProcess(aski);
+                                                            alertDialog.dismiss();
+                                                        }
+                                                    });
+
+// Add buttons to the linear layout
+                                                    buttonsLayout.addView(sendFilesButton);
+                                                    buttonsLayout.addView(sendTextButton);
 
                                                     builder.show();
 

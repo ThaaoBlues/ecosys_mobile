@@ -25,6 +25,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -51,72 +52,6 @@ public class BackendApi {
         // Use the ActivityResultLauncher to start the InputActivity
         context.startActivity(intent);
     }
-    public static String askInput(String flag, String inputContext,Context context,Boolean textMode) {
-        final String[] result = new String[1];
-
-        ProcessExecutor.Function userInput = new ProcessExecutor.Function() {
-            @Override
-            public void execute() {
-                final Handler handler = new Handler(Looper.getMainLooper());
-
-                handler.post(new Runnable() {
-                    @RequiresApi(api = Build.VERSION_CODES.O)
-                    @Override
-                    public void run() {
-
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle(flag);
-                        builder.setMessage(inputContext);
-
-                        // Set up the input
-                        EditText input;
-                        if (textMode){
-                            input = new EditText(context);
-                            builder.setView(input);
-                        } else {
-                            input = null;
-                        }
-
-
-                        // Set up the buttons
-                        builder.setPositiveButton("OK", (dialog, which) -> {
-                            result[0] = textMode ? input.getText().toString() : "y";
-                            dialog.dismiss();
-                        });
-                        builder.setNegativeButton("Cancel", (dialog, which) -> {
-                            result[0] = null;
-                            dialog.cancel();
-                        });
-
-                        AlertDialog alert = builder.create();
-                        Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
-
-                        // as we send this from a service started from an activity that does not exists anymore
-                        alert.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-                        alert.show();
-
-                    }
-                });
-
-
-            }
-
-        };
-
-        ProcessExecutor.executeOnUIThread(userInput);
-
-
-
-        // Wait for user input
-        while (result[0] == null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return result[0];
-    }
 
 
     public static String askMultilineInput(String flag, String inputContext,Context context) {
@@ -131,9 +66,24 @@ public class BackendApi {
                     @Override
                     public void run() {
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                        builder.setTitle(flag);
-                        builder.setMessage(inputContext);
+
+                        LayoutInflater inflater =LayoutInflater.from(context);
+                        View dialogView = inflater.inflate(R.layout.text_dialog_custom_layout, null);
+
+                        // Build the alert dialog
+                        AlertDialog.Builder builder = new AlertDialog.Builder(context,R.style.TransparentDialogStyle);
+                        builder.setView(dialogView);
+
+
+
+
+                        TextView title = dialogView.findViewById(R.id.text_dialog_title);
+                        title.setText(R.string.select_an_action);
+
+                        TextView msg = dialogView.findViewById(R.id.text_dialog_message);
+                        msg.setText(inputContext);
+
+                        LinearLayout inputLayout = dialogView.findViewById(R.id.text_dialog_input_layout);
 
                         // Set up the input
                         EditText input;
@@ -141,19 +91,43 @@ public class BackendApi {
                         input.setInputType(InputType.TYPE_CLASS_TEXT |InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                         input.setMaxHeight(250);
                         input.setWidth(100);
-                        builder.setView(input);
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams
+                                (LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        input.setLayoutParams(params);
+
+                        inputLayout.addView(input);
+
+                        AlertDialog alert = builder.create();
 
 
 
-                        // Set up the buttons
-                        builder.setPositiveButton("OK", (dialog, which) -> {
-                            result[0] =  input.getText().toString();
-                            dialog.dismiss();
+
+
+
+
+
+
+                        Button positiveButton = dialogView.findViewById(R.id.text_dialog_positive_button);
+
+                        positiveButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                result[0] = input.getText().toString();
+                                alert.dismiss();
+                            }
                         });
-                        builder.setNegativeButton("Cancel", (dialog, which) -> {
-                            result[0] = null;
-                            dialog.cancel();
+
+                        Button negativeButton = dialogView.findViewById(R.id.text_dialog_negative_button);
+
+                        negativeButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                alert.dismiss();
+                                result[0] = null;
+                            }
                         });
+
+
                         Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
                         builder.show();
                     }

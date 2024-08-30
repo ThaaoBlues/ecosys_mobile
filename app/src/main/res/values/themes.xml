@@ -11,20 +11,43 @@
     <style name="Base.Theme.Ecosys" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:colorBackground">@color/bg2</item>
         <item name="android:colorPrimary">@color/card1</item>
-        <!--<item name="android:colorPrimaryVariant">@color/card2</item>-->
-        <!--<item name="android:colorOnPrimary">@color/bg2</item>-->
         <item name="android:colorSecondary">@color/btn1</item>
-        <!--<item name="android:colorOnSecondary">@color/bg2</item>-->
-        <!--<item name="android:colorOnSurface">@color/font1</item>-->
-        <item name="android:textColor">@color/font1</item>
-        <item name="android:buttonStyle">@style/Widget.Button.Coral</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:buttonStyle">@style/Widget.Button.2</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
     </style>
 
     <style name="Theme.Ecosys" parent="Base.Theme.Ecosys" />
 
     <!-- Button Styles -->
-    <style name="Widget.Button.Coral" parent="Widget.MaterialComponents.Button">
-        <item name="backgroundTint">@color/btn1</item>
+    <style name="Widget.Button.1" parent="Widget.MaterialComponents.Button">
         <item name="android:textColor">@color/bg2</item>
+        <item name="android:colorAccent">@color/btn1</item>
+        <item name="android:backgroundTint">@color/btn1</item>
+    </style>
+
+    <style name="Widget.Button.2" parent="Widget.MaterialComponents.Button">
+        <item name="android:textColor">@color/bg2</item>
+        <item name="android:colorAccent">@color/btn2</item>
+        <item name="android:backgroundTint">@color/btn2</item>
+
+    </style>
+
+    <style name="Widget.Button.3" parent="Widget.MaterialComponents.Button">
+        <item name="android:color">@color/bg2</item>
+        <item name="android:textColor">@color/bg2</item>
+        <item name="android:colorAccent">@color/btn3</item>
+        <item name="android:backgroundTint">@color/btn3</item>
+    </style>
+
+
+    <style name="TransparentDialogStyle" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMinor">75%</item>
     </style>
 </resources>
