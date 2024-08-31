@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.io.File;
 import java.security.Permission;
 
 public class MainActivity extends AppCompatActivity {
@@ -150,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
             as.requestAutoStartPermission();
             prefs.edit().putBoolean("autostart",true).apply();
         }
+        
 
 
         //prefs.edit().putBoolean("firstrun", true).commit();

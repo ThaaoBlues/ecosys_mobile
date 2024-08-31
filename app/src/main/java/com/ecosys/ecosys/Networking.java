@@ -269,6 +269,7 @@ public class Networking {
                             }else{
 
                                 Intent intent = new Intent(context,SelectAppToLinkActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 context.startActivity(intent);
                             }
 

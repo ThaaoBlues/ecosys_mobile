@@ -28,10 +28,13 @@ public class SelectAppToLinkActivity extends AppCompatActivity {
 
 
         //verify that the apps folder is present !
-        DocumentFile appsFolder = DocumentFile.fromFile(new File(getFilesDir(),"apps"));
+        //DocumentFile appsFolder = DocumentFile.fromFile(new File(getFilesDir(),"apps"));
 
-        if(!appsFolder.exists()){
-            appsFolder.getParentFile().createDirectory("apps");
+        File root = getFilesDir();
+        File appsDir = new File(root,"apps");
+
+        if(!appsDir.exists()){
+            appsDir.mkdirs();
         }
 
 

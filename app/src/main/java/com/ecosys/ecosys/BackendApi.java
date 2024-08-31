@@ -11,6 +11,7 @@ package com.ecosys.ecosys;
 import static android.app.Activity.RESULT_OK;
 
 import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
+import static androidx.core.content.ContextCompat.getColor;
 import static androidx.core.content.ContextCompat.startActivity;
 
 import android.app.AlertDialog;
@@ -91,6 +92,7 @@ public class BackendApi {
                         input.setInputType(InputType.TYPE_CLASS_TEXT |InputType.TYPE_TEXT_FLAG_MULTI_LINE);
                         input.setMaxHeight(250);
                         input.setWidth(100);
+                        input.setTextColor(getColor(context,R.color.font1));
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams
                                 (LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         input.setLayoutParams(params);
@@ -122,14 +124,14 @@ public class BackendApi {
                         negativeButton.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
+                                result[0] = "[ANNULATION]";
                                 alert.dismiss();
-                                result[0] = null;
                             }
                         });
 
 
                         Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
-                        builder.show();
+                        alert.show();
                     }
                 });
 

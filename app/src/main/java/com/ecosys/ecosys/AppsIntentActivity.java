@@ -48,6 +48,15 @@ public class AppsIntentActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
 
+
+        // makes sure we have created the apps directory
+        File root = getFilesDir();
+        File appsDir = new File(root,"apps");
+
+        if(!appsDir.exists()){
+            appsDir.mkdirs();
+        }
+
         if (intent != null) {
             // Retrieve the flag and app name from the intent
             String actionFlag = intent.getStringExtra("action_flag");

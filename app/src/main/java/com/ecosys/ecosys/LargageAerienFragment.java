@@ -54,6 +54,8 @@ public class LargageAerienFragment extends Fragment {
     private Map<String,String> target_device;
     //private ZeroConfService zc = new ZeroConfService(getContext());
 
+    private static final String TAG = "Ecosys server : LargageAerienFragment";
+
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container,
@@ -217,6 +219,11 @@ public class LargageAerienFragment extends Fragment {
                                                                             "Type/paste the text you want to send here",
                                                                             getContext()
                                                                     );
+
+                                                                    if(text.equals("[ANNULATION]")){
+                                                                        Log.d(TAG,text);
+                                                                        return;
+                                                                    }
 
                                                                     try {
                                                                         File outputFile = File.createTempFile(
