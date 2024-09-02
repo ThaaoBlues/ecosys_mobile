@@ -249,7 +249,7 @@ public class Networking {
                                 );
                                 acces.getSecureIdFromRootPath(app_path);
 
-                                long remote_task_creation_timestamp = Long.parseLong(data.getNewFilePath());
+                                long remote_task_creation_timestamp =data.getVersionToPatch();
                                 long local_task_creation_timestamp = acces.getSyncCreationDate();
 
                                 if(remote_task_creation_timestamp < local_task_creation_timestamp){
@@ -1432,9 +1432,9 @@ public class Networking {
                 acces.isApp() ? "[APPLICATION]" :"[CLASSIC]",
                 null,
                 acces.isApp() ? acces.getAppName() : "",
-                String.valueOf(acces.getSyncCreationDate()),
+                "",
                 acces.getSecureId(),
-                0
+                acces.getSyncCreationDate()
         );
         Globals.GenArray<String> dummyDevice = new Globals.GenArray<>();
         dummyDevice.add(deviceIp);

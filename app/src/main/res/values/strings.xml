@@ -7,7 +7,7 @@
   -->
 
 <resources>
-    <string name="app_name">Ecosys</string>
+    <string name="app_name" translatable="false">Ecosys</string>
     <string name="action_settings">Settings</string>
     <string name="welcome_msg">To use Ecosys, please install it on your others devices and connect them to the same Wifi network :D
 \n\n

@@ -39,10 +39,8 @@ import androidx.annotation.RequiresApi;
 import java.util.Map;
 
 public class BackendApi {
-    private static final String TAG = "BackendApi";
+    private static final String TAG = "Ecosys Server : BackendApi";
 
-    private static final String ECOSYS_WRITEABLE_DIRECTORY = ""; // Specify your directory path here
-        // Initialize the ActivityResultLauncher
 
     public static void launchInputActivityAndBroadCastResult( String flag, String inputContext, Context context, boolean textMode) {
         Intent intent = new Intent(context, InputActivity.class);
@@ -130,7 +128,7 @@ public class BackendApi {
                         });
 
 
-                        Log.d("BACKEND API","LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
+                        Log.d(TAG,"LA FENETRE DE DIALOGUE VA ETRE AFFICHEE");
                         alert.show();
                     }
                 });

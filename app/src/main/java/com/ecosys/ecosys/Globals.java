@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,6 +196,7 @@ public class Globals {
         }
 
         public void deserializeQEvent(byte[] data) {
+            Log.d("DESERIALISATION",new String(data, StandardCharsets.UTF_8));
             ByteBuffer buffer = ByteBuffer.wrap(data);
 
             // Define separators as hexadecimal strings
@@ -210,6 +212,8 @@ public class Globals {
 
             // Check if a binary delta is present
             if (buffer.remaining() > 0 && !startsWith(buffer, HEX_FIELD_SEPARATOR)) {
+
+                Log.d("DESERIALISATION","delta presence detected");
                 List<DeltaBinaire.DeltaInstruction> instructions = new ArrayList<>();
 
                 while (true) {
@@ -263,7 +267,8 @@ public class Globals {
 
                 this.Delta = delta;
             } else {
-                buffer.position(buffer.position() + HEX_FIELD_SEPARATOR.length); // Skip FIELD_SEPARATOR for Delta
+                // skipping delta AND delta filepath
+                buffer.position(buffer.position() + HEX_FIELD_SEPARATOR.length*2); // Skip FIELD_SEPARATOR for Delta
             }
 
             // Read other fields
@@ -273,16 +278,6 @@ public class Globals {
             this.SecureId = readString(buffer, HEX_FIELD_SEPARATOR,true);
         }
 
-        // Convert a hexadecimal string to a byte array
-        private byte[] hexToByteArray(String hex) {
-            int len = hex.length();
-            byte[] data = new byte[len / 2];
-            for (int i = 0; i < len; i += 2) {
-                data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
-                        + Character.digit(hex.charAt(i+1), 16));
-            }
-            return data;
-        }
 
         // Method to check if the buffer starts with a specific byte array
         private boolean startsWith(ByteBuffer buffer, byte[] separator) {
@@ -303,6 +298,7 @@ public class Globals {
 
             // prevent stealing a byte from the next field if this one is empty
             if (startsWith(buffer, separator)) {
+                Log.d("DESERIALISATION","skipping empty field");
                 buffer.position(buffer.position() + separator.length);
                 return "";
             }
