@@ -8,10 +8,16 @@
 
 package com.ecosys.ecosys;
 
+import static org.apache.commons.lang3.ClassUtils.getPackageName;
+
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,7 +26,11 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,13 +38,17 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.bumptech.glide.Glide;
 import com.ecosys.ecosys.databinding.FragmentMagasinBinding;
-import com.ecosys.ecosys.databinding.FragmentSynchronisationsBinding;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -43,6 +57,22 @@ public class MagasinFragment extends Fragment {
 
     private static String TAG = "Qsycn Server : MagasinFragment";
     private FragmentMagasinBinding binding;
+    private Uri apkUri;
+
+
+    private ActivityResultLauncher<Intent> unknownSourcesLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    // Si l'utilisateur a activé l'autorisation, lancer l'installation
+                    installApk(apkUri);
+                } else {
+                    Log.e(TAG, "L'autorisation d'installation depuis des sources inconnues a été refusée");
+                }
+            }
+    );
+
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -120,9 +150,11 @@ public class MagasinFragment extends Fragment {
 
                     String appDownloadUrl = config.getString("AppDownloadUrl");
                     installButton.setOnClickListener(v -> {
-                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                        intent.setData(Uri.parse(appDownloadUrl));
-                        startActivity(intent);
+
+                        Toast.makeText(context, "Downloading your app...", Toast.LENGTH_LONG).show();
+                        downloadApkAndPromptInstall(appDownloadUrl);
+
+
                     });
 
                     container.addView(card);
@@ -134,11 +166,102 @@ public class MagasinFragment extends Fragment {
     }
 
 
+
+
+
+
+    public void downloadApkAndPromptInstall(String fileUrl){
+
+        new Thread(() -> {
+            try {
+                URL url = new URL(fileUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setDoOutput(true);
+                connection.connect();
+
+                // Créer le fichier
+                File packageFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "ecosys_magasin_app.apk");
+                if(!packageFile.exists()){
+                    if(!packageFile.createNewFile()){
+                        Log.d(TAG,"WTF ????");
+                        throw new IOException();
+                    }
+                }
+                FileOutputStream fileOutput = new FileOutputStream(packageFile);
+
+                // Lire la réponse
+                InputStream inputStream = new BufferedInputStream(url.openStream(), 8192);
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    fileOutput.write(buffer, 0, bytesRead);
+                }
+
+                fileOutput.flush();
+                fileOutput.close();
+                inputStream.close();
+
+                Log.d(TAG, "File downloaded: " + packageFile.getAbsolutePath());
+
+                // Utiliser FileProvider pour éviter l'exception FileUriExposedException
+                apkUri = FileProvider.getUriForFile(
+                        getContext(),
+                        "com.ecosys.ecosys.fileprovider",
+                        packageFile
+                );
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+
+                    if (!getContext().getPackageManager().canRequestPackageInstalls()) {
+                        // Lancer l'intention pour autoriser les sources inconnues
+                        Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+                                .setData(Uri.parse("package:" + getContext().getPackageName()));
+                        unknownSourcesLauncher.launch(intent); // Utiliser ActivityResultLauncher
+                    } else {
+                        installApk(apkUri); // Si l'autorisation est déjà activée
+                    }
+                } else {
+                    installApk(apkUri); // Pour les versions inférieures à Android 8.0
+                }
+
+
+            } catch (IOException e) {
+                Log.e(TAG, "Error: " + e.getMessage());
+            }
+
+
+
+
+
+        }).start();
+    }
+
+
+    private void installApk(Uri apkUri){
+        Log.d(TAG,"Prompting user to install app");
+        Intent promptInstall = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(this.apkUri,
+                        "application/vnd.android.package-archive");
+
+        promptInstall.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        promptInstall.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+
+
+        startActivity(promptInstall);
+    }
+
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
     }
+
+
+
 
 
 

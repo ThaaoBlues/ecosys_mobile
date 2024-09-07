@@ -268,6 +268,7 @@ public class Globals {
                 this.Delta = delta;
             } else {
                 // skipping delta AND delta filepath
+                Log.d("DESERIALISATION","Skipping delta and its filepath fields");
                 buffer.position(buffer.position() + HEX_FIELD_SEPARATOR.length*2); // Skip FIELD_SEPARATOR for Delta
             }
 

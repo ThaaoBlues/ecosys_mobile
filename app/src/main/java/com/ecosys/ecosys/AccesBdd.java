@@ -933,6 +933,24 @@ public class AccesBdd {
                         secureId
                 }
                 );
+
+        db.execSQL("DELETE FROM delta WHERE secure_id=?",
+                new String[]{
+                        secureId
+                }
+        );
+
+        db.execSQL("DELETE FROM filesystem WHERE secure_id=?",
+                new String[]{
+                        secureId
+                }
+        );
+
+        db.execSQL("DELETE FROM retard WHERE secure_id=?",
+                new String[]{
+                        secureId
+                }
+        );
     }
 
     public void linkDevice(String deviceId, String ipAddress) {

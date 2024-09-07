@@ -12,11 +12,17 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -24,6 +30,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -120,89 +127,126 @@ public class SynchronisationsFragment extends Fragment {
                         AccesBdd acces = new AccesBdd(getContext());
                         acces.setSecureId(sync.getSecureId());
 
-                        String[] choices = {"Delete task", "See devices status", "Link another device to this task"};
-                        choices = Arrays.copyOf(choices,choices.length+1);
 
-                        if(!sync.getBackup_mode()){
-                            choices[choices.length-1] = "Enable backup mode";
-                        }else{
-                            choices[choices.length-1] = "Disable backup mode";
+                        LayoutInflater inflater = getLayoutInflater();
+                        View dialogView = inflater.inflate(R.layout.buttons_dialog_custom_layout, null);
 
-                        }
+                        // Build the alert dialog
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(),R.style.TransparentDialogStyle);
+                        builder.setView(dialogView);
 
-                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                        builder.setTitle("Sync Options");
-                        String[] finalChoices = choices;
-                        builder.setItems(choices, new DialogInterface.OnClickListener() {
+
+                        // Create the dialog
+                        AlertDialog alertDialog = builder.create();
+
+                        alertDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+                        // set transparent background to not shit on the rounded corners of the layout
+                        alertDialog.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+                        alertDialog.getWindow().setDimAmount(0);
+
+                        TextView title = dialogView.findViewById(R.id.buttons_dialog_title);
+                        title.setText(R.string.select_an_action);
+
+                        TextView msg = dialogView.findViewById(R.id.buttons_dialog_message);
+                        msg.setText(R.string.select_something_to_do_with_this_synchronisation_task);
+
+
+                        LinearLayout buttonsLayout = dialogView.findViewById(R.id.dialog_buttons_layout);
+                        float widthInPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PT, 100, getResources().getDisplayMetrics());
+
+
+                        // Create the first button (for the first choice)
+                        Button rmTaskButton = new Button(getContext());
+                        rmTaskButton.setLayoutParams(new LinearLayout.LayoutParams((int) widthInPx, LinearLayout.LayoutParams.WRAP_CONTENT)); 
+                        rmTaskButton.setText("Delete Task");
+                        rmTaskButton.setTextColor(ContextCompat.getColor(getContext(),R.color.bg1));
+                        rmTaskButton.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.btn1));
+                        rmTaskButton.setOnClickListener(new View.OnClickListener() {
                             @Override
-                            public void onClick(DialogInterface dialog, int choice_index) {
-
-
-                                acces.setSecureId(sync.getSecureId());
-
-                                switch (choice_index){
-                                    case 0:
-                                        acces.rmSync();
-                                        break;
-
-                                    case 1:
-                                        // get task status -\_(:/)_/-
-                                        break;
-                                    case 2:
-                                        // link another device to the designated sync task
-
-                                        Globals.GenArray<Map<String,String>> devices = acces.getNetworkMap();
-
-                                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                                        builder.setTitle("Online devices");
-                                        String[] choices = new String[devices.size()];
-
-                                        for(int i=0;i<devices.size();i++){
-
-                                            choices[i] = devices.get(i).get("hostname");
-
-                                        }
-
-
-
-                                        builder.setItems(choices, new DialogInterface.OnClickListener() {
-                                            @Override
-                                            public void onClick(DialogInterface dialog, int i) {
-
-
-                                                ProcessExecutor.Function sendreqs = new ProcessExecutor.Function() {
-                                                    @Override
-                                                    public void execute() {
-                                                        BackendApi.showLoadingNotification(getContext(),"Negociating link between devices...");
-                                                        String ip_addr = devices.get(i).get("ip_addr");
-                                                        String device_id = devices.get(i).get("device_id");
-                                                        Networking.sendLinkDeviceRequest(ip_addr,acces);
-                                                        acces.linkDevice(device_id,ip_addr);
-
-                                                        BackendApi.discardLoadingNotification(getContext());
-                                                    }
-                                                };
-
-                                                ProcessExecutor.startProcess(sendreqs);
-
-                                            }
-                                        });
-
-                                        builder.show();
-
-                                        break;
-                                    case 3:
-                                        acces.toggleBackupMode();
-
-                                        break;
-
-                                }
-
-                                Toast.makeText(getContext(), finalChoices[choice_index], Toast.LENGTH_SHORT).show();
-
+                            public void onClick(View v) {
+                                acces.rmSync();
+                                alertDialog.dismiss();
                             }
                         });
 
+
+
+                        Button sendLinkRequestButton = new Button(getContext());
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams((int) widthInPx, LinearLayout.LayoutParams.WRAP_CONTENT);
+                        params.topMargin = 20;
+                        sendLinkRequestButton.setLayoutParams(params);
+                        sendLinkRequestButton.setText(R.string.link_this_task_to_another_device);
+                        sendLinkRequestButton.setTextColor(ContextCompat.getColor(getContext(),R.color.bg1));
+                        sendLinkRequestButton.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.btn1));
+                        sendLinkRequestButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+
+                                // link another device to the designated sync task
+
+                                Globals.GenArray<Map<String,String>> devices = acces.getNetworkMap();
+
+                                AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                                builder.setTitle("Online devices");
+                                String[] choices = new String[devices.size()];
+
+                                for(int i=0;i<devices.size();i++){
+
+                                    choices[i] = devices.get(i).get("hostname");
+
+                                }
+
+
+
+
+                                builder.setItems(choices, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int i) {
+
+
+                                        ProcessExecutor.Function sendreqs = new ProcessExecutor.Function() {
+                                            @Override
+                                            public void execute() {
+                                                BackendApi.showLoadingNotification(getContext(),"Negociating link between devices...");
+                                                String ip_addr = devices.get(i).get("ip_addr");
+                                                String device_id = devices.get(i).get("device_id");
+                                                Networking.sendLinkDeviceRequest(ip_addr,acces);
+                                                acces.linkDevice(device_id,ip_addr);
+
+                                                BackendApi.discardLoadingNotification(getContext());
+                                            }
+                                        };
+
+                                        ProcessExecutor.startProcess(sendreqs);
+
+                                    }
+                                });
+
+                                builder.show();
+                            }
+                        });
+
+
+
+                        // Create the first button (for the first choice)
+                        Button backupModeButton = new Button(getContext());
+                        // same params as precedent button
+                        backupModeButton.setLayoutParams(params);
+                        backupModeButton.setText(sync.getBackup_mode() ? "Disable backup mode":  "Enable backup mode");
+                        backupModeButton.setTextColor(ContextCompat.getColor(getContext(),R.color.bg1));
+                        backupModeButton.setBackgroundColor(ContextCompat.getColor(getContext(),R.color.btn1));
+                        backupModeButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                acces.toggleBackupMode();
+                            }
+                        });
+
+                        // Add buttons to the linear layout
+                        buttonsLayout.addView(rmTaskButton);
+                        buttonsLayout.addView(sendLinkRequestButton);
+                        buttonsLayout.addView(backupModeButton);
                         builder.show();
                     }
                 }

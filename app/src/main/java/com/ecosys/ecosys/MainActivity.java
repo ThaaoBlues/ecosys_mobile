@@ -144,6 +144,8 @@ public class MainActivity extends AppCompatActivity {
                 "This app needs the permission to know if your device has booted to start itself."
         );
 
+
+
         prefs = getSharedPreferences("com.ecosys.ecosys", MODE_PRIVATE);
 
         if(!prefs.getBoolean("autostart",false)){
@@ -151,7 +153,6 @@ public class MainActivity extends AppCompatActivity {
             as.requestAutoStartPermission();
             prefs.edit().putBoolean("autostart",true).apply();
         }
-        
 
 
         //prefs.edit().putBoolean("firstrun", true).commit();

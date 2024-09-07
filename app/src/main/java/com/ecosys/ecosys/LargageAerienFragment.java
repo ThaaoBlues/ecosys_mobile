@@ -250,7 +250,7 @@ public class LargageAerienFragment extends Fragment {
                                                         }
                                                     });
 
-// Add buttons to the linear layout
+                                                    // Add buttons to the linear layout
                                                     buttonsLayout.addView(sendFilesButton);
                                                     buttonsLayout.addView(sendTextButton);
 

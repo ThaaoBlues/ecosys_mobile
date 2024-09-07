@@ -33,5 +33,7 @@
     <string name="largageaerien">LargageAerien</string>
     <string name="select_an_action">Select an action !</string>
     <string name="select_something_to_send_to_the_other_device">Select something to send to the other device !</string>
+    <string name="select_something_to_do_with_this_synchronisation_task">Select something to do with this synchronisation task</string>
+    <string name="link_this_task_to_another_device">Link this task to another device</string>
 
 </resources>

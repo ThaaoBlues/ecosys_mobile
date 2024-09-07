@@ -10,4 +10,5 @@
     <external-files-path
         name="apps"
         path="apps/" />
+    <external-path name="download" path="Download/" />
 </paths>
