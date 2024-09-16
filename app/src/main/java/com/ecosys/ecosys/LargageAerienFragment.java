@@ -215,9 +215,10 @@ public class LargageAerienFragment extends Fragment {
                                                                 @Override
                                                                 public void execute() {
                                                                     String text = BackendApi.askMultilineInput(
-                                                                            "TYPE YOUR TEXT HERE",
+                                                                            "[FROM_LARGAGE_AERIEN_FRAGMENT]",
                                                                             "Type/paste the text you want to send here",
-                                                                            getContext()
+                                                                            getContext(),
+                                                                            null
                                                                     );
 
                                                                     if(text.equals("[ANNULATION]")){

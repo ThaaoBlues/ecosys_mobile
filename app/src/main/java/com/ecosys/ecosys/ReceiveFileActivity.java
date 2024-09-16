@@ -12,47 +12,120 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Map;
+
+import kotlinx.coroutines.channels.Send;
+
 public class ReceiveFileActivity extends Activity {
+
+
+    private Map<String,String> target_device = null;
+
+    private static final String TAG = "Ecosys Server : ReceiveFileActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_receive_file);
+        setContentView(R.layout.activity_receive_file);
 
         // Check if the intent that launched this activity is a file sharing intent
         Intent receivedIntent = getIntent();
         String action = receivedIntent.getAction();
         String type = receivedIntent.getType();
 
-        if (Intent.ACTION_SEND.equals(action) && type != null) {
-            if ("text/plain".equals(type)) {
-                handleSharedText(receivedIntent); // Handle shared text
-            } else if (type.startsWith("image/")) {
-                handleSharedImage(receivedIntent); // Handle shared image
-            } else if (type.startsWith("audio/")) {
-                handleSharedAudio(receivedIntent); // Handle shared audio
-            } else if (type.startsWith("video/")) {
-                handleSharedVideo(receivedIntent); // Handle shared video
-            } else {
-                handleSharedFile(receivedIntent); // Handle shared generic file
-            }
-        }
+        AccesBdd acces = new AccesBdd(ReceiveFileActivity.this);
+
+
+        // ask user to select a device
+        BackendApi.addButtonsFromDevicesGenArray(
+                ReceiveFileActivity.this,
+                acces.getNetworkMap(),
+                findViewById(R.id.activity_receive_files_title_textview),
+                new BackendApi.DeviceButtonCallback() {
+                    @Override
+                    public void callback(Map<String, String> device) {
+                        target_device = device;
+
+
+                        if (Intent.ACTION_SEND.equals(action) && type != null) {
+                            if ("text/plain".equals(type)) {
+                                handleSharedText(receivedIntent); // Handle shared text
+                            } else if (type.startsWith("image/")) {
+                                handleSharedImage(receivedIntent); // Handle shared image
+                            } else if (type.startsWith("audio/")) {
+                                handleSharedAudio(receivedIntent); // Handle shared audio
+                            } else if (type.startsWith("video/")) {
+                                handleSharedVideo(receivedIntent); // Handle shared video
+                            } else {
+                                handleSharedFile(receivedIntent); // Handle shared generic file
+                            }
+                        }
+
+                    }
+                }
+        );
+
+
+
+
+
+
     }
 
     private void handleSharedText(Intent intent) {
         String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
         if (sharedText != null) {
-            // Handle the shared text here
             Toast.makeText(this, "Received shared text: " + sharedText, Toast.LENGTH_SHORT).show();
+
+            ProcessExecutor.Function aski = new ProcessExecutor.Function() {
+                @Override
+                public void execute() {
+                    String text = BackendApi.askMultilineInput(
+                            "[MODIFY_SHARED_TEXT]",
+                            "Type/paste the text you want to send here",
+                            ReceiveFileActivity.this,
+                            sharedText
+                    );
+
+                    if(text.equals("[ANNULATION]")){
+                        Log.d(TAG,text);
+                        return;
+                    }
+
+                    try {
+                        File outputFile = File.createTempFile(
+                                "text",
+                                ".txt",
+                                getCacheDir()
+                        );
+
+                        FileOutputStream fos = new FileOutputStream(outputFile);
+                        fos.write(text.getBytes());
+                        fos.close();
+
+                        Log.d(TAG, Uri.parse(outputFile.getPath()).toString());
+                        SendLA(Uri.parse(outputFile.getPath()));
+
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            };
+
+            ProcessExecutor.startProcess(aski);
         }
     }
 
     private void handleSharedImage(Intent intent) {
         Uri imageUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (imageUri != null) {
-            // Handle the shared image here
+            SendLA(imageUri);
             Toast.makeText(this, "Received shared image: " + imageUri.toString(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -60,7 +133,7 @@ public class ReceiveFileActivity extends Activity {
     private void handleSharedAudio(Intent intent) {
         Uri audioUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (audioUri != null) {
-            // Handle the shared audio here
+            SendLA(audioUri);
             Toast.makeText(this, "Received shared audio: " + audioUri.toString(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -68,7 +141,7 @@ public class ReceiveFileActivity extends Activity {
     private void handleSharedVideo(Intent intent) {
         Uri videoUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (videoUri != null) {
-            // Handle the shared video here
+            SendLA(videoUri);
             Toast.makeText(this, "Received shared video: " + videoUri.toString(), Toast.LENGTH_SHORT).show();
         }
     }
@@ -76,8 +149,23 @@ public class ReceiveFileActivity extends Activity {
     private void handleSharedFile(Intent intent) {
         Uri fileUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
         if (fileUri != null) {
-            // Handle the shared file here
+            SendLA(fileUri);
             Toast.makeText(this, "Received shared file: " + fileUri.toString(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+
+    private void SendLA(Uri uri) {
+        ProcessExecutor.Function SendLA = new ProcessExecutor.Function() {
+            @Override
+            public void execute() {
+
+                BackendApi.showLoadingNotification(ReceiveFileActivity.this,"Sending Largage Aerien...");
+                Networking nt = new Networking(ReceiveFileActivity.this, getFilesDir().toString());
+                nt.sendLargageAerien(uri, target_device.get("ip_addr"),false);
+                BackendApi.discardLoadingNotification(ReceiveFileActivity.this);
+            }
+        };
+        ProcessExecutor.startProcess(SendLA);
     }
 }

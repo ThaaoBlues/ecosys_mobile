@@ -53,7 +53,7 @@ public class BackendApi {
     }
 
 
-    public static String askMultilineInput(String flag, String inputContext,Context context) {
+    public static String askMultilineInput(String flag, String inputContext,Context context,String defaultText) {
         final String[] result = new String[1];
 
         ProcessExecutor.Function userInput = new ProcessExecutor.Function() {
@@ -96,6 +96,10 @@ public class BackendApi {
                         input.setLayoutParams(params);
 
                         inputLayout.addView(input);
+
+                        if(flag.equals("[MODIFY_SHARED_TEXT]")){
+                            input.setText(defaultText);
+                        }
 
                         AlertDialog alert = builder.create();
 
