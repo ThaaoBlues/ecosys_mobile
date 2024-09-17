@@ -28,7 +28,7 @@ import java.util.List;
 public class Globals {
 
 
-    public static final String VERSION = "0.0.4-Beta";
+    public static final String VERSION = "0.0.5-Beta";
 
     public static class QEvent {
         public String Flag;
