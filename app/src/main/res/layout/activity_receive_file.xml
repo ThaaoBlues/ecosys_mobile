@@ -14,8 +14,8 @@
 
     <TextView
         android:id="@+id/activity_receive_files_title_textview"
-        android:layout_width="375dp"
-        android:layout_height="97dp"
+        android:layout_width="384dp"
+        android:layout_height="23dp"
         android:text="TextView"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -24,13 +24,19 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.013" />
 
-    <LinearLayout
-        android:id="@+id/receive_file_activity_network_devices_list_linearlayout"
-        android:layout_width="671dp"
-        android:layout_height="1083dp"
-        android:orientation="vertical"
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/activity_receive_files_title_textview" />
+        app:layout_constraintTop_toBottomOf="@+id/activity_receive_files_title_textview">
+
+        <LinearLayout
+            android:id="@+id/activity_receive_files_network_devices_list_linearlayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

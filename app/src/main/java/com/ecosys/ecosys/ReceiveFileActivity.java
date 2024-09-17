@@ -13,6 +13,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -20,7 +24,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
-import kotlinx.coroutines.channels.Send;
 
 public class ReceiveFileActivity extends Activity {
 
@@ -42,11 +45,16 @@ public class ReceiveFileActivity extends Activity {
         AccesBdd acces = new AccesBdd(ReceiveFileActivity.this);
 
 
+        LinearLayout linearLayout = findViewById(R.id.activity_receive_files_network_devices_list_linearlayout);
+        TextView title = findViewById(R.id.activity_receive_files_title_textview);
+        title.setText(R.string.choose_a_device_to_send_your_things_to);
+
         // ask user to select a device
         BackendApi.addButtonsFromDevicesGenArray(
                 ReceiveFileActivity.this,
                 acces.getNetworkMap(),
-                findViewById(R.id.activity_receive_files_title_textview),
+                linearLayout
+                ,
                 new BackendApi.DeviceButtonCallback() {
                     @Override
                     public void callback(Map<String, String> device) {
@@ -72,7 +80,7 @@ public class ReceiveFileActivity extends Activity {
         );
 
 
-
+        acces.closedb();
 
 
 

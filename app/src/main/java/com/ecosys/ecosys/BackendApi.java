@@ -202,6 +202,7 @@ public class BackendApi {
             return;
         }
 
+
         LayoutInflater inflater = LayoutInflater.from(context);
 
         for (int i = 0; i < devices.size(); i++) {
@@ -209,7 +210,6 @@ public class BackendApi {
             TextView buttonText = cardView.findViewById(R.id.button_text);
 
             buttonText.setText(String.format("%s; %s", devices.get(i).get("hostname"), devices.get(i).get("ip_addr")));
-
             int finalI = i;
             cardView.setOnClickListener(new View.OnClickListener() {
                 @Override

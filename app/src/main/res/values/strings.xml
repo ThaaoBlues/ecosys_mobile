@@ -35,5 +35,7 @@
     <string name="select_something_to_send_to_the_other_device">Select something to send to the other device !</string>
     <string name="select_something_to_do_with_this_synchronisation_task">Select something to do with this synchronisation task</string>
     <string name="link_this_task_to_another_device">Link this task to another device</string>
+    <string name="choose_a_device_to_send_your_things_to">"Choose a device to send your things to : "</string>
+    <string name="accept_the_largage_aerien">Accept the largage aerien ?</string>
 
 </resources>

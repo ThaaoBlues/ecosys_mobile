@@ -34,6 +34,7 @@ public class InputActivity extends Activity {
     public static final String FLAG_KEY = "flag";
     public static final String INPUT_CONTEXT_KEY = "inputContext";
     public static final String TEXT_MODE_KEY = "textMode";
+    public static final String RECEIVED_FILE_NAME_KEY = "file_name";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,28 +45,25 @@ public class InputActivity extends Activity {
         String flag = intent.getStringExtra(FLAG_KEY);
         String inputContext = intent.getStringExtra(INPUT_CONTEXT_KEY);
         boolean textMode = intent.getBooleanExtra(TEXT_MODE_KEY,false);
+        String file_name = intent.getStringExtra(RECEIVED_FILE_NAME_KEY);
         switch (flag){
             case "[MULTILINE_INPUT]":
                 askMultilineInput(flag, inputContext, this);
                 break;
             case "[SINGLE_LINE_INPUT_OR_CONFIRMATION_DIALOG]":
-                askInput(flag, inputContext, this, textMode);
+                askInput(flag, inputContext, this, textMode,file_name);
                 break;
 
             default:
                 break;
 
         }
-        // Decide which method to call based on the flag
-        if ("multiLineInput".equals(flag)) {
-        } else {
-        }
 
 
 
     }
 
-    public void askInput(String flag, String inputContext, Context context, Boolean textMode) {
+    public void askInput(String flag, String inputContext, Context context, Boolean textMode,String file_name) {
         final String[] result = new String[1];
 
         ProcessExecutor.Function waitInput = new ProcessExecutor.Function() {
@@ -108,10 +106,10 @@ public class InputActivity extends Activity {
 
 
                         TextView title = dialogView.findViewById(R.id.text_dialog_title);
-                        title.setText(R.string.select_an_action);
+                        title.setText(R.string.accept_the_largage_aerien);
 
                         TextView msg = dialogView.findViewById(R.id.text_dialog_message);
-                        msg.setText(R.string.largage_aerien_msg);
+                        msg.setText(R.string.largage_aerien_msg+" "+file_name);
 
                         // Set up the input
                         EditText input;
@@ -131,6 +129,7 @@ public class InputActivity extends Activity {
                             @Override
                             public void onClick(View v) {
                                 result[0] = textMode ? input.getText().toString() : "y";
+                                Log.d("TAG","BROADCASTING POSITIVE USER RESPONSE");
                                 alert.dismiss();
                             }
                         });
