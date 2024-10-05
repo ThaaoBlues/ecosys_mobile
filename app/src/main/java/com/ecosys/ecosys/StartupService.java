@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -21,6 +22,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
@@ -196,7 +198,11 @@ public class StartupService extends Service implements FolderPickerCallback{
         super.onCreate();
         // Register the BroadcastReceiver
         IntentFilter filter = new IntentFilter("com.ecosys.RESULT_ACTION");
-        registerReceiver(resultReceiver, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(resultReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        }else {
+            registerReceiver(resultReceiver, filter);
+        }
     }
 
 

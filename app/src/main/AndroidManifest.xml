@@ -40,7 +40,7 @@
         <service
             android:name=".StartupService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
 
 
 
